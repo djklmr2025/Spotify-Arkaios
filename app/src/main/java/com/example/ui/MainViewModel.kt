@@ -53,7 +53,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val amrWalletRepository = AmrWalletRepository(db)
     val playerEngine = AudioPlayerEngine(application)
     val tidalApiService = TidalApiService(application)
+    val radioStationRepository = com.example.data.repository.RadioStationRepository()
 
+    val radioStations: StateFlow<List<com.example.data.model.RadioStation>> = radioStationRepository.stations
     val playbackState: StateFlow<PlaybackState> = playerEngine.playbackState
     val walletState: StateFlow<AmrWallet> = amrWalletRepository.walletState
     val downloadStatus: StateFlow<Map<String, DownloadProgress>> = downloadRepository.downloadStatus
@@ -390,8 +392,112 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             if (locals.isNotEmpty()) {
                 val merged = (_catalogTracks.value + locals).distinctBy { it.id }
                 _catalogTracks.value = merged
+                showSnackbar("🎵 Se encontraron ${locals.size} canciones en tu teléfono")
+            } else {
+                showSnackbar("No se encontraron audios en carpetas del sistema. Usa 'Elegir Archivos' para seleccionarlos directamente.")
             }
         }
+    }
+
+    fun importAudioUris(uris: List<android.net.Uri>) {
+        if (uris.isEmpty()) return
+        viewModelScope.launch {
+            val imported = musicRepository.importTracksFromUris(uris)
+            if (imported.isNotEmpty()) {
+                val existing = _localDeviceTracks.value
+                val combined = (imported + existing).distinctBy { it.audioUrl }
+                _localDeviceTracks.value = combined
+                _catalogTracks.value = (_catalogTracks.value + imported).distinctBy { it.id }
+                showSnackbar("✔ Se importaron ${imported.size} canciones con éxito")
+            }
+        }
+    }
+
+    fun importM3uUri(uri: android.net.Uri) {
+        viewModelScope.launch {
+            try {
+                val tracks = com.example.data.m3u.M3uParser.parseFromUri(getApplication(), uri)
+                if (tracks.isNotEmpty()) {
+                    val plId = "pl_m3u_${System.currentTimeMillis()}"
+                    val playlistName = "Lista M3U Importada (${tracks.size} tracks)"
+                    val pl = com.example.data.local.PlaylistEntity(
+                        id = plId,
+                        title = playlistName,
+                        description = "Importado desde archivo .m3u",
+                        coverUrl = tracks.firstOrNull()?.coverUrl ?: "",
+                        author = _userProfile.value.displayName
+                    )
+                    db.playlistDao().insertPlaylist(pl)
+                    for (track in tracks) {
+                        db.trackDao().insertOrUpdateTrack(com.example.data.local.TrackEntity.fromTrack(track))
+                        db.playlistDao().insertTrackToPlaylist(
+                            com.example.data.local.PlaylistTrackCrossRefEntity(
+                                playlistId = plId,
+                                trackId = track.id
+                            )
+                        )
+                    }
+                    _playlistTracksMap.value = _playlistTracksMap.value.toMutableMap().apply {
+                        put(plId, tracks)
+                    }
+                    _catalogTracks.value = (_catalogTracks.value + tracks).distinctBy { it.id }
+                    showSnackbar("📻 Lista .M3U importada: ${tracks.size} canciones añadidas a tu biblioteca")
+                } else {
+                    showSnackbar("No se pudieron extraer canciones válidas del archivo .M3U")
+                }
+            } catch (e: Exception) {
+                showSnackbar("Error al procesar archivo .M3U: ${e.message}")
+            }
+        }
+    }
+
+    fun importM3uFromUrl(url: String, name: String = "Radio M3U") {
+        if (url.isBlank()) return
+        viewModelScope.launch {
+            try {
+                val tracks = com.example.data.m3u.M3uParser.parseFromUrl(url)
+                if (tracks.isNotEmpty()) {
+                    val plId = "pl_m3u_url_${System.currentTimeMillis()}"
+                    val pl = com.example.data.local.PlaylistEntity(
+                        id = plId,
+                        title = name,
+                        description = "Enlace M3U Online: $url",
+                        coverUrl = tracks.firstOrNull()?.coverUrl ?: "",
+                        author = "M3U Stream"
+                    )
+                    db.playlistDao().insertPlaylist(pl)
+                    for (track in tracks) {
+                        db.trackDao().insertOrUpdateTrack(com.example.data.local.TrackEntity.fromTrack(track))
+                        db.playlistDao().insertTrackToPlaylist(
+                            com.example.data.local.PlaylistTrackCrossRefEntity(
+                                playlistId = plId,
+                                trackId = track.id
+                            )
+                        )
+                    }
+                    _playlistTracksMap.value = _playlistTracksMap.value.toMutableMap().apply {
+                        put(plId, tracks)
+                    }
+                    _catalogTracks.value = (_catalogTracks.value + tracks).distinctBy { it.id }
+                    showSnackbar("📻 Sintonizadas ${tracks.size} emisoras/temas desde la URL M3U")
+                } else {
+                    showSnackbar("No se encontraron transmisiones activas en la URL M3U proporcionada")
+                }
+            } catch (e: Exception) {
+                showSnackbar("Error al conectar con la lista M3U: ${e.message}")
+            }
+        }
+    }
+
+    fun playRadioStation(station: com.example.data.model.RadioStation) {
+        val radioTrack = station.toTrack()
+        playTrack(radioTrack)
+        showSnackbar("📻 Sintonizando en vivo: ${station.name} (${station.genre})")
+    }
+
+    fun addCustomRadioStation(name: String, genre: String, url: String) {
+        radioStationRepository.addCustomStation(name, genre, url)
+        showSnackbar("📻 Estación \"$name\" agregada exitosamente")
     }
 
     fun createPlaylist(name: String, desc: String) {

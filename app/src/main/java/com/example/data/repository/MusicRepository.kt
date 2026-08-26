@@ -2,8 +2,12 @@ package com.example.data.repository
 
 import android.content.ContentUris
 import android.content.Context
+import android.media.MediaMetadataRetriever
 import android.net.Uri
+import android.os.Environment
 import android.provider.MediaStore
+import android.provider.OpenableColumns
+import android.util.Log
 import com.example.data.local.AppDatabase
 import com.example.data.local.PlaylistEntity
 import com.example.data.local.TrackEntity
@@ -15,6 +19,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import java.io.File
 
 class MusicRepository(private val context: Context, private val db: AppDatabase) {
 
@@ -226,73 +231,229 @@ class MusicRepository(private val context: Context, private val db: AppDatabase)
 
     suspend fun scanDeviceLocalAudio(): List<Track> = withContext(Dispatchers.IO) {
         val localTracks = mutableListOf<Track>()
-        try {
-            val projection = arrayOf(
-                MediaStore.Audio.Media._ID,
-                MediaStore.Audio.Media.TITLE,
-                MediaStore.Audio.Media.ARTIST,
-                MediaStore.Audio.Media.ALBUM,
-                MediaStore.Audio.Media.DURATION,
-                MediaStore.Audio.Media.DATA,
-                MediaStore.Audio.Media.SIZE
-            )
+        val seenPathsOrUris = mutableSetOf<String>()
 
-            val selection = "${MediaStore.Audio.Media.IS_MUSIC} != 0 AND (${MediaStore.Audio.Media.DATA} LIKE '%.mp3' OR ${MediaStore.Audio.Media.DATA} LIKE '%.m4a' OR ${MediaStore.Audio.Media.DATA} LIKE '%.flac' OR ${MediaStore.Audio.Media.DATA} LIKE '%.wav')"
+        // 1. Query MediaStore Audio External & Internal
+        val urisToQuery = listOf(
+            MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+            MediaStore.Audio.Media.INTERNAL_CONTENT_URI
+        )
 
-            context.contentResolver.query(
-                MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                projection,
-                selection,
-                null,
-                "${MediaStore.Audio.Media.TITLE} ASC"
-            )?.use { cursor ->
-                val idColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
-                val titleColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)
-                val artistColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
-                val albumColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM)
-                val durationColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
-                val dataColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)
-                val sizeColumn = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE)
+        for (contentUriToScan in urisToQuery) {
+            try {
+                val projection = arrayOf(
+                    MediaStore.Audio.Media._ID,
+                    MediaStore.Audio.Media.TITLE,
+                    MediaStore.Audio.Media.ARTIST,
+                    MediaStore.Audio.Media.ALBUM,
+                    MediaStore.Audio.Media.DURATION,
+                    MediaStore.Audio.Media.DATA,
+                    MediaStore.Audio.Media.SIZE,
+                    MediaStore.Audio.Media.DISPLAY_NAME
+                )
 
-                while (cursor.moveToNext()) {
-                    val mediaId = cursor.getLong(idColumn)
-                    val title = cursor.getString(titleColumn) ?: "Local Audio Track"
-                    val artist = cursor.getString(artistColumn) ?: "Device Storage"
-                    val album = cursor.getString(albumColumn) ?: "Local Music"
-                    val duration = cursor.getLong(durationColumn)
-                    val path = cursor.getString(dataColumn)
-                    val sizeBytes = cursor.getLong(sizeColumn)
-                    val contentUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, mediaId)
+                context.contentResolver.query(
+                    contentUriToScan,
+                    projection,
+                    null, // Avoid restrictive filter so user songs in Download/Music/WhatsApp are found
+                    null,
+                    "${MediaStore.Audio.Media.TITLE} ASC"
+                )?.use { cursor ->
+                    val idColumn = cursor.getColumnIndex(MediaStore.Audio.Media._ID)
+                    val titleColumn = cursor.getColumnIndex(MediaStore.Audio.Media.TITLE)
+                    val artistColumn = cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST)
+                    val albumColumn = cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM)
+                    val durationColumn = cursor.getColumnIndex(MediaStore.Audio.Media.DURATION)
+                    val dataColumn = cursor.getColumnIndex(MediaStore.Audio.Media.DATA)
+                    val sizeColumn = cursor.getColumnIndex(MediaStore.Audio.Media.SIZE)
+                    val displayNameColumn = cursor.getColumnIndex(MediaStore.Audio.Media.DISPLAY_NAME)
 
-                    val format = when {
-                        path.endsWith(".mp3", ignoreCase = true) -> "MP3"
-                        path.endsWith(".m4a", ignoreCase = true) -> "M4A"
-                        path.endsWith(".flac", ignoreCase = true) -> "FLAC"
-                        else -> "AUDIO"
-                    }
+                    while (cursor.moveToNext()) {
+                        val mediaId = if (idColumn != -1) cursor.getLong(idColumn) else System.currentTimeMillis()
+                        val displayName = if (displayNameColumn != -1) cursor.getString(displayNameColumn) ?: "" else ""
+                        var title = if (titleColumn != -1) cursor.getString(titleColumn) ?: "" else ""
+                        if (title.isBlank()) {
+                            title = displayName.substringBeforeLast(".")
+                        }
+                        if (title.isBlank()) title = "Pista de Audio Local"
 
-                    localTracks.add(
-                        Track(
-                            id = "local_$mediaId",
-                            title = title,
-                            artist = artist,
-                            album = album,
-                            durationMs = if (duration > 0) duration else 180000L,
-                            audioUrl = contentUri.toString(),
-                            coverUrl = "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600&auto=format&fit=crop&q=80",
-                            genre = "Local Storage",
-                            bitrate = "Local $format (Original)",
-                            isDownloaded = true,
-                            localFilePath = path,
-                            downloadSizeMb = (sizeBytes / (1024.0 * 1024.0)).coerceAtLeast(1.0),
-                            audioFormat = format
+                        val rawArtist = if (artistColumn != -1) cursor.getString(artistColumn) ?: "" else ""
+                        val artist = if (rawArtist.isNotBlank() && rawArtist != "<unknown>") rawArtist else "Almacenamiento Local"
+                        val album = if (albumColumn != -1) cursor.getString(albumColumn) ?: "Música Local" else "Música Local"
+                        val duration = if (durationColumn != -1) cursor.getLong(durationColumn) else 180000L
+                        val path = if (dataColumn != -1) cursor.getString(dataColumn) ?: "" else ""
+                        val sizeBytes = if (sizeColumn != -1) cursor.getLong(sizeColumn) else 0L
+
+                        val trackContentUri = ContentUris.withAppendedId(contentUriToScan, mediaId)
+                        val uriStr = trackContentUri.toString()
+
+                        if (seenPathsOrUris.contains(uriStr) || (path.isNotBlank() && seenPathsOrUris.contains(path))) {
+                            continue
+                        }
+                        if (path.isNotBlank()) seenPathsOrUris.add(path)
+                        seenPathsOrUris.add(uriStr)
+
+                        val format = when {
+                            path.endsWith(".mp3", ignoreCase = true) || displayName.endsWith(".mp3", ignoreCase = true) -> "MP3"
+                            path.endsWith(".m4a", ignoreCase = true) || displayName.endsWith(".m4a", ignoreCase = true) -> "M4A"
+                            path.endsWith(".flac", ignoreCase = true) || displayName.endsWith(".flac", ignoreCase = true) -> "FLAC"
+                            path.endsWith(".wav", ignoreCase = true) || displayName.endsWith(".wav", ignoreCase = true) -> "WAV"
+                            path.endsWith(".aac", ignoreCase = true) || displayName.endsWith(".aac", ignoreCase = true) -> "AAC"
+                            path.endsWith(".ogg", ignoreCase = true) || displayName.endsWith(".ogg", ignoreCase = true) -> "OGG"
+                            else -> "AUDIO"
+                        }
+
+                        // Filter out zero-length or system ringtones shorter than 4 seconds if duration is known
+                        if (duration > 0 && duration < 4000) continue
+
+                        localTracks.add(
+                            Track(
+                                id = "local_${mediaId}_${System.currentTimeMillis() % 10000}",
+                                title = title,
+                                artist = artist,
+                                album = album,
+                                durationMs = if (duration > 0) duration else 210000L,
+                                audioUrl = uriStr,
+                                coverUrl = "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600&auto=format&fit=crop&q=80",
+                                genre = "Local / Personal",
+                                bitrate = "Local $format (Directo)",
+                                isDownloaded = true,
+                                localFilePath = path,
+                                downloadSizeMb = (sizeBytes / (1024.0 * 1024.0)).coerceAtLeast(1.0),
+                                audioFormat = format
+                            )
                         )
-                    )
+                    }
+                }
+            } catch (e: Exception) {
+                Log.w("MusicRepository", "MediaStore scan exception: ${e.message}")
+            }
+        }
+
+        // 2. Direct File System Traversal (e.g. /storage/emulated/0/Music, /storage/emulated/0/Download)
+        val musicDirs = listOfNotNull(
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC),
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+            File("/storage/emulated/0/Music"),
+            File("/storage/emulated/0/Download"),
+            File("/storage/emulated/0/Audio"),
+            File("/sdcard/Music")
+        ).distinctBy { it.absolutePath }
+
+        for (dir in musicDirs) {
+            if (dir.exists() && dir.isDirectory) {
+                scanDirectoryRecursively(dir, localTracks, seenPathsOrUris)
+            }
+        }
+
+        Log.d("MusicRepository", "Total local audio tracks scanned: ${localTracks.size}")
+        localTracks
+    }
+
+    private fun scanDirectoryRecursively(dir: File, localTracks: MutableList<Track>, seen: MutableSet<String>) {
+        try {
+            val files = dir.listFiles() ?: return
+            for (file in files) {
+                if (file.isDirectory) {
+                    if (!file.name.startsWith(".")) {
+                        scanDirectoryRecursively(file, localTracks, seen)
+                    }
+                } else {
+                    val name = file.name.lowercase()
+                    if (name.endsWith(".mp3") || name.endsWith(".m4a") || name.endsWith(".flac") ||
+                        name.endsWith(".wav") || name.endsWith(".aac") || name.endsWith(".ogg")) {
+                        val path = file.absolutePath
+                        if (!seen.contains(path)) {
+                            seen.add(path)
+                            val title = file.nameWithoutExtension
+                            val sizeMb = (file.length() / (1024.0 * 1024.0)).coerceAtLeast(0.5)
+                            val format = file.extension.uppercase()
+
+                            localTracks.add(
+                                Track(
+                                    id = "local_file_${file.name.hashCode()}_${System.currentTimeMillis() % 1000}",
+                                    title = title,
+                                    artist = dir.name.ifEmpty { "Almacenamiento Local" },
+                                    album = dir.name,
+                                    durationMs = 210000L,
+                                    audioUrl = Uri.fromFile(file).toString(),
+                                    coverUrl = "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&auto=format&fit=crop&q=80",
+                                    genre = "Local / Personal",
+                                    bitrate = "Direct File $format",
+                                    isDownloaded = true,
+                                    localFilePath = path,
+                                    downloadSizeMb = sizeMb,
+                                    audioFormat = format
+                                )
+                            )
+                        }
+                    }
                 }
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.w("MusicRepository", "Folder scan error on ${dir.absolutePath}: ${e.message}")
         }
-        localTracks
+    }
+
+    suspend fun importTracksFromUris(uris: List<Uri>): List<Track> = withContext(Dispatchers.IO) {
+        val imported = mutableListOf<Track>()
+        val retriever = MediaMetadataRetriever()
+        for (uri in uris) {
+            try {
+                var displayName = "Canción Propia"
+                var sizeBytes = 0L
+
+                context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                    val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                    val sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
+                    if (cursor.moveToFirst()) {
+                        if (nameIndex != -1) displayName = cursor.getString(nameIndex) ?: displayName
+                        if (sizeIndex != -1) sizeBytes = cursor.getLong(sizeIndex)
+                    }
+                }
+
+                var title = displayName.substringBeforeLast(".")
+                var artist = "Artista Local"
+                var album = "Música Propia"
+                var duration = 180000L
+
+                try {
+                    retriever.setDataSource(context, uri)
+                    retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)?.let { if (it.isNotBlank()) title = it }
+                    retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST)?.let { if (it.isNotBlank()) artist = it }
+                    retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ALBUM)?.let { if (it.isNotBlank()) album = it }
+                    retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull()?.let { if (it > 0) duration = it }
+                } catch (e: Exception) {
+                    // fallback to display name
+                }
+
+                val ext = displayName.substringAfterLast(".", "mp3").uppercase()
+                val sizeMb = if (sizeBytes > 0) (sizeBytes / (1024.0 * 1024.0)).coerceAtLeast(0.5) else 5.0
+
+                imported.add(
+                    Track(
+                        id = "imported_${uri.hashCode()}_${System.currentTimeMillis() % 10000}",
+                        title = title,
+                        artist = artist,
+                        album = album,
+                        durationMs = duration,
+                        audioUrl = uri.toString(),
+                        coverUrl = "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600&auto=format&fit=crop&q=80",
+                        genre = "Importado / Local",
+                        bitrate = "Direct File $ext",
+                        isDownloaded = true,
+                        localFilePath = uri.toString(),
+                        downloadSizeMb = sizeMb,
+                        audioFormat = ext
+                    )
+                )
+            } catch (e: Exception) {
+                Log.e("MusicRepository", "Failed to import uri: $uri", e)
+            }
+        }
+        try {
+            retriever.release()
+        } catch (e: Exception) {}
+        imported
     }
 }

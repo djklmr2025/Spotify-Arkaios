@@ -73,8 +73,10 @@ fun HomeScreen(
     wallet: AmrWallet,
     playbackState: PlaybackState,
     downloadStatus: Map<String, DownloadProgress>,
+    radioStations: List<com.example.data.model.RadioStation> = emptyList(),
     onTrackClick: (Track) -> Unit,
     onAlbumClick: (Album) -> Unit = {},
+    onRadioClick: (com.example.data.model.RadioStation) -> Unit = {},
     onFavoriteToggle: (Track) -> Unit,
     onDownloadClick: (Track) -> Unit,
     onRemoveDownloadClick: (Track) -> Unit,
@@ -367,6 +369,131 @@ fun HomeScreen(
                                 fontSize = 11.sp,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // Jango Live & Trending Radio Stations (24/7 Unlimited Streaming)
+        item {
+            Column(modifier = Modifier.padding(top = 22.dp)) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            text = "📻 Jango Live • Radios en Vivo",
+                            color = TextPrimary,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(Color(0x26EF4444))
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text("EN VIVO", color = Color(0xFFEF4444), fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+
+                    Text(
+                        text = "Sin Anuncios",
+                        color = CyanLight,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    items(radioStations) { station ->
+                        Column(
+                            modifier = Modifier
+                                .width(150.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(SurfaceDark)
+                                .border(1.dp, BorderSubtleCyan, RoundedCornerShape(16.dp))
+                                .clickable { onRadioClick(station) }
+                                .padding(10.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(130.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(SurfaceCard)
+                            ) {
+                                AsyncImage(
+                                    model = station.coverUrl,
+                                    contentDescription = station.name,
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier.matchParentSize()
+                                )
+                                Box(
+                                    modifier = Modifier
+                                        .align(Alignment.TopStart)
+                                        .padding(6.dp)
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(Color(0xCC000000))
+                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                ) {
+                                    Text("🔴 LIVE", color = Color.White, fontSize = 8.sp, fontWeight = FontWeight.Bold)
+                                }
+                                Box(
+                                    modifier = Modifier
+                                        .align(Alignment.BottomEnd)
+                                        .padding(6.dp)
+                                        .size(32.dp)
+                                        .clip(CircleShape)
+                                        .background(CyanPrimary),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.PlayArrow,
+                                        contentDescription = "Play Radio",
+                                        tint = Color(0xFF08080C),
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Text(
+                                text = station.name,
+                                color = TextPrimary,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+
+                            Text(
+                                text = station.genre,
+                                color = CyanLight,
+                                fontSize = 11.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+
+                            Text(
+                                text = station.listenersCount,
+                                color = TextMuted,
+                                fontSize = 10.sp,
+                                maxLines = 1
                             )
                         }
                     }

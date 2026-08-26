@@ -137,6 +137,7 @@ fun MainAppScreen(viewModel: MainViewModel) {
     val creatorStats by viewModel.creatorStats.collectAsState()
     val creatorTracks by viewModel.creatorTracks.collectAsState()
     val isCreatorStudioOpen by viewModel.isCreatorStudioOpen.collectAsState()
+    val radioStations by viewModel.radioStations.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -290,6 +291,8 @@ fun MainAppScreen(viewModel: MainViewModel) {
                         wallet = wallet,
                         playbackState = playbackState,
                         downloadStatus = downloadStatus,
+                        radioStations = radioStations,
+                        onRadioClick = { viewModel.playRadioStation(it) },
                         onTrackClick = { viewModel.playTrack(it) },
                         onAlbumClick = { viewModel.openAlbumModal(it) },
                         onFavoriteToggle = { viewModel.toggleFavorite(it) },
@@ -329,14 +332,20 @@ fun MainAppScreen(viewModel: MainViewModel) {
                         downloadedTracks = downloadedTracks,
                         favoriteTracks = favoriteTracks,
                         localDeviceTracks = localDeviceTracks,
+                        radioStations = radioStations,
                         playbackState = playbackState,
                         downloadStatus = downloadStatus,
                         onTrackClick = { viewModel.playTrack(it) },
+                        onRadioClick = { viewModel.playRadioStation(it) },
                         onPlayPlaylist = { tracks, shuffle -> viewModel.playPlaylist(tracks, shuffle) },
                         onFavoriteToggle = { viewModel.toggleFavorite(it) },
                         onDownloadClick = { viewModel.downloadTrack(it) },
                         onRemoveDownloadClick = { viewModel.removeDownload(it) },
                         onScanDeviceAudio = { viewModel.scanLocalMusic() },
+                        onImportAudioUris = { viewModel.importAudioUris(it) },
+                        onImportM3uUri = { viewModel.importM3uUri(it) },
+                        onImportM3uUrl = { url, name -> viewModel.importM3uFromUrl(url, name) },
+                        onAddCustomRadio = { name, genre, url -> viewModel.addCustomRadioStation(name, genre, url) },
                         onCreatePlaylist = { name, desc -> viewModel.createPlaylist(name, desc) },
                         onDeletePlaylist = { id -> viewModel.deletePlaylist(id) },
                         onOpenDownloaderSheet = { viewModel.setDownloaderSheetOpen(true) },

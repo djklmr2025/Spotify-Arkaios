@@ -1,5 +1,10 @@
 package com.example.ui.screens
 
+import android.Manifest
+import android.net.Uri
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -21,14 +26,19 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.DownloadDone
 import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.QueueMusic
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material3.AlertDialog
@@ -87,27 +97,89 @@ fun LibraryScreen(
     downloadedTracks: List<Track>,
     favoriteTracks: List<Track>,
     localDeviceTracks: List<Track>,
+    radioStations: List<com.example.data.model.RadioStation> = emptyList(),
     playbackState: PlaybackState,
     downloadStatus: Map<String, DownloadProgress>,
     onTrackClick: (Track) -> Unit,
+    onRadioClick: (com.example.data.model.RadioStation) -> Unit = {},
     onPlayPlaylist: (List<Track>, Boolean) -> Unit,
     onFavoriteToggle: (Track) -> Unit,
     onDownloadClick: (Track) -> Unit,
     onRemoveDownloadClick: (Track) -> Unit,
     onScanDeviceAudio: () -> Unit,
+    onImportAudioUris: (List<Uri>) -> Unit = {},
+    onImportM3uUri: (Uri) -> Unit = {},
+    onImportM3uUrl: (String, String) -> Unit = { _, _ -> },
+    onAddCustomRadio: (String, String, String) -> Unit = { _, _, _ -> },
     onCreatePlaylist: (String, String) -> Unit,
     onDeletePlaylist: (String) -> Unit,
     onOpenDownloaderSheet: () -> Unit = {},
     onOpenAuthModal: () -> Unit = {},
     onOpenCreatorStudio: () -> Unit = {}
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     var selectedSubTab by remember { mutableIntStateOf(0) }
     var showCreatePlaylistDialog by remember { mutableStateOf(false) }
+    var showImportM3uUrlDialog by remember { mutableStateOf(false) }
+    var showAddRadioDialog by remember { mutableStateOf(false) }
     var selectedPlaylistForDetail by remember { mutableStateOf<PlaylistEntity?>(null) }
     var playlistTitle by remember { mutableStateOf("") }
     var playlistDesc by remember { mutableStateOf("") }
+    var m3uUrlInput by remember { mutableStateOf("") }
+    var m3uNameInput by remember { mutableStateOf("") }
+    var radioNameInput by remember { mutableStateOf("") }
+    var radioGenreInput by remember { mutableStateOf("") }
+    var radioUrlInput by remember { mutableStateOf("") }
+    var radioSearchQuery by remember { mutableStateOf("") }
 
-    val tabs = listOf("Playlists (${playlists.size})", "Descargas Offline / Vault", "Favoritos", "Archivos Locales")
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        onScanDeviceAudio()
+    }
+
+    val filePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenMultipleDocuments()
+    ) { uris ->
+        if (uris.isNotEmpty()) {
+            onImportAudioUris(uris)
+        }
+    }
+
+    val m3uFilePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            onImportM3uUri(uri)
+        }
+    }
+
+    fun requestPermissionsAndScan() {
+        val permissionsToRequest = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            arrayOf(
+                Manifest.permission.READ_MEDIA_AUDIO,
+                Manifest.permission.READ_MEDIA_IMAGES
+            )
+        } else {
+            arrayOf(
+                Manifest.permission.READ_EXTERNAL_STORAGE,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE
+            )
+        }
+        permissionLauncher.launch(permissionsToRequest)
+    }
+
+    fun sharePlaylistAsM3u(pl: PlaylistEntity, tracks: List<Track>) {
+        val m3uText = com.example.data.m3u.M3uParser.exportToM3u(pl.title, tracks)
+        val shareIntent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(android.content.Intent.EXTRA_SUBJECT, "Lista de Música M3U - ${pl.title}")
+            putExtra(android.content.Intent.EXTRA_TEXT, m3uText)
+        }
+        context.startActivity(android.content.Intent.createChooser(shareIntent, "Exportar / Compartir Lista .M3U"))
+    }
+
+    val tabs = listOf("Playlists (${playlists.size})", "Radios & Jango Live (${radioStations.size})", "Descargas Offline / Vault", "Favoritos", "Archivos Locales")
 
     Column(
         modifier = Modifier
@@ -267,14 +339,14 @@ fun LibraryScreen(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // Play / Shuffle Playlist Buttons
+                // Play / Shuffle Playlist Buttons & Export M3U
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Button(
                         onClick = { onPlayPlaylist(tracksInPl, false) },
-                        modifier = Modifier.weight(1f).height(42.dp),
+                        modifier = Modifier.weight(1.2f).height(42.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = CyanPrimary, contentColor = Color(0xFF08080C)),
                         shape = RoundedCornerShape(20.dp),
                         enabled = tracksInPl.isNotEmpty()
@@ -295,6 +367,19 @@ fun LibraryScreen(
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             Icon(Icons.Default.Shuffle, contentDescription = null, tint = CyanLight, modifier = Modifier.size(16.dp))
                             Text("Aleatorio", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        }
+                    }
+
+                    Button(
+                        onClick = { sharePlaylistAsM3u(pl, tracksInPl) },
+                        modifier = Modifier.weight(1f).height(42.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0x2638BDF8), contentColor = CyanLight),
+                        shape = RoundedCornerShape(20.dp),
+                        enabled = tracksInPl.isNotEmpty()
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Icon(Icons.Default.Share, contentDescription = null, tint = CyanLight, modifier = Modifier.size(15.dp))
+                            Text(".M3U", fontWeight = FontWeight.Bold, fontSize = 12.sp)
                         }
                     }
                 }
@@ -374,25 +459,57 @@ fun LibraryScreen(
                         contentPadding = PaddingValues(bottom = 120.dp, top = 10.dp, start = 16.dp, end = 16.dp),
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        // Create Playlist Banner
+                        // Quick Action Buttons: Create, Import .M3U file, Import M3U URL
                         item {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .background(Color(0x1F22D3EE))
-                                    .border(1.dp, BorderSubtleCyan, RoundedCornerShape(12.dp))
-                                    .clickable { showCreatePlaylistDialog = true }
-                                    .padding(12.dp)
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1.2f)
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(Color(0x1F22D3EE))
+                                        .border(1.dp, BorderSubtleCyan, RoundedCornerShape(12.dp))
+                                        .clickable { showCreatePlaylistDialog = true }
+                                        .padding(vertical = 10.dp, horizontal = 8.dp),
+                                    contentAlignment = Alignment.Center
                                 ) {
-                                    Icon(Icons.Default.Add, contentDescription = null, tint = CyanLight, modifier = Modifier.size(22.dp))
-                                    Column {
-                                        Text("Crear Nueva Playlist", color = CyanLight, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                                        Text("Organiza canciones para reproducir en sesión continua", color = TextSecondary, fontSize = 11.sp)
+                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        Icon(Icons.Default.Add, contentDescription = null, tint = CyanLight, modifier = Modifier.size(18.dp))
+                                        Text("Nueva Playlist", color = CyanLight, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                    }
+                                }
+
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(SurfaceElevated)
+                                        .border(1.dp, BorderSubtle, RoundedCornerShape(12.dp))
+                                        .clickable { m3uFilePickerLauncher.launch(arrayOf("*/*")) }
+                                        .padding(vertical = 10.dp, horizontal = 8.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        Icon(Icons.Default.Folder, contentDescription = null, tint = ArkaiosGoldLight, modifier = Modifier.size(16.dp))
+                                        Text("Abrir .M3U", color = TextPrimary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                    }
+                                }
+
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(SurfaceElevated)
+                                        .border(1.dp, BorderSubtle, RoundedCornerShape(12.dp))
+                                        .clickable { showImportM3uUrlDialog = true }
+                                        .padding(vertical = 10.dp, horizontal = 8.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        Icon(Icons.Default.Share, contentDescription = null, tint = CyanLight, modifier = Modifier.size(16.dp))
+                                        Text("URL .M3U", color = TextPrimary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                     }
                                 }
                             }
@@ -408,7 +525,7 @@ fun LibraryScreen(
                                         Text("🎵", fontSize = 36.sp)
                                         Spacer(modifier = Modifier.height(8.dp))
                                         Text("Aún no has creado playlists", color = TextPrimary, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                                        Text("Toca el botón arriba para crear tu primera lista personalizada.", color = TextMuted, fontSize = 12.sp)
+                                        Text("Toca 'Nueva Playlist' o 'Abrir .M3U' para importar listas de música.", color = TextMuted, fontSize = 12.sp)
                                     }
                                 }
                             }
@@ -462,6 +579,164 @@ fun LibraryScreen(
                     }
                 }
                 1 -> {
+                    // Radios & Jango Live Subtab
+                    val filteredStations = remember(radioSearchQuery, radioStations) {
+                        if (radioSearchQuery.isBlank()) radioStations
+                        else radioStations.filter {
+                            it.name.contains(radioSearchQuery, ignoreCase = true) ||
+                            it.genre.contains(radioSearchQuery, ignoreCase = true)
+                        }
+                    }
+
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(bottom = 120.dp, top = 8.dp, start = 16.dp, end = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        // Header Banner
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(14.dp))
+                                    .background(
+                                        androidx.compose.ui.graphics.Brush.horizontalGradient(
+                                            listOf(Color(0xFF0F2A38), Color(0xFF131726))
+                                        )
+                                    )
+                                    .border(1.dp, BorderSubtleCyan, RoundedCornerShape(14.dp))
+                                    .padding(14.dp)
+                            ) {
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                            Text("📻 Jango Live Radio", color = CyanLight, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                                            Box(
+                                                modifier = Modifier
+                                                    .clip(RoundedCornerShape(6.dp))
+                                                    .background(Color(0x26EF4444))
+                                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                                            ) {
+                                                Text("EN VIVO", color = Color(0xFFEF4444), fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                                            }
+                                        }
+                                        Text("Streaming 24/7", color = EmeraldLight, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                                    }
+
+                                    Text(
+                                        text = "Emisoras de música continuas sin cortes ni anuncios al estilo Jango / TuneIn. Compatible con transmisiones M3U, AAC, MP3 e Icecast.",
+                                        color = TextSecondary,
+                                        fontSize = 11.sp,
+                                        lineHeight = 15.sp
+                                    )
+
+                                    Button(
+                                        onClick = { showAddRadioDialog = true },
+                                        modifier = Modifier.fillMaxWidth().height(38.dp),
+                                        colors = ButtonDefaults.buttonColors(containerColor = CyanPrimary, contentColor = Color(0xFF08080C)),
+                                        shape = RoundedCornerShape(10.dp)
+                                    ) {
+                                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                                            Text("➕ Añadir Estación de Radio / Stream Web", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Search Field for Radio
+                        item {
+                            OutlinedTextField(
+                                value = radioSearchQuery,
+                                onValueChange = { radioSearchQuery = it },
+                                modifier = Modifier.fillMaxWidth(),
+                                placeholder = { Text("Buscar estación o género (Jazz, Rock, Reggaeton...)", fontSize = 12.sp, color = TextMuted) },
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = CyanLight,
+                                    unfocusedBorderColor = BorderSubtle,
+                                    focusedContainerColor = SurfaceDark,
+                                    unfocusedContainerColor = SurfaceDark
+                                ),
+                                singleLine = true,
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                        }
+
+                        items(filteredStations) { station ->
+                            val isCurrentStation = playbackState.currentTrack?.id == "radio_${station.id}"
+                            val isPlaying = isCurrentStation && playbackState.isPlaying
+
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(if (isCurrentStation) Color(0x1F22D3EE) else SurfaceElevated)
+                                    .border(1.dp, if (isCurrentStation) BorderSubtleCyan else BorderSubtle, RoundedCornerShape(12.dp))
+                                    .clickable { onRadioClick(station) }
+                                    .padding(10.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(54.dp)
+                                            .clip(RoundedCornerShape(10.dp))
+                                            .background(SurfaceDark)
+                                    ) {
+                                        AsyncImage(
+                                            model = station.coverUrl,
+                                            contentDescription = station.name,
+                                            contentScale = ContentScale.Crop,
+                                            modifier = Modifier.matchParentSize()
+                                        )
+                                        Box(
+                                            modifier = Modifier
+                                                .align(Alignment.TopStart)
+                                                .padding(3.dp)
+                                                .clip(RoundedCornerShape(4.dp))
+                                                .background(Color(0xCC000000))
+                                                .padding(horizontal = 4.dp, vertical = 1.dp)
+                                        ) {
+                                            Text("LIVE", color = Color.White, fontSize = 7.sp, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+
+                                    Column {
+                                        Text(station.name, color = TextPrimary, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                        Text(station.genre, color = CyanLight, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                                        Text("${station.listenersCount} • ${station.bitrate}", color = TextMuted, fontSize = 10.sp)
+                                    }
+                                }
+
+                                IconButton(
+                                    onClick = { onRadioClick(station) },
+                                    modifier = Modifier
+                                        .size(38.dp)
+                                        .clip(androidx.compose.foundation.shape.CircleShape)
+                                        .background(if (isPlaying) Color(0xFFEF4444) else CyanPrimary)
+                                ) {
+                                    Icon(
+                                        imageVector = if (isPlaying) Icons.Default.MusicNote else Icons.Default.PlayArrow,
+                                        contentDescription = "Sintonizar",
+                                        tint = Color(0xFF08080C),
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+                2 -> {
                     // Downloaded Tracks Offline
                     val totalDownloadSize = downloadedTracks.sumOf { it.downloadSizeMb }
 
@@ -552,7 +827,7 @@ fun LibraryScreen(
                         }
                     }
                 }
-                2 -> {
+                3 -> {
                     // Favorites Tab
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
@@ -603,56 +878,121 @@ fun LibraryScreen(
                         }
                     }
                 }
-                3 -> {
-                    // Local Device Audio Files (.mp3 / .m4a)
+                4 -> {
+                    // Local Device Audio Files (.mp3 / .m4a / .flac / .wav)
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(bottom = 120.dp, top = 8.dp, start = 8.dp, end = 8.dp)
+                        contentPadding = PaddingValues(bottom = 120.dp, top = 8.dp, start = 8.dp, end = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
+                        // Scan & File Manager Action Card
                         item {
-                            Row(
+                            Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 8.dp, vertical = 6.dp)
-                                    .clip(RoundedCornerShape(14.dp))
+                                    .clip(RoundedCornerShape(16.dp))
                                     .background(SurfaceDark)
-                                    .border(1.dp, BorderSubtle, RoundedCornerShape(14.dp))
-                                    .clickable { onScanDeviceAudio() }
-                                    .padding(12.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
+                                    .border(1.dp, BorderSubtleCyan, RoundedCornerShape(16.dp))
+                                    .padding(14.dp)
                             ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Folder,
-                                        contentDescription = null,
-                                        tint = CyanLight,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                    Column {
-                                        Text(
-                                            text = "Archivos de Música en el Dispositivo",
-                                            color = TextPrimary,
-                                            fontSize = 13.sp,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                        Text(
-                                            text = "${localDeviceTracks.size} archivos encontrados (.mp3, .m4a)",
-                                            color = TextSecondary,
-                                            fontSize = 11.sp
-                                        )
+                                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.FolderOpen,
+                                                contentDescription = null,
+                                                tint = CyanLight,
+                                                modifier = Modifier.size(22.dp)
+                                            )
+                                            Column {
+                                                Text(
+                                                    text = "Música en Almacenamiento Local",
+                                                    color = TextPrimary,
+                                                    fontSize = 14.sp,
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                                Text(
+                                                    text = "${localDeviceTracks.size} canciones encontradas (.mp3, .m4a, .flac)",
+                                                    color = CyanLight,
+                                                    fontSize = 11.sp,
+                                                    fontWeight = FontWeight.SemiBold
+                                                )
+                                            }
+                                        }
+
+                                        Box(
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(8.dp))
+                                                .background(Color(0x2610B981))
+                                                .padding(horizontal = 6.dp, vertical = 3.dp)
+                                        ) {
+                                            Text("Autorizado", color = EmeraldLight, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+
+                                    // Action Buttons Row
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Button(
+                                            onClick = { requestPermissionsAndScan() },
+                                            modifier = Modifier.weight(1f).height(42.dp),
+                                            colors = ButtonDefaults.buttonColors(containerColor = CyanPrimary, contentColor = Color(0xFF08080C)),
+                                            shape = RoundedCornerShape(12.dp)
+                                        ) {
+                                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                                Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
+                                                Text("Escanear Teléfono", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                            }
+                                        }
+
+                                        Button(
+                                            onClick = { filePickerLauncher.launch(arrayOf("audio/*", "application/ogg", "*/*")) },
+                                            modifier = Modifier.weight(1f).height(42.dp),
+                                            colors = ButtonDefaults.buttonColors(containerColor = SurfaceElevated, contentColor = TextPrimary),
+                                            shape = RoundedCornerShape(12.dp)
+                                        ) {
+                                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                                Icon(Icons.Default.MusicNote, contentDescription = null, tint = CyanLight, modifier = Modifier.size(16.dp))
+                                                Text("Elegir Archivos", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                            }
+                                        }
+                                    }
+
+                                    // Upload to Cloud & Share Banner
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clip(RoundedCornerShape(10.dp))
+                                            .background(Color(0x1F38BDF8))
+                                            .border(1.dp, Color(0x3338BDF8), RoundedCornerShape(10.dp))
+                                            .clickable { onOpenCreatorStudio() }
+                                            .padding(horizontal = 10.dp, vertical = 8.dp)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                            ) {
+                                                Icon(Icons.Default.CloudUpload, contentDescription = null, tint = CyanLight, modifier = Modifier.size(16.dp))
+                                                Text("¿Quieres compartir o subir tu música?", color = CyanLight, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                            }
+                                            Text("Subir a Nube 5TB ➔", color = ArkaiosGoldLight, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                        }
                                     }
                                 }
-
-                                Icon(
-                                    imageVector = Icons.Default.Refresh,
-                                    contentDescription = "Scan",
-                                    tint = CyanLight,
-                                    modifier = Modifier.size(20.dp)
-                                )
                             }
                         }
 
@@ -661,12 +1001,14 @@ fun LibraryScreen(
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(top = 48.dp),
+                                        .padding(top = 28.dp),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Text("📁", fontSize = 36.sp)
-                                        Spacer(modifier = Modifier.height(8.dp))
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Text("📁", fontSize = 40.sp)
                                         Text(
                                             text = "No se encontraron audios locales",
                                             color = TextPrimary,
@@ -674,11 +1016,22 @@ fun LibraryScreen(
                                             fontWeight = FontWeight.Bold
                                         )
                                         Text(
-                                            text = "Toca el botón arriba para escanear archivos .mp3 o .m4a en tu teléfono.",
+                                            text = "Toca \"Escanear Teléfono\" para otorgar permisos automáticos o \"Elegir Archivos\" para seleccionar directamente tus canciones desde la carpeta Music.",
                                             color = TextMuted,
-                                            fontSize = 13.sp,
-                                            modifier = Modifier.padding(horizontal = 24.dp)
+                                            fontSize = 12.sp,
+                                            modifier = Modifier.padding(horizontal = 20.dp),
+                                            lineHeight = 16.sp
                                         )
+
+                                        Spacer(modifier = Modifier.height(6.dp))
+
+                                        Button(
+                                            onClick = { filePickerLauncher.launch(arrayOf("audio/*", "application/ogg", "*/*")) },
+                                            colors = ButtonDefaults.buttonColors(containerColor = CyanPrimary, contentColor = Color(0xFF08080C)),
+                                            shape = RoundedCornerShape(12.dp)
+                                        ) {
+                                            Text("Seleccionar Canciones de la Memoria", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                        }
                                     }
                                 }
                             }
@@ -752,6 +1105,133 @@ fun LibraryScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showCreatePlaylistDialog = false }) {
+                    Text("Cancelar", color = TextSecondary)
+                }
+            },
+            containerColor = SurfaceDark
+        )
+    }
+
+    // Import M3U URL Dialog
+    if (showImportM3uUrlDialog) {
+        AlertDialog(
+            onDismissRequest = { showImportM3uUrlDialog = false },
+            title = { Text("Importar Playlist .M3U / .M3U8 Web", color = TextPrimary, fontWeight = FontWeight.Bold) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        "Pega la URL de una lista de reproducción remota .m3u o .m3u8 para importarla automáticamente a tu biblioteca.",
+                        color = TextSecondary,
+                        fontSize = 12.sp
+                    )
+                    OutlinedTextField(
+                        value = m3uNameInput,
+                        onValueChange = { m3uNameInput = it },
+                        label = { Text("Nombre de la Lista (opcional)") },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = CyanLight,
+                            focusedLabelColor = CyanLight
+                        ),
+                        singleLine = true
+                    )
+                    OutlinedTextField(
+                        value = m3uUrlInput,
+                        onValueChange = { m3uUrlInput = it },
+                        label = { Text("Enlace URL https://.../playlist.m3u") },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = CyanLight,
+                            focusedLabelColor = CyanLight
+                        ),
+                        singleLine = true
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (m3uUrlInput.isNotBlank()) {
+                            onImportM3uUrl(m3uUrlInput.trim(), m3uNameInput.trim())
+                            showImportM3uUrlDialog = false
+                            m3uUrlInput = ""
+                            m3uNameInput = ""
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = CyanPrimary, contentColor = Color(0xFF08080C))
+                ) {
+                    Text("Importar", fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showImportM3uUrlDialog = false }) {
+                    Text("Cancelar", color = TextSecondary)
+                }
+            },
+            containerColor = SurfaceDark
+        )
+    }
+
+    // Add Custom Radio Station Dialog
+    if (showAddRadioDialog) {
+        AlertDialog(
+            onDismissRequest = { showAddRadioDialog = false },
+            title = { Text("Añadir Estación de Radio Web", color = TextPrimary, fontWeight = FontWeight.Bold) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        "Ingresa el enlace de transmisión en vivo (Icecast, Shoutcast, AAC, MP3 stream o archivo M3U).",
+                        color = TextSecondary,
+                        fontSize = 12.sp
+                    )
+                    OutlinedTextField(
+                        value = radioNameInput,
+                        onValueChange = { radioNameInput = it },
+                        label = { Text("Nombre de la Emisora") },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = CyanLight,
+                            focusedLabelColor = CyanLight
+                        ),
+                        singleLine = true
+                    )
+                    OutlinedTextField(
+                        value = radioGenreInput,
+                        onValueChange = { radioGenreInput = it },
+                        label = { Text("Género / Estilo (e.g. Rock, Pop, Chillout)") },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = CyanLight,
+                            focusedLabelColor = CyanLight
+                        ),
+                        singleLine = true
+                    )
+                    OutlinedTextField(
+                        value = radioUrlInput,
+                        onValueChange = { radioUrlInput = it },
+                        label = { Text("URL de Transmisión (http://...:8000/stream)") },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = CyanLight,
+                            focusedLabelColor = CyanLight
+                        ),
+                        singleLine = true
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (radioNameInput.isNotBlank() && radioUrlInput.isNotBlank()) {
+                            onAddCustomRadio(radioNameInput.trim(), radioGenreInput.trim(), radioUrlInput.trim())
+                            showAddRadioDialog = false
+                            radioNameInput = ""
+                            radioGenreInput = ""
+                            radioUrlInput = ""
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = CyanPrimary, contentColor = Color(0xFF08080C))
+                ) {
+                    Text("Guardar y Sintonizar", fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showAddRadioDialog = false }) {
                     Text("Cancelar", color = TextSecondary)
                 }
             },
