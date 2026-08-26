@@ -1,0 +1,6 @@
+{
+  "name": "Arkaios-Tify",
+  "description": "Reproductor de música estilo Spotify/Tidal con soporte para .mp3, .m4a, descargas offline, integración con la red y cartera de tokens AMR.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
