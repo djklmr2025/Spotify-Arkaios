@@ -74,6 +74,8 @@ fun SearchScreen(
     playbackState: PlaybackState,
     downloadStatus: Map<String, DownloadProgress>,
     isSearching: Boolean = false,
+    selectedSource: com.example.data.tidal.MusicSourceFilter = com.example.data.tidal.MusicSourceFilter.ALL,
+    onSourceSelect: (com.example.data.tidal.MusicSourceFilter) -> Unit = {},
     onQueryChange: (String) -> Unit,
     onGenreSelect: (String?) -> Unit,
     onTrackClick: (Track) -> Unit,
@@ -84,7 +86,7 @@ fun SearchScreen(
     onOpenTidalModal: () -> Unit = {}
 ) {
     val focusManager = LocalFocusManager.current
-    val quickSuggestions = listOf("Tiësto", "David Guetta", "Martin Garrix", "Bad Bunny", "Synthwave", "Hi-Fi Master")
+    val quickSuggestions = listOf("Tiësto", "David Guetta", "Bad Bunny", "Dua Lipa", "Martin Garrix", "Synthwave", "Cyberpunk", "Chillhop")
 
     Column(
         modifier = Modifier
@@ -100,7 +102,7 @@ fun SearchScreen(
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
                 .testTag("search_input_field"),
-            placeholder = { Text("Buscar en TIDAL, Deezer, Apple & Local...", color = TextMuted, fontSize = 14.sp) },
+            placeholder = { Text("Buscar en YouTube Music, SoundCloud, Drive & TIDAL...", color = TextMuted, fontSize = 13.sp) },
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Default.Search,
@@ -142,31 +144,60 @@ fun SearchScreen(
             keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() })
         )
 
-        // Quick Artist Suggestions Pills
+        // Multi-Source Filter Pills (YouTube Music, SoundCloud/Audius, Jamendo, Drive, TIDAL)
         LazyRow(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 6.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(quickSuggestions) { item ->
-                val isSelected = searchQuery.equals(item, ignoreCase = true)
+            items(com.example.data.tidal.MusicSourceFilter.values()) { filter ->
+                val isSelected = selectedSource == filter
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(16.dp))
                         .background(if (isSelected) CyanGlow else SurfaceDark)
                         .border(1.dp, if (isSelected) CyanLight else BorderSubtle, RoundedCornerShape(16.dp))
                         .clickable {
-                            onQueryChange(item)
-                            focusManager.clearFocus()
+                            onSourceSelect(filter)
                         }
-                        .padding(horizontal = 10.dp, vertical = 4.dp)
+                        .padding(horizontal = 10.dp, vertical = 6.dp)
                 ) {
                     Text(
-                        text = item,
+                        text = filter.displayName,
                         color = if (isSelected) CyanLight else TextSecondary,
                         fontSize = 11.sp,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                    )
+                }
+            }
+        }
+
+        // Quick Artist Suggestions Pills
+        LazyRow(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 2.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(quickSuggestions) { item ->
+                val isSelected = searchQuery.equals(item, ignoreCase = true)
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(if (isSelected) Color(0x2606B6D4) else Color(0x14FFFFFF))
+                        .border(1.dp, if (isSelected) CyanLight else Color(0x1FFFFFFF), RoundedCornerShape(14.dp))
+                        .clickable {
+                            onQueryChange(item)
+                            focusManager.clearFocus()
+                        }
+                        .padding(horizontal = 8.dp, vertical = 3.dp)
+                ) {
+                    Text(
+                        text = item,
+                        color = if (isSelected) CyanLight else TextMuted,
+                        fontSize = 10.sp,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                     )
                 }
             }

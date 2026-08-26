@@ -225,8 +225,24 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    val selectedSourceFilter: StateFlow<com.example.data.tidal.MusicSourceFilter> = tidalApiService.selectedSource
+
     fun setTab(index: Int) {
         _selectedTab.value = index
+    }
+
+    fun setSourceFilter(source: com.example.data.tidal.MusicSourceFilter) {
+        tidalApiService.setSourceFilter(source)
+        val trimmed = _searchQuery.value.trim()
+        if (trimmed.isNotBlank()) {
+            searchJob?.cancel()
+            searchJob = viewModelScope.launch {
+                _isTidalSearching.value = true
+                val results = tidalApiService.searchMultiSourceTracks(trimmed, source)
+                _tidalSearchResults.value = results
+                _isTidalSearching.value = false
+            }
+        }
     }
 
     private var searchJob: kotlinx.coroutines.Job? = null
@@ -243,7 +259,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         searchJob = viewModelScope.launch {
             _isTidalSearching.value = true
             kotlinx.coroutines.delay(200) // debounce
-            val results = tidalApiService.searchTidalTracks(trimmed)
+            val results = tidalApiService.searchMultiSourceTracks(trimmed, tidalApiService.selectedSource.value)
             _tidalSearchResults.value = results
             _isTidalSearching.value = false
         }

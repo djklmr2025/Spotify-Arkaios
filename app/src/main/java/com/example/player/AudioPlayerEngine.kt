@@ -143,7 +143,12 @@ class AudioPlayerEngine(private val context: Context) {
                 Uri.parse(track.audioUrl)
             }
 
-            mediaPlayer?.setDataSource(context, audioUri)
+            if (audioUri.scheme?.startsWith("http") == true) {
+                val headers = mapOf("User-Agent" to "Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36 ArkaiosTify/2.0")
+                mediaPlayer?.setDataSource(context, audioUri, headers)
+            } else {
+                mediaPlayer?.setDataSource(context, audioUri)
+            }
             mediaPlayer?.prepareAsync()
         } catch (e: Exception) {
             Log.e("AudioPlayerEngine", "Error playing track ${track.title}", e)

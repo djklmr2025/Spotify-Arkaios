@@ -123,6 +123,7 @@ fun MainAppScreen(viewModel: MainViewModel) {
     val tidalSearchResults by viewModel.tidalSearchResults.collectAsState()
     val isTidalSearching by viewModel.isTidalSearching.collectAsState()
     val isTidalModalOpen by viewModel.isTidalModalOpen.collectAsState()
+    val selectedSourceFilter by viewModel.selectedSourceFilter.collectAsState()
 
     // Playlists & Auth & Modals
     val playlists by viewModel.playlists.collectAsState()
@@ -311,6 +312,8 @@ fun MainAppScreen(viewModel: MainViewModel) {
                         playbackState = playbackState,
                         downloadStatus = downloadStatus,
                         isSearching = isTidalSearching,
+                        selectedSource = selectedSourceFilter,
+                        onSourceSelect = { viewModel.setSourceFilter(it) },
                         onQueryChange = { viewModel.setSearchQuery(it) },
                         onGenreSelect = { viewModel.setGenreFilter(it) },
                         onTrackClick = { viewModel.playTrack(it) },
