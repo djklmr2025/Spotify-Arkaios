@@ -1,12 +1,16 @@
 package com.example
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.os.Build
 import android.os.Bundle
 import android.webkit.JavascriptInterface
 import android.webkit.PermissionRequest
 import android.webkit.WebChromeClient
+import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
 import android.webkit.WebView
@@ -15,18 +19,28 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
 
 class MainActivity : ComponentActivity() {
+
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        // Permisos otorgados dinámicamente para Almacenamiento y Notificaciones
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        requestAppPermissions()
 
         setContent {
             MaterialTheme {
@@ -34,6 +48,30 @@ class MainActivity : ComponentActivity() {
                     SpotifyArkaiosWebViewScreen(this)
                 }
             }
+        }
+    }
+
+    private fun requestAppPermissions() {
+        val permissionsToRequest = mutableListOf<String>()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                permissionsToRequest.add(Manifest.permission.POST_NOTIFICATIONS)
+            }
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                permissionsToRequest.add(Manifest.permission.READ_MEDIA_AUDIO)
+            }
+        } else {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                permissionsToRequest.add(Manifest.permission.READ_EXTERNAL_STORAGE)
+            }
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                permissionsToRequest.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            }
+        }
+
+        if (permissionsToRequest.isNotEmpty()) {
+            requestPermissionLauncher.launch(permissionsToRequest.toTypedArray())
         }
     }
 }
@@ -46,13 +84,16 @@ class ArkaiosNativeBridge(private val context: Context) {
 
     @JavascriptInterface
     fun getEcosystemVersion(): String {
-        return "1.3.0-HybridWebView"
+        return "1.4.0-LiveDomainPermissions"
     }
 }
 
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
 fun SpotifyArkaiosWebViewScreen(context: Context) {
+    val liveDomainUrl = "https://arkaios-puterlab-nexus-ide.vercel.app/"
+    val offlineAssetUrl = "file:///android_asset/web/index.html"
+
     AndroidView(
         factory = { ctx ->
             WebView(ctx).apply {
@@ -73,8 +114,11 @@ fun SpotifyArkaiosWebViewScreen(context: Context) {
                         return false
                     }
 
-                    override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
-                        super.onPageStarted(view, url, favicon)
+                    override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
+                        super.onReceivedError(view, request, error)
+                        if (request?.isForMainFrame == true && view?.url != offlineAssetUrl) {
+                            view?.loadUrl(offlineAssetUrl)
+                        }
                     }
                 }
 
@@ -84,8 +128,7 @@ fun SpotifyArkaiosWebViewScreen(context: Context) {
                     }
                 }
 
-                // Cargar primero los recursos web locales integrados en la APK (Assets)
-                loadUrl("file:///android_asset/web/index.html")
+                loadUrl(liveDomainUrl)
             }
         },
         modifier = Modifier.fillMaxSize()

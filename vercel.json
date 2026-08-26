@@ -1,0 +1,23 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "web/daemon.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "web/public/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "web/daemon.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "web/public/$1"
+    }
+  ]
+}
