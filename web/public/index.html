@@ -3,159 +3,155 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spotify-Arkaios Web Player & API Daemon</title>
+    <title>Spotify-Arkaios — El Ecosistema Inteligente de Música & Radio FM</title>
+    <meta name="description" content="Descarga oficial de la APK Spotify-Arkaios v1.5.0. Reproductor de música nativo, radio FM en vivo, escáner de archivos locales y monedero AMR Pay.">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="app-layout">
-        <!-- Sidebar Navigation -->
-        <aside class="sidebar">
-            <div class="logo-container">
-                <i class="fa-solid fa-bolt logo-icon"></i>
-                <span class="logo-text">Spotify<span class="highlight">Arkaios</span></span>
+
+    <!-- Header / Navbar -->
+    <header class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <i class="fa-solid fa-bolt logo-bolt"></i>
+                <span>SPOTIFY <span class="cyan-gradient">ARKAIOS</span></span>
             </div>
             
-            <nav class="nav-menu">
-                <button class="nav-btn active" data-tab="home"><i class="fa-solid fa-house"></i> Inicio</button>
-                <button class="nav-btn" data-tab="search"><i class="fa-solid fa-magnifying-glass"></i> Buscar</button>
-                <button class="nav-btn" data-tab="library"><i class="fa-solid fa-list-ul"></i> Biblioteca</button>
-                <button class="nav-btn" data-tab="radio"><i class="fa-solid fa-radio"></i> Radio FM</button>
-                <button class="nav-btn" data-tab="amr"><i class="fa-solid fa-wallet"></i> AMR Pay</button>
+            <nav class="nav-links">
+                <a href="#features"><i class="fa-solid fa-star"></i> Características</a>
+                <a href="#preview"><i class="fa-solid fa-mobile-screen-button"></i> Vista Previa</a>
+                <a href="https://github.com/djklmr2025/Spotify-Arkaios" target="_blank"><i class="fa-brands fa-github"></i> GitHub</a>
             </nav>
 
-            <div class="daemon-badge">
-                <div class="status-dot"></div>
-                <div class="daemon-info">
-                    <span class="title">Demonio API v1.2</span>
-                    <span class="status-text" id="daemonStatusText">Conectando...</span>
+            <a href="https://github.com/djklmr2025/Spotify-Arkaios/releases/download/v1.5.0/app-debug.apk" class="btn-download-nav">
+                <i class="fa-solid fa-download"></i> Descargar Ahora
+            </a>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="hero-container">
+            <div class="hero-content">
+                <div class="version-badge">
+                    <span class="pulse-dot"></span> v1.5.0 Oficial
+                </div>
+
+                <h1 class="hero-title">
+                    El Ecosistema Inteligente de <span class="cyan-gradient">Música & Radio FM</span>
+                </h1>
+
+                <p class="hero-description">
+                    Reproducción de alta fidelidad, escáner de almacenamiento local para tus canciones en celular, emisoras de Radio FM en vivo y pasarela de pago tokenizada <strong>AMR Pay</strong>.
+                </p>
+
+                <div class="hero-cta-buttons">
+                    <a href="https://github.com/djklmr2025/Spotify-Arkaios/releases/download/v1.5.0/app-debug.apk" class="btn-primary-hero">
+                        <i class="fa-solid fa-cloud-arrow-down"></i> Descargar Release v1.5.0 (.APK)
+                    </a>
+                    <a href="https://github.com/djklmr2025/Spotify-Arkaios" target="_blank" class="btn-secondary-hero">
+                        <i class="fa-brands fa-github"></i> Ver Código Fuente
+                    </a>
+                </div>
+
+                <div class="license-notice">
+                    <i class="fa-solid fa-shield-halved"></i> * Aplicación nativa en Kotlin Jetpack Compose para terminales Android.
                 </div>
             </div>
-        </aside>
 
-        <!-- Main Content Area -->
-        <main class="main-content">
-            <!-- Header Bar -->
-            <header class="top-bar">
-                <div class="search-box">
-                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                    <input type="text" id="globalSearchInput" placeholder="Buscar canciones, artistas o streams...">
-                </div>
-                <div class="user-profile">
-                    <span class="amr-balance-pill"><i class="fa-solid fa-coins"></i> <span id="headerAmrBalance">1,250.75</span> AMR</span>
-                    <button class="profile-btn"><i class="fa-solid fa-user-gear"></i> Arkaios User</button>
-                </div>
-            </header>
+            <!-- Preview Card Window -->
+            <div class="hero-preview" id="preview">
+                <div class="mockup-window">
+                    <div class="window-header">
+                        <div class="window-dots">
+                            <span class="dot red"></span>
+                            <span class="dot yellow"></span>
+                            <span class="dot green"></span>
+                        </div>
+                        <div class="window-title">Spotify_Arkaios_v1.5.0.apk</div>
+                    </div>
 
-            <!-- Tab 0: Home -->
-            <section id="tab-home" class="tab-content active">
-                <div class="hero-banner">
-                    <div class="hero-text">
-                        <h2>Ecosistema Sonora Arkaios</h2>
-                        <p>Reproducción de audio en alta fidelidad, radio en vivo y descargas coordinadas con el Demonio API.</p>
-                        <button class="hero-btn" onclick="switchTab('radio')"><i class="fa-solid fa-radio"></i> Escuchar Radio en Vivo</button>
+                    <div class="window-body">
+                        <div class="app-card-header">
+                            <i class="fa-solid fa-bolt icon-cyan"></i>
+                            <div>
+                                <h3>Spotify-Arkaios Native</h3>
+                                <p>Motor Kotlin Jetpack Compose • Android 8.0+</p>
+                            </div>
+                        </div>
+
+                        <div class="mockup-tab-list">
+                            <div class="mockup-tab active"><i class="fa-solid fa-house"></i> Inicio</div>
+                            <div class="mockup-tab"><i class="fa-solid fa-magnifying-glass"></i> Buscar</div>
+                            <div class="mockup-tab"><i class="fa-solid fa-list-ul"></i> Biblioteca</div>
+                            <div class="mockup-tab"><i class="fa-solid fa-radio"></i> Radio FM</div>
+                            <div class="mockup-tab"><i class="fa-solid fa-wallet"></i> AMR Pay</div>
+                        </div>
+
+                        <div class="mockup-player-box">
+                            <div class="track-row">
+                                <i class="fa-solid fa-music track-icon"></i>
+                                <div class="track-details">
+                                    <strong>Starboy — The Weeknd</strong>
+                                    <span>Reproductor Continuo 1 a 1</span>
+                                </div>
+                                <i class="fa-solid fa-circle-play play-icon"></i>
+                            </div>
+                            <div class="progress-bar-mock">
+                                <div class="progress-fill"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-
-                <h3 class="section-title">Música en Tendencia</h3>
-                <div class="tracks-grid" id="homeTracksGrid">
-                    <!-- Dynamic Tracks injected by app.js -->
-                </div>
-            </section>
-
-            <!-- Tab 1: Search -->
-            <section id="tab-search" class="tab-content">
-                <h3 class="section-title">Buscador y Descargador de Audio API</h3>
-                <div class="search-panel">
-                    <input type="text" id="daemonSearchInput" placeholder="Ingrese nombre de canción o URL para encolar descarga...">
-                    <button class="search-action-btn" onclick="executeDaemonSearch()"><i class="fa-solid fa-search"></i> Buscar</button>
-                    <button class="download-action-btn" onclick="enqueueTrackDownload()"><i class="fa-solid fa-download"></i> Encolar Descarga</button>
-                </div>
-                <div class="results-list" id="searchResultsList"></div>
-            </section>
-
-            <!-- Tab 2: Library -->
-            <section id="tab-library" class="tab-content">
-                <h3 class="section-title">Biblioteca de Tareas y Descargas</h3>
-                <div class="downloader-dashboard">
-                    <div class="stat-card">
-                        <i class="fa-solid fa-arrow-down stat-icon"></i>
-                        <div><h4 id="statActiveDownloads">0</h4><p>Descargas Activas</p></div>
-                    </div>
-                    <div class="stat-card">
-                        <i class="fa-solid fa-clock stat-icon"></i>
-                        <div><h4 id="statQueueCount">0</h4><p>En Cola</p></div>
-                    </div>
-                    <div class="stat-card">
-                        <i class="fa-solid fa-circle-check stat-icon"></i>
-                        <div><h4 id="statCompletedCount">0</h4><p>Completadas</p></div>
-                    </div>
-                </div>
-
-                <h4 class="sub-title">Descargas Recientes</h4>
-                <div class="downloads-list" id="downloadsQueueList"></div>
-            </section>
-
-            <!-- Tab 3: Radio -->
-            <section id="tab-radio" class="tab-content">
-                <h3 class="section-title">Estaciones de Radio FM / Web en Vivo</h3>
-                <div class="radio-grid" id="radioStationsGrid">
-                    <!-- Dynamic Radio Cards -->
-                </div>
-            </section>
-
-            <!-- Tab 4: AMR Pay -->
-            <section id="tab-amr" class="tab-content">
-                <h3 class="section-title">Pasarela de Pagos AMR Pay & Wallet</h3>
-                <div class="amr-card">
-                    <div class="card-header">
-                        <i class="fa-solid fa-bolt"></i>
-                        <span>ARKAIOS WALLET</span>
-                    </div>
-                    <div class="card-balance">
-                        <h1 id="amrWalletBalance">1,250.75 AMR</h1>
-                        <p>~$125.07 USD Equivalent</p>
-                    </div>
-                    <div class="card-address" id="amrWalletAddress">0xARKAIOS_W18392817293812739182739</div>
-                    <div class="card-actions">
-                        <button class="btn-primary"><i class="fa-solid fa-paper-plane"></i> Transferir Tokens</button>
-                        <button class="btn-secondary"><i class="fa-brands fa-paypal"></i> Recargar con PayPal</button>
-                    </div>
-                </div>
-            </section>
-        </main>
-    </div>
-
-    <!-- Bottom Audio Player Bar -->
-    <footer class="player-bar">
-        <div class="track-info">
-            <img src="https://picsum.photos/id/10/300/300" id="playerCover" class="track-cover">
-            <div>
-                <h4 id="playerTitle">Starboy</h4>
-                <p id="playerArtist">The Weeknd</p>
             </div>
         </div>
+    </section>
 
-        <div class="player-controls">
-            <div class="buttons">
-                <button onclick="prevTrack()"><i class="fa-solid fa-backward-step"></i></button>
-                <button onclick="togglePlayPause()" id="playPauseBtn" class="play-main"><i class="fa-solid fa-play"></i></button>
-                <button onclick="nextTrack()"><i class="fa-solid fa-forward-step"></i></button>
-            </div>
-            <div class="progress-container">
-                <span id="currentTime">0:00</span>
-                <input type="range" id="progressBar" value="0" max="100">
-                <span id="totalDuration">3:50</span>
-            </div>
+    <!-- Features Section -->
+    <section class="features-section" id="features">
+        <div class="section-header">
+            <h2>Características Principales</h2>
+            <p>Diseñado para ofrecer máxima calidad de sonido, sincronización y control multimedia.</p>
         </div>
 
-        <div class="volume-controls">
-            <i class="fa-solid fa-volume-high"></i>
-            <input type="range" id="volumeBar" value="80" max="100">
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fa-solid fa-radio"></i></div>
+                <h3>Radio FM en Vivo</h3>
+                <p>Módulo exclusivo para reproducir emisoras de radio y listas de streaming globales sin interrupciones.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fa-solid fa-bolt"></i></div>
+                <h3>100% Nativo Jetpack Compose</h3>
+                <p>Interfaz ultra fluida escrita en Kotlin nativo para Android, optimizada para consumo mínimo de batería.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fa-solid fa-folder-open"></i></div>
+                <h3>Escáner de Audio Local</h3>
+                <p>Detecta e integra al instante las canciones e historias almacenadas en la memoria de tu dispositivo celular.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fa-solid fa-wallet"></i></div>
+                <h3>Pasarela AMR Pay & PayPal</h3>
+                <p>Monedero de tokens AMR integrado para recargas directas con PayPal e interconexión con el Ecosistema ARKAIOS.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="landing-footer">
+        <div class="footer-container">
+            <p>© 2026 Ecosistema ARKAIOS — Spotify-Arkaios Official Release v1.5.0</p>
+            <div class="footer-links">
+                <a href="https://github.com/djklmr2025/Spotify-Arkaios" target="_blank"><i class="fa-brands fa-github"></i> GitHub Repository</a>
+            </div>
         </div>
     </footer>
 
-    <script src="app.js"></script>
 </body>
 </html>
