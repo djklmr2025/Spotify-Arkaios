@@ -144,7 +144,7 @@ fun TidalServerModal(
                                 horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
                                 Text(
-                                    text = "TIDAL Hi-Fi & Servidores Cloud",
+                                    text = "Buscador Multi-Plataforma & Servidores Cloud",
                                     color = TextPrimary,
                                     fontSize = 15.sp,
                                     fontWeight = FontWeight.Bold
@@ -183,7 +183,7 @@ fun TidalServerModal(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    val tabs = listOf("Servidor & Token", "Buscador TIDAL", "Docs & Servidores")
+                    val tabs = listOf("Servidor & Token", "Buscador Multi-Fuente", "Docs & Servidores")
                     tabs.forEachIndexed { index, title ->
                         val isSelected = selectedTab == index
                         Box(

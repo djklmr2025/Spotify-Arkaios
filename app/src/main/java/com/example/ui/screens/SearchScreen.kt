@@ -327,7 +327,7 @@ fun SearchScreen(
         // If searching or filtering: Show Results. Otherwise: Show Explore Cards.
         if (searchQuery.isNotBlank() || selectedGenre != null) {
             Text(
-                text = "Resultados (${searchResults.size})",
+                text = "Resultados Multi-Plataforma (${searchResults.size})",
                 color = TextPrimary,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,

@@ -140,6 +140,49 @@ fun TrackItemRow(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
+                    // Platform Source Badge
+                    val sourceText = when {
+                        track.id.startsWith("yt_") -> "▶ YT Music"
+                        track.id.startsWith("audius_") -> "☁ Audius"
+                        track.id.startsWith("jamendo_") -> "🎵 Jamendo"
+                        track.id.startsWith("archive_") -> "📁 Archive"
+                        track.id.startsWith("tidal_") -> "⚡ TIDAL"
+                        track.id.startsWith("local_") || track.localFilePath != null -> "💾 Local"
+                        else -> "🌐 Cloud"
+                    }
+                    val sourceBgColor = when {
+                        track.id.startsWith("yt_") -> Color(0x33EF4444)
+                        track.id.startsWith("audius_") -> Color(0x33A855F7)
+                        track.id.startsWith("jamendo_") -> Color(0x33F59E0B)
+                        track.id.startsWith("archive_") -> Color(0x333B82F6)
+                        track.id.startsWith("tidal_") -> Color(0x3306B6D4)
+                        track.id.startsWith("local_") || track.localFilePath != null -> Color(0x3310B981)
+                        else -> Color(0x3364748B)
+                    }
+                    val sourceTextColor = when {
+                        track.id.startsWith("yt_") -> Color(0xFFFCA5A5)
+                        track.id.startsWith("audius_") -> Color(0xFFE9D5FF)
+                        track.id.startsWith("jamendo_") -> Color(0xFFFDE68A)
+                        track.id.startsWith("archive_") -> Color(0xFF93C5FD)
+                        track.id.startsWith("tidal_") -> CyanLight
+                        track.id.startsWith("local_") || track.localFilePath != null -> EmeraldLight
+                        else -> TextSecondary
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(sourceBgColor)
+                            .padding(horizontal = 5.dp, vertical = 1.dp)
+                    ) {
+                        Text(
+                            text = sourceText,
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = sourceTextColor
+                        )
+                    }
+
                     // Audio format badge (FLAC / MP3 / M4A)
                     Box(
                         modifier = Modifier
