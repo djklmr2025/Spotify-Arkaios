@@ -1,5 +1,7 @@
 package com.example.ui.components
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -7,6 +9,7 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,6 +28,7 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ElectricBolt
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.OpenInBrowser
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -39,6 +43,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -66,12 +71,20 @@ fun ArkaiosPayModal(
     modalState: CheckoutModalState,
     wallet: AmrWallet,
     onConfirmPay: () -> Unit,
+    onConfirmPayPal: () -> Unit = {},
     onClose: () -> Unit
 ) {
     if (!modalState.isOpen) return
 
+    val context = LocalContext.current
     val numAmount = modalState.customAmount
     val hasEnoughBalance = wallet.balance >= numAmount
+    val usdPrice = when {
+        modalState.customConcept.contains("God Owner", ignoreCase = true) -> 4.99
+        modalState.customConcept.contains("Tidal", ignoreCase = true) -> 2.99
+        modalState.customConcept.contains("Creator", ignoreCase = true) -> 3.99
+        else -> (numAmount * 0.10).coerceAtLeast(0.99)
+    }
 
     Box(
         modifier = Modifier
@@ -317,33 +330,135 @@ fun ArkaiosPayModal(
                         Text("✔ Finalizar y Disfrutar", fontWeight = FontWeight.Bold, fontSize = 14.sp)
                     }
                 } else {
-                    Button(
-                        onClick = onConfirmPay,
-                        enabled = hasEnoughBalance && !modalState.isProcessing,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(48.dp)
-                            .testTag("arkaios_pay_confirm_button"),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = CyanPrimary,
-                            contentColor = Color(0xFF08080C),
-                            disabledContainerColor = Color(0x3306B6D4),
-                            disabledContentColor = Color(0x66FFFFFF)
-                        ),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        if (modalState.isProcessing) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp),
-                                color = Color(0xFF08080C),
-                                strokeWidth = 2.dp
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Procesando pago seguro...", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                        } else {
-                            Icon(Icons.Default.ElectricBolt, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("⚡ Confirmar Pago con ARKAIOS Pay", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        // 1. PayPal Button (JavaScript SDK v6 / Card / Direct)
+                        Button(
+                            onClick = onConfirmPayPal,
+                            enabled = !modalState.isProcessing,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp)
+                                .testTag("paypal_sdk_v6_button"),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFFFFC439), // PayPal Brand Gold
+                                contentColor = Color(0xFF003087)  // PayPal Navy
+                            ),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Text(
+                                    text = "Pay",
+                                    fontWeight = FontWeight.ExtraBold,
+                                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
+                                    fontSize = 17.sp,
+                                    color = Color(0xFF003087)
+                                )
+                                Text(
+                                    text = "Pal",
+                                    fontWeight = FontWeight.ExtraBold,
+                                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
+                                    fontSize = 17.sp,
+                                    color = Color(0xFF0079C1)
+                                )
+                                Text(
+                                    text = "• Pagar $$usdPrice USD",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 13.sp,
+                                    color = Color(0xFF003087)
+                                )
+                            }
+                        }
+
+                        // 2. ARKAIOS Pay with AMR Wallet
+                        Button(
+                            onClick = onConfirmPay,
+                            enabled = hasEnoughBalance && !modalState.isProcessing,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(46.dp)
+                                .testTag("arkaios_pay_confirm_button"),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (hasEnoughBalance) CyanPrimary else Color(0x3306B6D4),
+                                contentColor = if (hasEnoughBalance) Color(0xFF08080C) else Color(0x88FFFFFF)
+                            ),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            if (modalState.isProcessing) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(18.dp),
+                                    color = Color(0xFF08080C),
+                                    strokeWidth = 2.dp
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Procesando pago seguro...", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                            } else {
+                                Icon(Icons.Default.ElectricBolt, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = if (hasEnoughBalance) "⚡ Pagar con AMR (${"%.2f".format(numAmount)} AMR)" else "⚡ Pagar con AMR (Saldo Insuficiente)",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 13.sp
+                                )
+                            }
+                        }
+
+                        // 3. Direct Link: PayPal.me & ARKAIOS Pay Web Portal
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .clickable {
+                                        val intent = Intent(
+                                            Intent.ACTION_VIEW,
+                                            Uri.parse("https://paypal.me/klmroffcialchannel?locale.x=es_XC&country.x=MX")
+                                        )
+                                        context.startActivity(intent)
+                                    }
+                                    .padding(vertical = 4.dp, horizontal = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    Icons.Default.OpenInBrowser,
+                                    contentDescription = "PayPal.me",
+                                    tint = Color(0xFF38BDF8),
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = "Abrir paypal.me/klmroffcialchannel",
+                                    color = Color(0xFF38BDF8),
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+
+                            Row(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .clickable {
+                                        val intent = Intent(
+                                            Intent.ACTION_VIEW,
+                                            Uri.parse("https://arkaios-puterlab-nexus-ide.vercel.app/arkaios-pay-demo")
+                                        )
+                                        context.startActivity(intent)
+                                    }
+                                    .padding(vertical = 4.dp, horizontal = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "🌐 Portal ARKAIOS Pay",
+                                    color = ArkaiosGold,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
                         }
                     }
                 }

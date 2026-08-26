@@ -50,6 +50,7 @@ import com.example.data.model.AmrTransaction
 import com.example.data.model.AmrTxType
 import com.example.data.model.AmrWallet
 import com.example.data.model.ArkaiosPremiumTier
+import com.example.ui.theme.ArkaiosGold
 import com.example.ui.theme.BlueAccent
 import com.example.ui.theme.BorderSubtle
 import com.example.ui.theme.BorderSubtleCyan
@@ -73,8 +74,9 @@ fun AmrStoreScreen(
     premiumTiers: List<ArkaiosPremiumTier>,
     transactions: List<AmrTransaction>,
     onOpenCheckout: (ArkaiosPremiumTier) -> Unit,
-    onClaimListeningReward: () -> Unit,
-    onTransferTokens: (String, Double) -> Unit
+    onTransferTokens: (String, Double) -> Unit,
+    onBuyTokensPayPal: (Double, Double) -> Unit = { _, _ -> },
+    onClaimListeningReward: () -> Unit = {}
 ) {
     var transferToAddress by remember { mutableStateOf("") }
     var transferAmountStr by remember { mutableStateOf("") }
@@ -180,13 +182,13 @@ fun AmrStoreScreen(
                         }
                     }
 
-                    // Reward Claim Button (+25 AMR)
+                    // Network Node Live Status (Read-Only Telemetry)
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(10.dp))
-                            .background(Color(0x1F10B981))
-                            .clickable { onClaimListeningReward() }
+                            .background(Color(0x1410B981))
+                            .border(1.dp, Color(0x3310B981), RoundedCornerShape(10.dp))
                             .padding(horizontal = 12.dp, vertical = 10.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
@@ -203,13 +205,13 @@ fun AmrStoreScreen(
                             )
                             Column {
                                 Text(
-                                    text = "Recompensa por Aporte de Red",
+                                    text = "Nodo de Audio Activo",
                                     color = EmeraldLight,
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold
                                 )
                                 Text(
-                                    text = "Reclama bonificación de tokens por streaming",
+                                    text = "Streaming P2P validado • Protocolo Arkaios Mainnet",
                                     color = TextSecondary,
                                     fontSize = 10.sp
                                 )
@@ -219,10 +221,107 @@ fun AmrStoreScreen(
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(EmeraldAccent)
-                                .padding(horizontal = 10.dp, vertical = 4.dp)
+                                .background(Color(0x3310B981))
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
                         ) {
-                            Text("+25.00 AMR", color = Color(0xFF042F2E), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            Text("EN LÍNEA", color = EmeraldLight, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+        }
+
+        // Section: Recargar Tokens AMR con PayPal (JavaScript SDK v6)
+        item {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = "Recargar Tokens AMR con PayPal",
+                    color = TextPrimary,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "Compra saldo directo vía PayPal (SDK v6), Tarjetas o Pay Later",
+                    color = TextSecondary,
+                    fontSize = 12.sp
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    // Pack 50 AMR
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(SurfaceCard)
+                            .border(1.dp, BorderSubtle, RoundedCornerShape(14.dp))
+                            .clickable { onBuyTokensPayPal(4.99, 50.0) }
+                            .padding(12.dp)
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                            Text("50 AMR", color = CyanLight, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                            Text("$4.99 USD", color = TextSecondary, fontSize = 11.sp)
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(Color(0xFFFFC439))
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                            ) {
+                                Text("PayPal", color = Color(0xFF003087), fontWeight = FontWeight.ExtraBold, fontSize = 10.sp)
+                            }
+                        }
+                    }
+
+                    // Pack 100 AMR
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(SurfaceDark)
+                            .border(1.dp, BorderSubtleCyan, RoundedCornerShape(14.dp))
+                            .clickable { onBuyTokensPayPal(9.99, 100.0) }
+                            .padding(12.dp)
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                            Text("100 AMR", color = CyanLight, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                            Text("$9.99 USD", color = TextSecondary, fontSize = 11.sp)
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(Color(0xFFFFC439))
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                            ) {
+                                Text("PayPal", color = Color(0xFF003087), fontWeight = FontWeight.ExtraBold, fontSize = 10.sp)
+                            }
+                        }
+                    }
+
+                    // Pack 500 AMR
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(SurfaceCard)
+                            .border(1.dp, BorderSubtle, RoundedCornerShape(14.dp))
+                            .clickable { onBuyTokensPayPal(44.99, 500.0) }
+                            .padding(12.dp)
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                            Text("500 AMR", color = ArkaiosGold, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                            Text("$44.99 USD", color = TextSecondary, fontSize = 11.sp)
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(Color(0xFFFFC439))
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                            ) {
+                                Text("PayPal", color = Color(0xFF003087), fontWeight = FontWeight.ExtraBold, fontSize = 10.sp)
+                            }
                         }
                     }
                 }

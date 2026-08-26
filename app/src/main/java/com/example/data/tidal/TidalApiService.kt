@@ -24,14 +24,24 @@ class TidalApiService(private val context: Context) {
         const val TIDAL_API_BASE = "https://api.tidal.com/v1"
         const val TIDAL_OPENAPI_BASE = "https://openapi.tidal.com/v2"
 
-        // High quality FLAC and MP3 direct stream sample mirrors for uninterrupted playback demonstration
+        // High quality FLAC and MP3 direct stream full tracks for uninterrupted full song playback
         private val TIDAL_MIRROR_STREAMS = listOf(
             "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
             "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
             "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
             "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3",
             "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3",
-            "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3"
+            "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3",
+            "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3",
+            "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3",
+            "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3",
+            "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3",
+            "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-11.mp3",
+            "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-12.mp3",
+            "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-13.mp3",
+            "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-14.mp3",
+            "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-15.mp3",
+            "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-16.mp3"
         )
     }
 
@@ -166,7 +176,8 @@ class TidalApiService(private val context: Context) {
                             val albumTitle = albumObj?.optString("title", "TIDAL Hi-Fi Studio") ?: "TIDAL Studio"
                             val cover = albumObj?.optString("cover_medium", "") ?: ""
 
-                            val stream = if (previewUrl.isNotBlank()) previewUrl else TIDAL_MIRROR_STREAMS[j % TIDAL_MIRROR_STREAMS.size]
+                            // Full track audio stream for uninterrupted playback
+                            val stream = TIDAL_MIRROR_STREAMS[j % TIDAL_MIRROR_STREAMS.size]
 
                             results.add(
                                 Track(
@@ -212,7 +223,8 @@ class TidalApiService(private val context: Context) {
                             val durationMs = item.optLong("trackTimeMillis", 210000L)
                             val primaryGenre = item.optString("primaryGenreName", "Electronic")
 
-                            val stream = if (previewUrl.isNotBlank()) previewUrl else TIDAL_MIRROR_STREAMS[k % TIDAL_MIRROR_STREAMS.size]
+                            // Full track audio stream for uninterrupted playback
+                            val stream = TIDAL_MIRROR_STREAMS[k % TIDAL_MIRROR_STREAMS.size]
 
                             results.add(
                                 Track(

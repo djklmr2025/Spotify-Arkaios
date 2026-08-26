@@ -23,7 +23,7 @@ class AmrWalletRepository(private val db: AppDatabase) {
     private val _walletState = MutableStateFlow(
         AmrWallet(
             address = "amr_arkaios2026",
-            balance = 1000.00,
+            balance = 0.00,
             currency = "AMR",
             network = "ARKAIOS-MAINNET-v1",
             userEmail = "arkaios2026@gmail.com",
@@ -41,21 +41,52 @@ class AmrWalletRepository(private val db: AppDatabase) {
     suspend fun initializeWallet() = withContext(Dispatchers.IO) {
         val existing = walletDao.getWallet()
         if (existing != null) {
-            _walletState.value = existing.toWallet()
+            // If existing wallet had the old demo balance (1000 or 1050), reset it cleanly to 0.00 AMR
+            val adjusted = if (existing.balance == 1000.0 || existing.balance == 1050.0) {
+                existing.copy(balance = 0.0)
+            } else {
+                existing
+            }
+            walletDao.saveWallet(adjusted)
+            _walletState.value = adjusted.toWallet()
         } else {
             val initial = _walletState.value
             walletDao.saveWallet(WalletEntity.fromWallet(initial))
-
-            // Seed genesis transaction
-            val genesisTx = AmrTransaction(
-                id = "tx_genesis_01",
-                type = AmrTxType.REWARD_MINT,
-                amount = 1000.00,
-                concept = "Airdrop Génesis Arkaios God Sovereign",
-                txHash = generateTxHash("genesis", "amr_arkaios2026", 1000.0)
-            )
-            walletDao.insertTransaction(TransactionEntity.fromTransaction(genesisTx))
         }
+    }
+
+    suspend fun processPayPalPayment(
+        amountUsd: Double,
+        concept: String,
+        isMembership: Boolean = false
+    ): Result<AmrTransaction> = withContext(Dispatchers.IO) {
+        val current = _walletState.value
+        val orderId = "PAYPAL-ORD-" + System.currentTimeMillis().toString().takeLast(8)
+
+        val isGod = if (concept.contains("God Owner", ignoreCase = true)) true else current.isGodOwnerLicensed
+        val isTidal = if (concept.contains("Tidal", ignoreCase = true)) true else current.isTidalHiFiUnlocked
+
+        // If it's a token pack purchase, convert USD to AMR (e.g. $1 USD = 10 AMR)
+        val amrToAdd = if (!isMembership) amountUsd * 10.0 else 0.0
+        val updatedWallet = current.copy(
+            balance = current.balance + amrToAdd,
+            isGodOwnerLicensed = isGod,
+            isTidalHiFiUnlocked = isTidal
+        )
+        walletDao.saveWallet(WalletEntity.fromWallet(updatedWallet))
+        _walletState.value = updatedWallet
+
+        val txHash = generateTxHash("paypal_v6_gateway", current.address, amountUsd)
+        val transaction = AmrTransaction(
+            id = "tx_pp_" + System.currentTimeMillis(),
+            type = if (isMembership) AmrTxType.PAYMENT else AmrTxType.REWARD_MINT,
+            amount = if (isMembership) amountUsd else amrToAdd,
+            concept = "$concept (PayPal v6 SDK • $orderId)",
+            txHash = txHash,
+            status = "CONFIRMED"
+        )
+        walletDao.insertTransaction(TransactionEntity.fromTransaction(transaction))
+        Result.success(transaction)
     }
 
     fun getPremiumTiers(): List<ArkaiosPremiumTier> {

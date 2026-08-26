@@ -575,10 +575,55 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _checkoutModal.value = CheckoutModalState(isOpen = false)
     }
 
-    fun claimListeningReward() {
+    fun confirmPayPalCheckout() {
+        val current = _checkoutModal.value
+        val amountAmr = current.customAmount
+        val concept = current.customConcept
+        // Convert AMR price to approx USD equivalent (1 USD = 1 AMR for direct tier, or tier USD price)
+        val usdPrice = when {
+            concept.contains("God Owner", ignoreCase = true) -> 4.99
+            concept.contains("Tidal", ignoreCase = true) -> 2.99
+            concept.contains("Creator", ignoreCase = true) -> 3.99
+            else -> (amountAmr * 0.10).coerceAtLeast(0.99)
+        }
+
         viewModelScope.launch {
-            val tx = amrWalletRepository.rewardListeningContribution(25.00, "Recompensa Aporte Nodo Oyente ARKAIOS")
-            showSnackbar("🪙 ¡Reclamaste +25.00 AMR! Saldo actualizado")
+            _checkoutModal.value = current.copy(isProcessing = true, errorMessage = null)
+            val result = amrWalletRepository.processPayPalPayment(
+                amountUsd = usdPrice,
+                concept = concept,
+                isMembership = current.tier != null
+            )
+
+            result.onSuccess { tx ->
+                _checkoutModal.value = current.copy(
+                    isProcessing = false,
+                    isSuccess = true,
+                    lastTx = tx
+                )
+                showSnackbar("✔ ¡Pago de $$usdPrice USD aprobado con PayPal v6 SDK!")
+            }.onFailure { err ->
+                _checkoutModal.value = current.copy(
+                    isProcessing = false,
+                    isSuccess = false,
+                    errorMessage = err.message
+                )
+            }
+        }
+    }
+
+    fun buyTokensWithPayPal(usdAmount: Double, tokenAmount: Double) {
+        viewModelScope.launch {
+            val result = amrWalletRepository.processPayPalPayment(
+                amountUsd = usdAmount,
+                concept = "Compra de $tokenAmount Tokens AMR",
+                isMembership = false
+            )
+            result.onSuccess {
+                showSnackbar("✔ ¡Recibiste +${"%.0f".format(tokenAmount)} AMR vía PayPal ($$usdAmount USD)!")
+            }.onFailure {
+                showSnackbar("✖ Error en pasarela PayPal: ${it.message}")
+            }
         }
     }
 

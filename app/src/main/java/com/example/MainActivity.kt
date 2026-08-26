@@ -345,8 +345,8 @@ fun MainAppScreen(viewModel: MainViewModel) {
                         premiumTiers = viewModel.premiumTiers,
                         transactions = transactions,
                         onOpenCheckout = { viewModel.openArkaiosPayCheckout(it) },
-                        onClaimListeningReward = { viewModel.claimListeningReward() },
-                        onTransferTokens = { addr, amt -> viewModel.transferAmrTokens(addr, amt) }
+                        onTransferTokens = { addr, amt -> viewModel.transferAmrTokens(addr, amt) },
+                        onBuyTokensPayPal = { usd, tokens -> viewModel.buyTokensWithPayPal(usd, tokens) }
                     )
                 }
 
@@ -556,6 +556,17 @@ fun MainAppScreen(viewModel: MainViewModel) {
                     viewModel.claimCreatorEarnings()
                 },
                 onDismiss = { viewModel.setCreatorStudioOpen(false) }
+            )
+        }
+
+        // Arkaios Pay & PayPal SDK v6 Checkout Modal
+        if (checkoutModal.isOpen) {
+            ArkaiosPayModal(
+                modalState = checkoutModal,
+                wallet = wallet,
+                onConfirmPay = { viewModel.confirmArkaiosPayCheckout() },
+                onConfirmPayPal = { viewModel.confirmPayPalCheckout() },
+                onClose = { viewModel.closeCheckoutModal() }
             )
         }
     }
