@@ -308,7 +308,7 @@ class MusicRepository(private val context: Context, private val db: AppDatabase)
 
                         localTracks.add(
                             Track(
-                                id = "local_${mediaId}_${System.currentTimeMillis() % 10000}",
+                                id = "local_media_${mediaId}_${uriStr.hashCode()}",
                                 title = title,
                                 artist = artist,
                                 album = album,
@@ -371,7 +371,7 @@ class MusicRepository(private val context: Context, private val db: AppDatabase)
 
                             localTracks.add(
                                 Track(
-                                    id = "local_file_${file.name.hashCode()}_${System.currentTimeMillis() % 1000}",
+                                    id = "local_file_${path.hashCode()}",
                                     title = title,
                                     artist = dir.name.ifEmpty { "Almacenamiento Local" },
                                     album = dir.name,
@@ -432,7 +432,7 @@ class MusicRepository(private val context: Context, private val db: AppDatabase)
 
                 imported.add(
                     Track(
-                        id = "imported_${uri.hashCode()}_${System.currentTimeMillis() % 10000}",
+                        id = "imported_uri_${uri.toString().hashCode()}",
                         title = title,
                         artist = artist,
                         album = album,

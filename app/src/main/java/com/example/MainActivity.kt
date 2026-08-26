@@ -58,6 +58,8 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material.icons.filled.Radio
+import androidx.compose.material.icons.outlined.Radio
 import com.example.ui.MainViewModel
 import com.example.ui.components.AddToPlaylistDialog
 import com.example.ui.components.AlbumDetailModal
@@ -71,6 +73,7 @@ import com.example.ui.components.TidalServerModal
 import com.example.ui.screens.AmrStoreScreen
 import com.example.ui.screens.HomeScreen
 import com.example.ui.screens.LibraryScreen
+import com.example.ui.screens.RadioScreen
 import com.example.ui.screens.SearchScreen
 import com.example.ui.theme.BackgroundDark
 import com.example.ui.theme.BorderSubtleCyan
@@ -133,7 +136,7 @@ fun MainAppScreen(viewModel: MainViewModel) {
     val selectedAlbumForModal by viewModel.selectedAlbumForModal.collectAsState()
     val trackForPlaylistDialog by viewModel.trackForPlaylistDialog.collectAsState()
 
-    // Creator Studio 50GB & Nube 5TB
+    // Creator Studio 50GB & Nube 5TB & CloudStream Video
     val creatorStats by viewModel.creatorStats.collectAsState()
     val creatorTracks by viewModel.creatorTracks.collectAsState()
     val isCreatorStudioOpen by viewModel.isCreatorStudioOpen.collectAsState()
@@ -259,11 +262,31 @@ fun MainAppScreen(viewModel: MainViewModel) {
                             onClick = { viewModel.setTab(3) },
                             icon = {
                                 Icon(
-                                    imageVector = if (selectedTab == 3) Icons.Filled.ElectricBolt else Icons.Outlined.ElectricBolt,
+                                    imageVector = if (selectedTab == 3) Icons.Filled.Radio else Icons.Outlined.Radio,
+                                    contentDescription = "Radio"
+                                )
+                            },
+                            label = { Text("Radio", fontSize = 11.sp, fontWeight = if (selectedTab == 3) FontWeight.Bold else FontWeight.Normal) },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = CyanLight,
+                                selectedTextColor = CyanLight,
+                                unselectedIconColor = TextMuted,
+                                unselectedTextColor = TextMuted,
+                                indicatorColor = Color(0x2606B6D4)
+                            ),
+                            modifier = Modifier.testTag("nav_tab_radio")
+                        )
+
+                        NavigationBarItem(
+                            selected = selectedTab == 4,
+                            onClick = { viewModel.setTab(4) },
+                            icon = {
+                                Icon(
+                                    imageVector = if (selectedTab == 4) Icons.Filled.ElectricBolt else Icons.Outlined.ElectricBolt,
                                     contentDescription = "AMR Pay"
                                 )
                             },
-                            label = { Text("AMR Pay", fontSize = 11.sp, fontWeight = if (selectedTab == 3) FontWeight.Bold else FontWeight.Normal) },
+                            label = { Text("AMR Pay", fontSize = 11.sp, fontWeight = if (selectedTab == 4) FontWeight.Bold else FontWeight.Normal) },
                             colors = NavigationBarItemDefaults.colors(
                                 selectedIconColor = CyanLight,
                                 selectedTextColor = CyanLight,
@@ -293,12 +316,12 @@ fun MainAppScreen(viewModel: MainViewModel) {
                         downloadStatus = downloadStatus,
                         radioStations = radioStations,
                         onRadioClick = { viewModel.playRadioStation(it) },
-                        onTrackClick = { viewModel.playTrack(it) },
+                        onTrackClick = { tr, queue -> viewModel.playTrack(tr, queue) },
                         onAlbumClick = { viewModel.openAlbumModal(it) },
                         onFavoriteToggle = { viewModel.toggleFavorite(it) },
                         onDownloadClick = { viewModel.downloadTrack(it) },
                         onRemoveDownloadClick = { viewModel.removeDownload(it) },
-                        onNavigateToAmrStore = { viewModel.setTab(3) },
+                        onNavigateToAmrStore = { viewModel.setTab(4) },
                         onGenreSelect = { genre ->
                             viewModel.setGenreFilter(genre)
                             viewModel.setTab(1)
@@ -319,7 +342,7 @@ fun MainAppScreen(viewModel: MainViewModel) {
                         onSourceSelect = { viewModel.setSourceFilter(it) },
                         onQueryChange = { viewModel.setSearchQuery(it) },
                         onGenreSelect = { viewModel.setGenreFilter(it) },
-                        onTrackClick = { viewModel.playTrack(it) },
+                        onTrackClick = { tr, queue -> viewModel.playTrack(tr, queue) },
                         onFavoriteToggle = { viewModel.toggleFavorite(it) },
                         onDownloadClick = { viewModel.downloadTrack(it) },
                         onRemoveDownloadClick = { viewModel.removeDownload(it) },
@@ -335,7 +358,7 @@ fun MainAppScreen(viewModel: MainViewModel) {
                         radioStations = radioStations,
                         playbackState = playbackState,
                         downloadStatus = downloadStatus,
-                        onTrackClick = { viewModel.playTrack(it) },
+                        onTrackClick = { tr, queue -> viewModel.playTrack(tr, queue) },
                         onRadioClick = { viewModel.playRadioStation(it) },
                         onPlayPlaylist = { tracks, shuffle -> viewModel.playPlaylist(tracks, shuffle) },
                         onFavoriteToggle = { viewModel.toggleFavorite(it) },
@@ -352,7 +375,13 @@ fun MainAppScreen(viewModel: MainViewModel) {
                         onOpenAuthModal = { viewModel.openAuthModal() },
                         onOpenCreatorStudio = { viewModel.setCreatorStudioOpen(true) }
                     )
-                    3 -> AmrStoreScreen(
+                    3 -> RadioScreen(
+                        radioStations = radioStations,
+                        playbackState = playbackState,
+                        onRadioClick = { viewModel.playRadioStation(it) },
+                        onAddRadioClick = { name, genre, url -> viewModel.addCustomRadioStation(name, genre, url) }
+                    )
+                    4 -> AmrStoreScreen(
                         wallet = wallet,
                         premiumTiers = viewModel.premiumTiers,
                         transactions = transactions,

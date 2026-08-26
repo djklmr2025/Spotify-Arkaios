@@ -74,7 +74,7 @@ fun HomeScreen(
     playbackState: PlaybackState,
     downloadStatus: Map<String, DownloadProgress>,
     radioStations: List<com.example.data.model.RadioStation> = emptyList(),
-    onTrackClick: (Track) -> Unit,
+    onTrackClick: (Track, List<Track>?) -> Unit = { _, _ -> },
     onAlbumClick: (Album) -> Unit = {},
     onRadioClick: (com.example.data.model.RadioStation) -> Unit = {},
     onFavoriteToggle: (Track) -> Unit,
@@ -246,7 +246,7 @@ fun HomeScreen(
                     )
                     .border(1.dp, BorderSubtleCyan, RoundedCornerShape(24.dp))
                     .clickable {
-                        tracks.firstOrNull()?.let { onTrackClick(it) }
+                        tracks.firstOrNull()?.let { onTrackClick(it, tracks) }
                     }
             ) {
                 Row(
@@ -579,7 +579,7 @@ fun HomeScreen(
                 isCurrentTrack = isCurrent,
                 isPlaying = isPlaying,
                 downloadProgress = progress,
-                onTrackClick = { onTrackClick(track) },
+                onTrackClick = { onTrackClick(track, tracks) },
                 onFavoriteToggle = { onFavoriteToggle(track) },
                 onDownloadClick = { onDownloadClick(track) },
                 onRemoveDownloadClick = { onRemoveDownloadClick(track) },

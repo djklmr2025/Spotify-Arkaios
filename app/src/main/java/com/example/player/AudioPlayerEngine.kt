@@ -87,8 +87,12 @@ class AudioPlayerEngine(private val context: Context) {
                     handleTrackCompletion()
                 }
                 setOnErrorListener { _, what, extra ->
-                    Log.e("AudioPlayerEngine", "MediaPlayer error: what=$what, extra=$extra")
+                    Log.e("AudioPlayerEngine", "MediaPlayer error: what=$what, extra=$extra. Avanzando a la siguiente pista...")
                     _playbackState.value = _playbackState.value.copy(isBuffering = false, isPlaying = false)
+                    scope.launch {
+                        delay(600)
+                        nextTrack()
+                    }
                     true
                 }
             }

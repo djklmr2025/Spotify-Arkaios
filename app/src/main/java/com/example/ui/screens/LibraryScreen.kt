@@ -100,7 +100,7 @@ fun LibraryScreen(
     radioStations: List<com.example.data.model.RadioStation> = emptyList(),
     playbackState: PlaybackState,
     downloadStatus: Map<String, DownloadProgress>,
-    onTrackClick: (Track) -> Unit,
+    onTrackClick: (Track, List<Track>?) -> Unit = { _, _ -> },
     onRadioClick: (com.example.data.model.RadioStation) -> Unit = {},
     onPlayPlaylist: (List<Track>, Boolean) -> Unit,
     onFavoriteToggle: (Track) -> Unit,
@@ -411,7 +411,7 @@ fun LibraryScreen(
                                 isCurrentTrack = isCurrent,
                                 isPlaying = isPlaying,
                                 downloadProgress = progress,
-                                onTrackClick = { onTrackClick(track) },
+                                onTrackClick = { onTrackClick(track, tracksInPl) },
                                 onFavoriteToggle = { onFavoriteToggle(track) },
                                 onDownloadClick = { onDownloadClick(track) },
                                 onRemoveDownloadClick = { onRemoveDownloadClick(track) }
@@ -818,7 +818,7 @@ fun LibraryScreen(
                                     isCurrentTrack = isCurrent,
                                     isPlaying = isPlaying,
                                     downloadProgress = progress,
-                                    onTrackClick = { onTrackClick(track) },
+                                    onTrackClick = { onTrackClick(track, downloadedTracks) },
                                     onFavoriteToggle = { onFavoriteToggle(track) },
                                     onDownloadClick = { onDownloadClick(track) },
                                     onRemoveDownloadClick = { onRemoveDownloadClick(track) }
@@ -869,7 +869,7 @@ fun LibraryScreen(
                                     isCurrentTrack = isCurrent,
                                     isPlaying = isPlaying,
                                     downloadProgress = progress,
-                                    onTrackClick = { onTrackClick(track) },
+                                    onTrackClick = { onTrackClick(track, favoriteTracks) },
                                     onFavoriteToggle = { onFavoriteToggle(track) },
                                     onDownloadClick = { onDownloadClick(track) },
                                     onRemoveDownloadClick = { onRemoveDownloadClick(track) }
@@ -1045,7 +1045,7 @@ fun LibraryScreen(
                                     isCurrentTrack = isCurrent,
                                     isPlaying = isPlaying,
                                     downloadProgress = null,
-                                    onTrackClick = { onTrackClick(track) },
+                                    onTrackClick = { onTrackClick(track, localDeviceTracks) },
                                     onFavoriteToggle = { onFavoriteToggle(track) },
                                     onDownloadClick = {},
                                     onRemoveDownloadClick = {}

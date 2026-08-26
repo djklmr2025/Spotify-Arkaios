@@ -72,7 +72,7 @@ object M3uParser {
 
                 tracks.add(
                     Track(
-                        id = "m3u_${url.hashCode()}_${System.currentTimeMillis() % 10000}",
+                        id = "m3u_track_${url.hashCode()}",
                         title = title.ifBlank { "M3U Audio Track" },
                         artist = artist,
                         album = if (isLive) "Radio M3U" else "Lista M3U",

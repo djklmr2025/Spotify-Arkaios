@@ -78,7 +78,7 @@ fun SearchScreen(
     onSourceSelect: (com.example.data.tidal.MusicSourceFilter) -> Unit = {},
     onQueryChange: (String) -> Unit,
     onGenreSelect: (String?) -> Unit,
-    onTrackClick: (Track) -> Unit,
+    onTrackClick: (Track, List<Track>?) -> Unit = { _, _ -> },
     onFavoriteToggle: (Track) -> Unit,
     onDownloadClick: (Track) -> Unit,
     onRemoveDownloadClick: (Track) -> Unit,
@@ -374,7 +374,7 @@ fun SearchScreen(
                             isCurrentTrack = isCurrent,
                             isPlaying = isPlaying,
                             downloadProgress = progress,
-                            onTrackClick = { onTrackClick(track) },
+                            onTrackClick = { onTrackClick(track, searchResults) },
                             onFavoriteToggle = { onFavoriteToggle(track) },
                             onDownloadClick = { onDownloadClick(track) },
                             onRemoveDownloadClick = { onRemoveDownloadClick(track) }

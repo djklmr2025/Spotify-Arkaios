@@ -279,9 +279,34 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             } else {
                 track
             }
-            val queue = fromQueue ?: searchResults.value.ifEmpty { _catalogTracks.value }
-            val index = queue.indexOfFirst { it.id == track.id }.coerceAtLeast(0)
-            val updatedQueue = queue.map { if (it.id == track.id) resolvedTrack else it }
+
+            // Intelligently resolve active queue from explicit param or matching track collection
+            val activeQueue = when {
+                !fromQueue.isNullOrEmpty() -> {
+                    if (fromQueue.any { it.id == track.id }) fromQueue else listOf(track) + fromQueue
+                }
+                _localDeviceTracks.value.any { it.id == track.id } -> {
+                    _localDeviceTracks.value
+                }
+                downloadedTracks.value.any { it.id == track.id } -> {
+                    downloadedTracks.value
+                }
+                favoriteTracks.value.any { it.id == track.id } -> {
+                    favoriteTracks.value
+                }
+                searchResults.value.any { it.id == track.id } -> {
+                    searchResults.value
+                }
+                _catalogTracks.value.any { it.id == track.id } -> {
+                    _catalogTracks.value
+                }
+                else -> {
+                    listOf(track)
+                }
+            }
+
+            val index = activeQueue.indexOfFirst { it.id == track.id }.coerceAtLeast(0)
+            val updatedQueue = activeQueue.map { if (it.id == track.id) resolvedTrack else it }
             playerEngine.setQueue(updatedQueue, index)
         }
     }
