@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify-Arkaios Web Player & API Daemon</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="logo-container">
+                <i class="fa-solid fa-bolt logo-icon"></i>
+                <span class="logo-text">Spotify<span class="highlight">Arkaios</span></span>
+            </div>
+            
+            <nav class="nav-menu">
+                <button class="nav-btn active" data-tab="home"><i class="fa-solid fa-house"></i> Inicio</button>
+                <button class="nav-btn" data-tab="search"><i class="fa-solid fa-magnifying-glass"></i> Buscar</button>
+                <button class="nav-btn" data-tab="library"><i class="fa-solid fa-list-ul"></i> Biblioteca</button>
+                <button class="nav-btn" data-tab="radio"><i class="fa-solid fa-radio"></i> Radio FM</button>
+                <button class="nav-btn" data-tab="amr"><i class="fa-solid fa-wallet"></i> AMR Pay</button>
+            </nav>
+
+            <div class="daemon-badge">
+                <div class="status-dot"></div>
+                <div class="daemon-info">
+                    <span class="title">Demonio API v1.2</span>
+                    <span class="status-text" id="daemonStatusText">Conectando...</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Header Bar -->
+            <header class="top-bar">
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input type="text" id="globalSearchInput" placeholder="Buscar canciones, artistas o streams...">
+                </div>
+                <div class="user-profile">
+                    <span class="amr-balance-pill"><i class="fa-solid fa-coins"></i> <span id="headerAmrBalance">1,250.75</span> AMR</span>
+                    <button class="profile-btn"><i class="fa-solid fa-user-gear"></i> Arkaios User</button>
+                </div>
+            </header>
+
+            <!-- Tab 0: Home -->
+            <section id="tab-home" class="tab-content active">
+                <div class="hero-banner">
+                    <div class="hero-text">
+                        <h2>Ecosistema Sonora Arkaios</h2>
+                        <p>Reproducción de audio en alta fidelidad, radio en vivo y descargas coordinadas con el Demonio API.</p>
+                        <button class="hero-btn" onclick="switchTab('radio')"><i class="fa-solid fa-radio"></i> Escuchar Radio en Vivo</button>
+                    </div>
+                </div>
+
+                <h3 class="section-title">Música en Tendencia</h3>
+                <div class="tracks-grid" id="homeTracksGrid">
+                    <!-- Dynamic Tracks injected by app.js -->
+                </div>
+            </section>
+
+            <!-- Tab 1: Search -->
+            <section id="tab-search" class="tab-content">
+                <h3 class="section-title">Buscador y Descargador de Audio API</h3>
+                <div class="search-panel">
+                    <input type="text" id="daemonSearchInput" placeholder="Ingrese nombre de canción o URL para encolar descarga...">
+                    <button class="search-action-btn" onclick="executeDaemonSearch()"><i class="fa-solid fa-search"></i> Buscar</button>
+                    <button class="download-action-btn" onclick="enqueueTrackDownload()"><i class="fa-solid fa-download"></i> Encolar Descarga</button>
+                </div>
+                <div class="results-list" id="searchResultsList"></div>
+            </section>
+
+            <!-- Tab 2: Library -->
+            <section id="tab-library" class="tab-content">
+                <h3 class="section-title">Biblioteca de Tareas y Descargas</h3>
+                <div class="downloader-dashboard">
+                    <div class="stat-card">
+                        <i class="fa-solid fa-arrow-down stat-icon"></i>
+                        <div><h4 id="statActiveDownloads">0</h4><p>Descargas Activas</p></div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-clock stat-icon"></i>
+                        <div><h4 id="statQueueCount">0</h4><p>En Cola</p></div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fa-solid fa-circle-check stat-icon"></i>
+                        <div><h4 id="statCompletedCount">0</h4><p>Completadas</p></div>
+                    </div>
+                </div>
+
+                <h4 class="sub-title">Descargas Recientes</h4>
+                <div class="downloads-list" id="downloadsQueueList"></div>
+            </section>
+
+            <!-- Tab 3: Radio -->
+            <section id="tab-radio" class="tab-content">
+                <h3 class="section-title">Estaciones de Radio FM / Web en Vivo</h3>
+                <div class="radio-grid" id="radioStationsGrid">
+                    <!-- Dynamic Radio Cards -->
+                </div>
+            </section>
+
+            <!-- Tab 4: AMR Pay -->
+            <section id="tab-amr" class="tab-content">
+                <h3 class="section-title">Pasarela de Pagos AMR Pay & Wallet</h3>
+                <div class="amr-card">
+                    <div class="card-header">
+                        <i class="fa-solid fa-bolt"></i>
+                        <span>ARKAIOS WALLET</span>
+                    </div>
+                    <div class="card-balance">
+                        <h1 id="amrWalletBalance">1,250.75 AMR</h1>
+                        <p>~$125.07 USD Equivalent</p>
+                    </div>
+                    <div class="card-address" id="amrWalletAddress">0xARKAIOS_W18392817293812739182739</div>
+                    <div class="card-actions">
+                        <button class="btn-primary"><i class="fa-solid fa-paper-plane"></i> Transferir Tokens</button>
+                        <button class="btn-secondary"><i class="fa-brands fa-paypal"></i> Recargar con PayPal</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Bottom Audio Player Bar -->
+    <footer class="player-bar">
+        <div class="track-info">
+            <img src="https://picsum.photos/id/10/300/300" id="playerCover" class="track-cover">
+            <div>
+                <h4 id="playerTitle">Starboy</h4>
+                <p id="playerArtist">The Weeknd</p>
+            </div>
+        </div>
+
+        <div class="player-controls">
+            <div class="buttons">
+                <button onclick="prevTrack()"><i class="fa-solid fa-backward-step"></i></button>
+                <button onclick="togglePlayPause()" id="playPauseBtn" class="play-main"><i class="fa-solid fa-play"></i></button>
+                <button onclick="nextTrack()"><i class="fa-solid fa-forward-step"></i></button>
+            </div>
+            <div class="progress-container">
+                <span id="currentTime">0:00</span>
+                <input type="range" id="progressBar" value="0" max="100">
+                <span id="totalDuration">3:50</span>
+            </div>
+        </div>
+
+        <div class="volume-controls">
+            <i class="fa-solid fa-volume-high"></i>
+            <input type="range" id="volumeBar" value="80" max="100">
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>

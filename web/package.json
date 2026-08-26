@@ -1,0 +1,14 @@
+{
+  "name": "spotify-arkaios-web",
+  "version": "1.2.0",
+  "description": "Plataforma Web & Demonio API de Spotify-Arkaios",
+  "main": "daemon.js",
+  "scripts": {
+    "start": "node daemon.js",
+    "dev": "nodemon daemon.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^4.22.2"
+  }
+}
