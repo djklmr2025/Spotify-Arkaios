@@ -1,5 +1,14 @@
 # ARKAIOS-TIFY (Arkaios Music & Hi-Fi Lossless Streaming) 🎵⚡
 
+
+
+
+https://github.com/user-attachments/assets/801ac834-7d53-4516-a84d-b361ec39d68a
+
+
+
+
+
 **ArkaiosTify** es una plataforma y aplicación móvil de streaming musical en alta fidelidad y estudio construida en **Kotlin** y **Jetpack Compose** para Android. Combina la fidelidad de TIDAL/FLAC con un motor multi-fuente universal (YouTube Music, SoundCloud/Audius, Jamendo Hi-Fi, Google Drive 5TB y Servidores Subsonic/Navidrome), complementada con la pasarela de pagos descentralizada y fiat **ARKAIOS Pay & PayPal.Me**.
 
 ---
