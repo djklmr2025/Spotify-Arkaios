@@ -84,55 +84,44 @@ fun HomeScreen(
     onGenreSelect: (String) -> Unit,
     onOpenTidalModal: () -> Unit = {},
     onOpenCreatorStudio: () -> Unit = {},
+    onOpenCommunityVoting: () -> Unit = {},
     onOpenAuthModal: () -> Unit = {}
 ) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .testTag("home_screen_list"),
-        contentPadding = PaddingValues(bottom = 120.dp)
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Top Header with User Profile, Creator Studio, TIDAL API pill, and AMR Balance Badge
         item {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 14.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                    .padding(top = 16.dp, bottom = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(12.dp))
-                        .clickable { onOpenAuthModal() }
-                        .padding(4.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier
+                        .clickable { onOpenAuthModal() }
+                        .testTag("home_user_profile_header")
                 ) {
-                    Box(
+                    AsyncImage(
+                        model = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200",
+                        contentDescription = "Perfil Usuario",
                         modifier = Modifier
                             .size(42.dp)
                             .clip(CircleShape)
-                            .background(
-                                Brush.linearGradient(
-                                    listOf(CyanPrimary, BlueAccent)
-                                )
-                            )
-                            .shadow(elevation = 8.dp, shape = CircleShape, spotColor = CyanPrimary),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "A",
-                            color = Color.White,
-                            fontWeight = FontWeight.Black,
-                            fontSize = 18.sp
-                        )
-                    }
-
+                            .border(1.5.dp, CyanLight, CircleShape),
+                        contentScale = ContentScale.Crop
+                    )
                     Column {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                             Text(
-                                text = wallet.userName,
+                                text = wallet.userName.ifEmpty { "Arkaios Master" },
                                 color = TextPrimary,
                                 fontSize = 15.sp,
                                 fontWeight = FontWeight.Bold
@@ -147,7 +136,7 @@ fun HomeScreen(
                             }
                         }
                         Text(
-                            text = if (wallet.isGodOwnerLicensed) "⚡ Licencia God Owner" else "Creator 50GB • Google Drive",
+                            text = if (wallet.isGodOwnerLicensed) "⚡ Membresía Anual 100GB VIP" else "100GB Nube • Google Drive",
                             color = if (wallet.isGodOwnerLicensed) CyanLight else EmeraldLight,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Medium
@@ -155,26 +144,48 @@ fun HomeScreen(
                     }
                 }
 
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                    // Creator Studio Pill Button (Google Drive 5TB)
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+                    // Community Voting Pill Button
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(Color(0x2610B981))
+                            .border(1.dp, Color(0x6610B981), RoundedCornerShape(20.dp))
+                            .clickable { onOpenCommunityVoting() }
+                            .padding(horizontal = 7.dp, vertical = 5.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(2.dp)
+                        ) {
+                            Text("🌟", fontSize = 10.sp)
+                            Text(
+                                text = "Votos",
+                                color = EmeraldLight,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
+                    // Creator Studio Pill Button (Google Drive 100GB)
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(20.dp))
                             .background(Color(0x26F59E0B))
                             .border(1.dp, Color(0x66F59E0B), RoundedCornerShape(20.dp))
                             .clickable { onOpenCreatorStudio() }
-                            .padding(horizontal = 8.dp, vertical = 6.dp)
+                            .padding(horizontal = 7.dp, vertical = 5.dp)
                             .testTag("home_creator_studio_pill_button")
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(3.dp)
+                            horizontalArrangement = Arrangement.spacedBy(2.dp)
                         ) {
-                            Text("☁️", fontSize = 11.sp)
                             Text(
-                                text = "50GB Studio",
+                                text = "100GB Studio",
                                 color = ArkaiosGold,
-                                fontSize = 11.sp,
+                                fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold
                             )
                         }

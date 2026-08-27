@@ -147,6 +147,11 @@ fun MainAppScreen(viewModel: MainViewModel) {
     val snackbarHostState = remember { SnackbarHostState() }
     val appUpdateInfo by viewModel.appUpdateInfo.collectAsState()
 
+    // Community Voting & Live Listening Status
+    val isCommunityVotingOpen by viewModel.isCommunityVotingOpen.collectAsState()
+    val votedTracks by viewModel.votedTracks.collectAsState()
+    val userListeningStatuses by viewModel.userListeningStatuses.collectAsState()
+
     appUpdateInfo?.let { info ->
         if (info.isUpdateAvailable) {
             UpdateAlertModal(
@@ -340,6 +345,7 @@ fun MainAppScreen(viewModel: MainViewModel) {
                         },
                         onOpenTidalModal = { viewModel.setTidalModalOpen(true) },
                         onOpenCreatorStudio = { viewModel.setCreatorStudioOpen(true) },
+                        onOpenCommunityVoting = { viewModel.setCommunityVotingOpen(true) },
                         onOpenAuthModal = { viewModel.openAuthModal() }
                     )
                     1 -> SearchScreen(
@@ -622,5 +628,21 @@ fun MainAppScreen(viewModel: MainViewModel) {
                 onClose = { viewModel.closeCheckoutModal() }
             )
         }
+
+        // Community Voting & Live Listening Status Modal
+        com.example.ui.components.CommunityVotingModal(
+            isOpen = isCommunityVotingOpen,
+            onClose = { viewModel.setCommunityVotingOpen(false) },
+            votedTracks = votedTracks,
+            userListeningStatuses = userListeningStatuses,
+            onVoteTrack = { id -> viewModel.voteTrack(id) },
+            onPlayTrack = { tr ->
+                viewModel.playTrack(tr)
+                viewModel.setCommunityVotingOpen(false)
+            },
+            onProposeNewSong = { title, artist ->
+                viewModel.proposeSongForVoting(title, artist)
+            }
+        )
     }
 }

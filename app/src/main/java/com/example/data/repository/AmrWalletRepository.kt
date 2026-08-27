@@ -101,45 +101,19 @@ class AmrWalletRepository(private val db: AppDatabase) {
         return listOf(
             ArkaiosPremiumTier(
                 id = "god_owner_licence",
-                title = "Membresía Anual God Owner & Nube 5TB",
-                description = "1 Año de Suscripción Anual. Acceso ilimitado a la Nube de 5TB en Google Drive, descargas FLAC 24-bit sin límites e inferencia IA musical.",
+                title = "Membresía Anual Única Arkaios VIP (100GB Nube)",
+                description = "Única Suscripción Anual Oficial ($500.00 MXN / año = 500 AMR-IO). Incluye 100GB de Almacenamiento Nube Musical Compartido en Google Drive, Subida de Melodías Propias, Sistema de Votación Comunitaria y Descargas FLAC ilimitadas.",
                 priceAmr = 500.00, // 500 AMR = $500 MXN / año
                 features = listOf(
-                    "Suscripción Válida por 1 Año Completo",
-                    "Nube ilimitada de 5TB en Google Drive",
-                    "Descargas FLAC 24-bit ilimitadas",
-                    "Inferencia IA Gemini 1.5 Pro musical",
-                    "Insignia Dorada God Card de Verificación"
+                    "Única Membresía Oficial por 1 Año Completo",
+                    "100GB de Almacenamiento Nube Musical en Google Drive",
+                    "Subida de Canciones y Melodías Propias",
+                    "Sistema de Votación Comunitaria y Ranking Top",
+                    "Indicador 'Escuchando Ahora' en Vivo",
+                    "Descargas FLAC 24-bit ilimitadas e Inferencia IA"
                 ),
-                badge = "⚡ MEMBRESÍA ANUAL 5TB GOD OWNER",
+                badge = "⚡ ÚNICA MEMBRESÍA ANUAL 100GB ($500 MXN/AÑO)",
                 isGodOwnerTier = true
-            ),
-            ArkaiosPremiumTier(
-                id = "pro_creator_node",
-                title = "Membresía Anual Creator Studio 50GB",
-                description = "1 Año de Suscripción Anual. Sube tus pistas .mp3/.flac a Google Drive 50GB, comparte con la comunidad y gana regalías AMR-IO.",
-                priceAmr = 300.00, // 300 AMR = $300 MXN / año
-                features = listOf(
-                    "Suscripción Válida por 1 Año Completo",
-                    "50GB de espacio en Google Drive para creadores",
-                    "Compartición directa de audio con usuarios",
-                    "Regalías en AMR-IO por cada reproducción",
-                    "Estadísticas de streaming en tiempo real"
-                ),
-                badge = "CREATOR STUDIO ANUAL 50GB"
-            ),
-            ArkaiosPremiumTier(
-                id = "tidal_master_hifi",
-                title = "Membresía Anual Tidal Master HiFi",
-                description = "1 Año de Suscripción Anual. Transmisión FLAC Master MQA hasta 9216 kbps integrada con ecualizador paramétrico IA.",
-                priceAmr = 200.00, // 200 AMR = $200 MXN / año
-                features = listOf(
-                    "Suscripción Válida por 1 Año Completo",
-                    "Flujo de datos Master MQA directo",
-                    "Ecualizador Paramétrico Arkaios AI",
-                    "Visualizador 3D de Ondas en Tiempo Real"
-                ),
-                badge = "TIDAL MASTER HIFI ANUAL"
             )
         )
     }

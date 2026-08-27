@@ -164,6 +164,79 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _appUpdateInfo = MutableStateFlow<com.example.data.update.AppUpdateInfo?>(null)
     val appUpdateInfo: StateFlow<com.example.data.update.AppUpdateInfo?> = _appUpdateInfo.asStateFlow()
 
+    // Community Voting & Live Listening Status State
+    private val _isCommunityVotingOpen = MutableStateFlow(false)
+    val isCommunityVotingOpen: StateFlow<Boolean> = _isCommunityVotingOpen.asStateFlow()
+
+    private val _votedTracks = MutableStateFlow<List<com.example.data.model.VotedTrack>>(
+        listOf(
+            com.example.data.model.VotedTrack(
+                id = "vote_01",
+                title = "Neon Genesis Arkaios",
+                artist = "Arkaios Sound Creator",
+                audioUrl = "https://cdn.arkaios.cloud/stream/genesis_neon.flac",
+                coverUrl = "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=400",
+                uploadedBy = "@ArkaiosMaster",
+                votesCount = 142,
+                userHasVoted = true,
+                isOriginalMelody = true
+            ),
+            com.example.data.model.VotedTrack(
+                id = "vote_02",
+                title = "Quantum Echoes FLAC",
+                artist = "Melody Maker Pro",
+                audioUrl = "https://cdn.arkaios.cloud/stream/quantum_echoes.flac",
+                coverUrl = "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=400",
+                uploadedBy = "@MelodyMaker",
+                votesCount = 98,
+                userHasVoted = false,
+                isOriginalMelody = true
+            ),
+            com.example.data.model.VotedTrack(
+                id = "vote_03",
+                title = "Starlight Cyber Symphony",
+                artist = "Aura Synthesizer",
+                audioUrl = "https://cdn.arkaios.cloud/stream/starlight.mp3",
+                coverUrl = "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400",
+                uploadedBy = "@AuraUser",
+                votesCount = 67,
+                userHasVoted = false,
+                isOriginalMelody = false
+            )
+        )
+    )
+    val votedTracks: StateFlow<List<com.example.data.model.VotedTrack>> = _votedTracks.asStateFlow()
+
+    private val _userListeningStatuses = MutableStateFlow<List<com.example.data.model.UserListeningStatus>>(
+        listOf(
+            com.example.data.model.UserListeningStatus(
+                id = "ls_01",
+                username = "DJ Prometeo",
+                avatarUrl = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200",
+                songTitle = "Neon Genesis Arkaios",
+                artistName = "Arkaios Sound Creator",
+                timestampText = "Ahora mismo"
+            ),
+            com.example.data.model.UserListeningStatus(
+                id = "ls_02",
+                username = "BeatMaster99",
+                avatarUrl = "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=200",
+                songTitle = "Blinding Lights",
+                artistName = "The Weeknd",
+                timestampText = "Hace 1 min"
+            ),
+            com.example.data.model.UserListeningStatus(
+                id = "ls_03",
+                username = "MelodyQueen",
+                avatarUrl = "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200",
+                songTitle = "Quantum Echoes FLAC",
+                artistName = "Melody Maker Pro",
+                timestampText = "Hace 3 min"
+            )
+        )
+    )
+    val userListeningStatuses: StateFlow<List<com.example.data.model.UserListeningStatus>> = _userListeningStatuses.asStateFlow()
+
     init {
         checkForUpdates()
     }
@@ -916,6 +989,46 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             _creatorStats.value = stats.copy(totalAmrEarned = 0.0)
             showSnackbar("✔ Reclamaste ${"%.2f".format(earned)} AMR depositados a tu Cartera")
         }
+    }
+
+    fun setCommunityVotingOpen(open: Boolean) {
+        _isCommunityVotingOpen.value = open
+    }
+
+    fun voteTrack(trackId: String) {
+        val currentList = _votedTracks.value.toMutableList()
+        val index = currentList.indexOfFirst { it.id == trackId }
+        if (index != -1) {
+            val item = currentList[index]
+            val newHasVoted = !item.userHasVoted
+            val newVoteCount = if (newHasVoted) item.votesCount + 1 else (item.votesCount - 1).coerceAtLeast(0)
+            currentList[index] = item.copy(userHasVoted = newHasVoted, votesCount = newVoteCount)
+            _votedTracks.value = currentList.sortedByDescending { it.votesCount }
+
+            if (newHasVoted) {
+                showSnackbar("🗳️ ¡Tu voto fue registrado para \"${item.title}\"!")
+            } else {
+                showSnackbar("Voto retirado de \"${item.title}\"")
+            }
+        }
+    }
+
+    fun proposeSongForVoting(title: String, artist: String) {
+        val newTrack = com.example.data.model.VotedTrack(
+            id = "vote_user_" + System.currentTimeMillis(),
+            title = title,
+            artist = artist,
+            audioUrl = "https://cdn.arkaios.cloud/stream/user_proposal.mp3",
+            coverUrl = "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400",
+            uploadedBy = "@ArkaiosMaster",
+            votesCount = 1,
+            userHasVoted = true,
+            isOriginalMelody = true
+        )
+        val currentList = _votedTracks.value.toMutableList()
+        currentList.add(0, newTrack)
+        _votedTracks.value = currentList.sortedByDescending { it.votesCount }
+        showSnackbar("🌟 ¡Tu propuesta \"$title\" fue publicada y ya puede ser votada!")
     }
 
     fun showSnackbar(msg: String) {

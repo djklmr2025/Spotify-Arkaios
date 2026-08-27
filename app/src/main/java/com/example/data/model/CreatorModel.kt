@@ -34,13 +34,13 @@ data class CreatorTrack(
 }
 
 data class CreatorCloudStats(
-    val allocatedStorageGb: Double = 50.0,
-    val usedStorageGb: Double = 1.84,
+    val allocatedStorageGb: Double = 100.0,
+    val usedStorageGb: Double = 2.45,
     val gdriveMasterFolderId: String = "14EVvOGfhLuhknCEz3uWqKkrNGPbukuWZ",
     val gdriveMasterFolderUrl: String = "https://drive.google.com/drive/folders/14EVvOGfhLuhknCEz3uWqKkrNGPbukuWZ?usp=sharing",
-    val totalTracksUploaded: Int = 3,
-    val totalGlobalStreams: Long = 1420,
-    val totalAmrEarned: Double = 7.10,
+    val totalTracksUploaded: Int = 4,
+    val totalGlobalStreams: Long = 1840,
+    val totalAmrEarned: Double = 12.50,
     val royaltyRatePerStreamAmr: Double = 0.005,
     val isCreatorNodeActive: Boolean = true
 )
