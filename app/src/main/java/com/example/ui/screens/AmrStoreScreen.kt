@@ -76,10 +76,12 @@ fun AmrStoreScreen(
     onOpenCheckout: (ArkaiosPremiumTier) -> Unit,
     onTransferTokens: (String, Double) -> Unit,
     onBuyTokensPayPal: (Double, Double) -> Unit = { _, _ -> },
-    onClaimListeningReward: () -> Unit = {}
+    onClaimListeningReward: () -> Unit = {},
+    onRedeemCode: (String) -> Unit = {}
 ) {
     var transferToAddress by remember { mutableStateOf("") }
     var transferAmountStr by remember { mutableStateOf("") }
+    var redeemCodeInput by remember { mutableStateOf("") }
 
     LazyColumn(
         modifier = Modifier
@@ -464,6 +466,71 @@ fun AmrStoreScreen(
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 13.sp
                             )
+                        }
+                    }
+                }
+            }
+        }
+
+        // Section: Canjear Código / Tarjeta de Saldo AMR
+        item {
+            Text(
+                text = "🎟️ Canjear Código o Tarjeta de Saldo AMR",
+                color = TextPrimary,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        item {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(SurfaceDark)
+                    .border(1.dp, BorderSubtleCyan, RoundedCornerShape(16.dp))
+                    .padding(16.dp)
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        text = "Ingresa tu código promocional o tarjeta criptográfica .arkaios para sumar saldo a tu cartera o activar tu Membresía VIP 100GB.",
+                        color = TextSecondary,
+                        fontSize = 11.sp
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        OutlinedTextField(
+                            value = redeemCodeInput,
+                            onValueChange = { redeemCodeInput = it },
+                            placeholder = { Text("Ej. AMR-500-VIP-8F2B4", fontSize = 12.sp, color = TextMuted) },
+                            modifier = Modifier.weight(1f),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = CyanLight,
+                                focusedLabelColor = CyanLight,
+                                focusedContainerColor = SurfaceElevated,
+                                unfocusedContainerColor = SurfaceElevated
+                            ),
+                            singleLine = true,
+                            shape = RoundedCornerShape(12.dp)
+                        )
+
+                        Button(
+                            onClick = {
+                                if (redeemCodeInput.isNotBlank()) {
+                                    onRedeemCode(redeemCodeInput)
+                                    redeemCodeInput = ""
+                                }
+                            },
+                            enabled = redeemCodeInput.isNotBlank(),
+                            colors = ButtonDefaults.buttonColors(containerColor = ArkaiosGold, contentColor = Color(0xFF08080C)),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.height(52.dp)
+                        ) {
+                            Text("Canjear", fontWeight = FontWeight.ExtraBold, fontSize = 12.sp)
                         }
                     }
                 }

@@ -413,7 +413,8 @@ fun MainAppScreen(viewModel: MainViewModel) {
                         transactions = transactions,
                         onOpenCheckout = { viewModel.openArkaiosPayCheckout(it) },
                         onTransferTokens = { addr, amt -> viewModel.transferAmrTokens(addr, amt) },
-                        onBuyTokensPayPal = { usd, tokens -> viewModel.buyTokensWithPayPal(usd, tokens) }
+                        onBuyTokensPayPal = { usd, tokens -> viewModel.buyTokensWithPayPal(usd, tokens) },
+                        onRedeemCode = { code -> viewModel.redeemAmrCode(code) }
                     )
                 }
 

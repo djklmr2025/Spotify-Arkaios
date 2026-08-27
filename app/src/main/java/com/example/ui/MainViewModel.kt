@@ -1004,6 +1004,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun redeemAmrCode(code: String) {
+        viewModelScope.launch {
+            val res = amrWalletRepository.redeemVoucherCode(code)
+            res.onSuccess { tx ->
+                showSnackbar("🎉 ¡Código canjeado con éxito! Saldo acreditado: +${"%.2f".format(tx.amount)} AMR")
+            }.onFailure { err ->
+                showSnackbar("✖ Error al canjear código: ${err.message}")
+            }
+        }
+    }
+
     // Tidal API & Cloud Audio Servers Controls
     fun setTidalModalOpen(open: Boolean) {
         _isTidalModalOpen.value = open
