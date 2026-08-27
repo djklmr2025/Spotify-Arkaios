@@ -85,6 +85,8 @@ fun HomeScreen(
     onOpenTidalModal: () -> Unit = {},
     onOpenCreatorStudio: () -> Unit = {},
     onOpenCommunityVoting: () -> Unit = {},
+    onOpenVipCreators: () -> Unit = {},
+    onOpenKaraokeStudio: () -> Unit = {},
     onOpenAuthModal: () -> Unit = {}
 ) {
     LazyColumn(
@@ -145,6 +147,52 @@ fun HomeScreen(
                 }
 
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+                    // VIP Creators Directory Pill Button (Karaoplay Style)
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(Color(0x26F59E0B))
+                            .border(1.dp, Color(0x66F59E0B), RoundedCornerShape(20.dp))
+                            .clickable { onOpenVipCreators() }
+                            .padding(horizontal = 7.dp, vertical = 5.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(2.dp)
+                        ) {
+                            Text("👥", fontSize = 10.sp)
+                            Text(
+                                text = "VIP Creadores",
+                                color = ArkaiosGold,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
+                    // Karaoke Studio Pill Button
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(Color(0x26EC4899))
+                            .border(1.dp, Color(0x66EC4899), RoundedCornerShape(20.dp))
+                            .clickable { onOpenKaraokeStudio() }
+                            .padding(horizontal = 7.dp, vertical = 5.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(2.dp)
+                        ) {
+                            Text("🎤", fontSize = 10.sp)
+                            Text(
+                                text = "Karaoke",
+                                color = Color(0xFFF472B6),
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
                     // Community Voting Pill Button
                     Box(
                         modifier = Modifier

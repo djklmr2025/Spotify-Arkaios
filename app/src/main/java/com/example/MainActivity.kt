@@ -152,6 +152,12 @@ fun MainAppScreen(viewModel: MainViewModel) {
     val votedTracks by viewModel.votedTracks.collectAsState()
     val userListeningStatuses by viewModel.userListeningStatuses.collectAsState()
 
+    // VIP Creators Directory ($500 MXN Annual Members) & Karaoke Studio
+    val isVipCreatorsModalOpen by viewModel.isVipCreatorsModalOpen.collectAsState()
+    val vipCreators by viewModel.vipCreators.collectAsState()
+    val isKaraokeModalOpen by viewModel.isKaraokeModalOpen.collectAsState()
+    val karaokeTracks by viewModel.karaokeTracks.collectAsState()
+
     appUpdateInfo?.let { info ->
         if (info.isUpdateAvailable) {
             UpdateAlertModal(
@@ -346,6 +352,8 @@ fun MainAppScreen(viewModel: MainViewModel) {
                         onOpenTidalModal = { viewModel.setTidalModalOpen(true) },
                         onOpenCreatorStudio = { viewModel.setCreatorStudioOpen(true) },
                         onOpenCommunityVoting = { viewModel.setCommunityVotingOpen(true) },
+                        onOpenVipCreators = { viewModel.setVipCreatorsModalOpen(true) },
+                        onOpenKaraokeStudio = { viewModel.setKaraokeModalOpen(true) },
                         onOpenAuthModal = { viewModel.openAuthModal() }
                     )
                     1 -> SearchScreen(
@@ -644,5 +652,40 @@ fun MainAppScreen(viewModel: MainViewModel) {
                 viewModel.proposeSongForVoting(title, artist)
             }
         )
+
+        // VIP Creators Directory Modal (Karaoplay Style - $500 MXN Annual Members)
+        if (isVipCreatorsModalOpen) {
+            com.example.ui.components.VipCreatorsDirectoryModal(
+                creators = vipCreators,
+                isCurrentUserVip = wallet.isGodOwnerLicensed,
+                onToggleFollow = { id -> viewModel.toggleFollowVipCreator(id) },
+                onVoteCreatorTrack = { title ->
+                    viewModel.proposeSongForVoting(title, "Creador VIP")
+                },
+                onOpenStoreForVip = {
+                    viewModel.setTab(4)
+                },
+                onDismiss = { viewModel.setVipCreatorsModalOpen(false) }
+            )
+        }
+
+        // Karaoke Studio & Karaoplay Engine Modal
+        if (isKaraokeModalOpen) {
+            com.example.ui.components.KaraokeStudioModal(
+                karaokeTracks = karaokeTracks,
+                onSearchKaraoke = { q -> viewModel.searchKaraokeTracks(q) },
+                onPlayKaraoke = { tr ->
+                    viewModel.playTrack(tr)
+                    viewModel.setKaraokeModalOpen(false)
+                },
+                onDownloadKaraoke = { kt ->
+                    viewModel.enqueueCustomUrlDownload(kt.sourceUrl, format = "MP3 (Karaoke HD)")
+                },
+                onForceLinkDownload = { url ->
+                    viewModel.enqueueCustomUrlDownload(url, format = "MP3 (Multi-Downloader Engine)")
+                },
+                onDismiss = { viewModel.setKaraokeModalOpen(false) }
+            )
+        }
     }
 }

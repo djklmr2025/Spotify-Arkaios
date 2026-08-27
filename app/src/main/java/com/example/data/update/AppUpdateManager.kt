@@ -15,7 +15,7 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 data class AppUpdateInfo(
-    val currentVersion: String = "v1.6.0",
+    val currentVersion: String = "v1.9.0",
     val latestVersion: String = "",
     val downloadUrl: String = "",
     val releaseNotes: String = "",
@@ -24,7 +24,7 @@ data class AppUpdateInfo(
 
 object AppUpdateManager {
 
-    const val CURRENT_VERSION = "v1.6.0"
+    const val CURRENT_VERSION = "v1.9.0"
     private const val GITHUB_RELEASES_API = "https://api.github.com/repos/djklmr2025/Spotify-Arkaios/releases/latest"
 
     suspend fun checkForUpdates(): AppUpdateInfo = withContext(Dispatchers.IO) {

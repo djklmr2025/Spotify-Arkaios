@@ -237,6 +237,131 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     )
     val userListeningStatuses: StateFlow<List<com.example.data.model.UserListeningStatus>> = _userListeningStatuses.asStateFlow()
 
+    // Featured VIP Creators Directory State ($500 MXN Annual Members)
+    private val _isVipCreatorsModalOpen = MutableStateFlow(false)
+    val isVipCreatorsModalOpen: StateFlow<Boolean> = _isVipCreatorsModalOpen.asStateFlow()
+
+    private val _vipCreators = MutableStateFlow<List<com.example.data.model.VipCreator>>(
+        listOf(
+            com.example.data.model.VipCreator(
+                id = "vip_01",
+                username = "karaoplay.com",
+                displayName = "karaoplay.com",
+                avatarUrl = "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=300",
+                followerCount = 11681,
+                isFollowing = true,
+                bio = "Catálogo Oficial Karaoplay & Pistas Karaoke HD",
+                storageUsageGb = 88.5,
+                publishedTracksCount = 1420,
+                topTrackTitle = "Starboy (Karaoke Version)",
+                topTrackVotes = 345
+            ),
+            com.example.data.model.VipCreator(
+                id = "vip_02",
+                username = "jocelyn_vocal",
+                displayName = "jocelyn",
+                avatarUrl = "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=300",
+                followerCount = 1450,
+                isFollowing = false,
+                bio = "Vocalista & Compositora de Melodías Propias",
+                storageUsageGb = 45.2,
+                publishedTracksCount = 38,
+                topTrackTitle = "Aura de Montaña Acoustic",
+                topTrackVotes = 188
+            ),
+            com.example.data.model.VipCreator(
+                id = "vip_03",
+                username = "claulett_music",
+                displayName = "claulett",
+                avatarUrl = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300",
+                followerCount = 5101,
+                isFollowing = true,
+                bio = "Covers Synthpop & Baladas Románticas",
+                storageUsageGb = 62.0,
+                publishedTracksCount = 94,
+                topTrackTitle = "Luna Sintética Remix 2026",
+                topTrackVotes = 310
+            ),
+            com.example.data.model.VipCreator(
+                id = "vip_04",
+                username = "javisplay_beats",
+                displayName = "javisplay",
+                avatarUrl = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300",
+                followerCount = 1230,
+                isFollowing = false,
+                bio = "Productor Urban Beats & Remixes",
+                storageUsageGb = 31.8,
+                publishedTracksCount = 52,
+                topTrackTitle = "Electro Barrio Flow",
+                topTrackVotes = 95
+            ),
+            com.example.data.model.VipCreator(
+                id = "vip_05",
+                username = "qfharrinson_audio",
+                displayName = "qfharrinson",
+                avatarUrl = "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300",
+                followerCount = 1000,
+                isFollowing = false,
+                bio = "Ingeniero Master Studio FLAC 24-bit",
+                storageUsageGb = 95.1,
+                publishedTracksCount = 110,
+                topTrackTitle = "Quantum Master Audio 100GB",
+                topTrackVotes = 82
+            )
+        )
+    )
+    val vipCreators: StateFlow<List<com.example.data.model.VipCreator>> = _vipCreators.asStateFlow()
+
+    // Karaoke Studio & Karaoplay Engine State
+    private val _isKaraokeModalOpen = MutableStateFlow(false)
+    val isKaraokeModalOpen: StateFlow<Boolean> = _isKaraokeModalOpen.asStateFlow()
+
+    private val _allKaraokeTracks = listOf(
+        com.example.data.model.KaraokeTrack(
+            id = "kar_01",
+            title = "Starboy (Official Karaoke)",
+            artist = "The Weeknd ft. Daft Punk",
+            sourcePlatform = "Karaoplay.com",
+            sourceUrl = "https://www.karaoplay.com/karaokes/starboy-the-weeknd",
+            coverUrl = "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400",
+            durationSeconds = 230,
+            viewsCount = 15420
+        ),
+        com.example.data.model.KaraokeTrack(
+            id = "kar_02",
+            title = "La Incondicional (Pista Instrumental HD)",
+            artist = "Luis Miguel",
+            sourcePlatform = "Karaoplay.com",
+            sourceUrl = "https://www.karaoplay.com/karaokes/la-incondicional-luis-miguel",
+            coverUrl = "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400",
+            durationSeconds = 265,
+            viewsCount = 28900
+        ),
+        com.example.data.model.KaraokeTrack(
+            id = "kar_03",
+            title = "Bohemian Rhapsody (Karaoke Version)",
+            artist = "Queen",
+            sourcePlatform = "YouTube Karaoke",
+            sourceUrl = "https://www.youtube.com/watch?v=fJ9rUzIMcZQ",
+            coverUrl = "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400",
+            durationSeconds = 354,
+            viewsCount = 94100
+        ),
+        com.example.data.model.KaraokeTrack(
+            id = "kar_04",
+            title = "Despacito (Karaoke Studio Master)",
+            artist = "Luis Fonsi ft. Daddy Yankee",
+            sourcePlatform = "Karaoplay.com",
+            sourceUrl = "https://www.karaoplay.com/karaokes/despacito-luis-fonsi",
+            coverUrl = "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=400",
+            durationSeconds = 228,
+            viewsCount = 61200
+        )
+    )
+
+    private val _karaokeTracks = MutableStateFlow<List<com.example.data.model.KaraokeTrack>>(_allKaraokeTracks)
+    val karaokeTracks: StateFlow<List<com.example.data.model.KaraokeTrack>> = _karaokeTracks.asStateFlow()
+
     init {
         checkForUpdates()
     }
@@ -993,6 +1118,45 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setCommunityVotingOpen(open: Boolean) {
         _isCommunityVotingOpen.value = open
+    }
+
+    fun setVipCreatorsModalOpen(open: Boolean) {
+        _isVipCreatorsModalOpen.value = open
+    }
+
+    fun toggleFollowVipCreator(creatorId: String) {
+        val currentList = _vipCreators.value.toMutableList()
+        val index = currentList.indexOfFirst { it.id == creatorId }
+        if (index != -1) {
+            val item = currentList[index]
+            val newIsFollowing = !item.isFollowing
+            val newFollowers = if (newIsFollowing) item.followerCount + 1 else (item.followerCount - 1).coerceAtLeast(0)
+            currentList[index] = item.copy(isFollowing = newIsFollowing, followerCount = newFollowers)
+            _vipCreators.value = currentList
+
+            if (newIsFollowing) {
+                showSnackbar("➕ Ahora sigues a @${item.username}")
+            } else {
+                showSnackbar("Dejaste de seguir a @${item.username}")
+            }
+        }
+    }
+
+    fun setKaraokeModalOpen(open: Boolean) {
+        _isKaraokeModalOpen.value = open
+    }
+
+    fun searchKaraokeTracks(query: String) {
+        val trimmed = query.trim()
+        if (trimmed.isBlank()) {
+            _karaokeTracks.value = _allKaraokeTracks
+        } else {
+            _karaokeTracks.value = _allKaraokeTracks.filter {
+                it.title.contains(trimmed, ignoreCase = true) ||
+                it.artist.contains(trimmed, ignoreCase = true) ||
+                it.sourcePlatform.contains(trimmed, ignoreCase = true)
+            }
+        }
     }
 
     fun voteTrack(trackId: String) {
