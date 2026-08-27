@@ -235,13 +235,13 @@ fun AmrStoreScreen(
         item {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    text = "Recargar Tokens AMR con PayPal",
+                    text = "Recargar Tokens AMR-IO con PayPal (1 AMR = 1 MXN)",
                     color = TextPrimary,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "Compra saldo directo vía PayPal (SDK v6), Tarjetas o Pay Later",
+                    text = "Valor Real Ecosistema: 1 AMR-IO = $1.00 MXN (Peso Mexicano). Recarga vía PayPal SDK v6",
                     color = TextSecondary,
                     fontSize = 12.sp
                 )
@@ -257,12 +257,13 @@ fun AmrStoreScreen(
                             .clip(RoundedCornerShape(14.dp))
                             .background(SurfaceCard)
                             .border(1.dp, BorderSubtle, RoundedCornerShape(14.dp))
-                            .clickable { onBuyTokensPayPal(4.99, 50.0) }
+                            .clickable { onBuyTokensPayPal(2.50, 50.0) }
                             .padding(12.dp)
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                            Text("50 AMR", color = CyanLight, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                            Text("$4.99 USD", color = TextSecondary, fontSize = 11.sp)
+                            Text("50 AMR-IO", color = CyanLight, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                            Text("$50.00 MXN", color = ArkaiosGold, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            Text("(~$2.50 USD)", color = TextSecondary, fontSize = 10.sp)
                             Spacer(modifier = Modifier.height(6.dp))
                             Box(
                                 modifier = Modifier
@@ -282,12 +283,13 @@ fun AmrStoreScreen(
                             .clip(RoundedCornerShape(14.dp))
                             .background(SurfaceDark)
                             .border(1.dp, BorderSubtleCyan, RoundedCornerShape(14.dp))
-                            .clickable { onBuyTokensPayPal(9.99, 100.0) }
+                            .clickable { onBuyTokensPayPal(5.00, 100.0) }
                             .padding(12.dp)
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                            Text("100 AMR", color = CyanLight, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                            Text("$9.99 USD", color = TextSecondary, fontSize = 11.sp)
+                            Text("100 AMR-IO", color = CyanLight, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                            Text("$100.00 MXN", color = ArkaiosGold, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            Text("(~$5.00 USD)", color = TextSecondary, fontSize = 10.sp)
                             Spacer(modifier = Modifier.height(6.dp))
                             Box(
                                 modifier = Modifier
@@ -307,12 +309,13 @@ fun AmrStoreScreen(
                             .clip(RoundedCornerShape(14.dp))
                             .background(SurfaceCard)
                             .border(1.dp, BorderSubtle, RoundedCornerShape(14.dp))
-                            .clickable { onBuyTokensPayPal(44.99, 500.0) }
+                            .clickable { onBuyTokensPayPal(25.00, 500.0) }
                             .padding(12.dp)
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                            Text("500 AMR", color = ArkaiosGold, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                            Text("$44.99 USD", color = TextSecondary, fontSize = 11.sp)
+                            Text("500 AMR-IO", color = ArkaiosGold, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                            Text("$500.00 MXN", color = ArkaiosGold, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            Text("(~$25.00 USD)", color = TextSecondary, fontSize = 10.sp)
                             Spacer(modifier = Modifier.height(6.dp))
                             Box(
                                 modifier = Modifier

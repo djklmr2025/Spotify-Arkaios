@@ -66,8 +66,16 @@ class AmrWalletRepository(private val db: AppDatabase) {
         val isGod = if (concept.contains("God Owner", ignoreCase = true)) true else current.isGodOwnerLicensed
         val isTidal = if (concept.contains("Tidal", ignoreCase = true)) true else current.isTidalHiFiUnlocked
 
-        // If it's a token pack purchase, convert USD to AMR (e.g. $1 USD = 10 AMR)
-        val amrToAdd = if (!isMembership) amountUsd * 10.0 else 0.0
+        // Tasa de Cambio Ecosistema AMR-IO: 1 AMR = 1 MXN ($1 Peso Mexicano)
+        // Convert USD paid to MXN/AMR (aprox $1 USD = 20 MXN / 20 AMR, o monto directo asignado)
+        val amrToAdd = if (!isMembership) {
+            when {
+                amountUsd >= 20.0 -> 500.0 // Pack 500 AMR ($500 MXN)
+                amountUsd >= 4.0 -> 100.0   // Pack 100 AMR ($100 MXN)
+                else -> 50.0                // Pack 50 AMR ($50 MXN)
+            }
+        } else 0.0
+
         val updatedWallet = current.copy(
             balance = current.balance + amrToAdd,
             isGodOwnerLicensed = isGod,
@@ -80,8 +88,8 @@ class AmrWalletRepository(private val db: AppDatabase) {
         val transaction = AmrTransaction(
             id = "tx_pp_" + System.currentTimeMillis(),
             type = if (isMembership) AmrTxType.PAYMENT else AmrTxType.REWARD_MINT,
-            amount = if (isMembership) amountUsd else amrToAdd,
-            concept = "$concept (PayPal v6 SDK • $orderId)",
+            amount = if (isMembership) amountUsd * 20.0 else amrToAdd,
+            concept = "$concept (PayPal v6 SDK • 1 AMR = 1 MXN • $orderId)",
             txHash = txHash,
             status = "CONFIRMED"
         )
@@ -93,44 +101,45 @@ class AmrWalletRepository(private val db: AppDatabase) {
         return listOf(
             ArkaiosPremiumTier(
                 id = "god_owner_licence",
-                title = "Suscripción Licencia ARKAIOS God Owner",
-                description = "Acceso ilimitado a todos los nodos del ecosistema, descargas sin límites en Puter Cloud y cuota de inferencia en Gemini 1.5 Pro / GPT-4o.",
-                priceAmr = 49.99,
+                title = "Membresía Anual God Owner & Nube 5TB",
+                description = "1 Año de Suscripción Anual. Acceso ilimitado a la Nube de 5TB en Google Drive, descargas FLAC 24-bit sin límites e inferencia IA musical.",
+                priceAmr = 500.00, // 500 AMR = $500 MXN / año
                 features = listOf(
+                    "Suscripción Válida por 1 Año Completo",
+                    "Nube ilimitada de 5TB en Google Drive",
                     "Descargas FLAC 24-bit ilimitadas",
-                    "Reproducción Offline sin restricciones",
-                    "Nodo de Audio Dedicado en Puter Cloud",
-                    "Inferencia IA de recomendación musical",
-                    "Insignia Dorada de Verificación God Card"
+                    "Inferencia IA Gemini 1.5 Pro musical",
+                    "Insignia Dorada God Card de Verificación"
                 ),
-                badge = "⚡ LICENCIA OFICIAL GOD OWNER",
+                badge = "⚡ MEMBRESÍA ANUAL 5TB GOD OWNER",
                 isGodOwnerTier = true
             ),
             ArkaiosPremiumTier(
-                id = "tidal_master_hifi",
-                title = "Tidal Master HiFi & MQA Pass",
-                description = "Transmisión de audio sin pérdidas hasta 9216 kbps (192 kHz / 24-bit FLAC) conectada directamente al SDK de Tidal.",
-                priceAmr = 19.99,
+                id = "pro_creator_node",
+                title = "Membresía Anual Creator Studio 50GB",
+                description = "1 Año de Suscripción Anual. Sube tus pistas .mp3/.flac a Google Drive 50GB, comparte con la comunidad y gana regalías AMR-IO.",
+                priceAmr = 300.00, // 300 AMR = $300 MXN / año
                 features = listOf(
-                    "Flujo de datos Master MQA directo",
-                    "Ecualizador Paramétrico Arkaios AI",
-                    "Visualizador 3D de Ondas en Tiempo Real",
-                    "Cero Publicidad de por vida"
+                    "Suscripción Válida por 1 Año Completo",
+                    "50GB de espacio en Google Drive para creadores",
+                    "Compartición directa de audio con usuarios",
+                    "Regalías en AMR-IO por cada reproducción",
+                    "Estadísticas de streaming en tiempo real"
                 ),
-                badge = "TIDAL MASTER HIFI"
+                badge = "CREATOR STUDIO ANUAL 50GB"
             ),
             ArkaiosPremiumTier(
-                id = "pro_creator_node",
-                title = "Arkaios Sound Creator Node",
-                description = "Sube tus pistas .mp3 y .m4a a la nube descentralizada y monetiza con AMR cada reproducción de tus oyentes.",
-                priceAmr = 29.99,
+                id = "tidal_master_hifi",
+                title = "Membresía Anual Tidal Master HiFi",
+                description = "1 Año de Suscripción Anual. Transmisión FLAC Master MQA hasta 9216 kbps integrada con ecualizador paramétrico IA.",
+                priceAmr = 200.00, // 200 AMR = $200 MXN / año
                 features = listOf(
-                    "Hosting de 50GB en Puter.fs",
-                    "Monetización de pistas con AMR Tokens",
-                    "Estadísticas de streaming en vivo",
-                    "API Webhook de Arkaios Pay para ventas"
+                    "Suscripción Válida por 1 Año Completo",
+                    "Flujo de datos Master MQA directo",
+                    "Ecualizador Paramétrico Arkaios AI",
+                    "Visualizador 3D de Ondas en Tiempo Real"
                 ),
-                badge = "CREATOR NODE"
+                badge = "TIDAL MASTER HIFI ANUAL"
             )
         )
     }
