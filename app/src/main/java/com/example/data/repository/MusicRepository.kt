@@ -40,6 +40,16 @@ class MusicRepository(private val context: Context, private val db: AppDatabase)
 
     val customPlaylistsFlow: Flow<List<PlaylistEntity>> = playlistDao.getAllPlaylists()
 
+    suspend fun searchOnlineTracks(query: String): List<Track> = withContext(Dispatchers.IO) {
+        if (query.isBlank()) return@withContext emptyList()
+        val online = YouTubeMusicProvider.searchTracks(query, limit = 25)
+        if (online.isNotEmpty()) {
+            val entities = online.map { TrackEntity.fromTrack(it) }
+            trackDao.insertOrUpdateTracks(entities)
+        }
+        online
+    }
+
     suspend fun getInitialCatalog(): List<Track> = withContext(Dispatchers.IO) {
         val defaultTracks = listOf(
             Track(

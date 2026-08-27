@@ -213,7 +213,7 @@ fun MainAppScreen(viewModel: MainViewModel) {
                         )
                     }
 
-                    // Navigation Bar (4 tabs)
+                    // Navigation Bar (3 clean tabs: Inicio, Buscar, Biblioteca/Descargas)
                     NavigationBar(
                         containerColor = SurfaceDark,
                         contentColor = TextPrimary,
@@ -249,7 +249,7 @@ fun MainAppScreen(viewModel: MainViewModel) {
                                     contentDescription = "Buscar"
                                 )
                             },
-                            label = { Text("Buscar", fontSize = 11.sp, fontWeight = if (selectedTab == 1) FontWeight.Bold else FontWeight.Normal) },
+                            label = { Text("Buscar (YouTube)", fontSize = 11.sp, fontWeight = if (selectedTab == 1) FontWeight.Bold else FontWeight.Normal) },
                             colors = NavigationBarItemDefaults.colors(
                                 selectedIconColor = CyanLight,
                                 selectedTextColor = CyanLight,
@@ -269,7 +269,7 @@ fun MainAppScreen(viewModel: MainViewModel) {
                                     contentDescription = "Biblioteca"
                                 )
                             },
-                            label = { Text("Biblioteca", fontSize = 11.sp, fontWeight = if (selectedTab == 2) FontWeight.Bold else FontWeight.Normal) },
+                            label = { Text("Biblioteca / Descargas", fontSize = 11.sp, fontWeight = if (selectedTab == 2) FontWeight.Bold else FontWeight.Normal) },
                             colors = NavigationBarItemDefaults.colors(
                                 selectedIconColor = CyanLight,
                                 selectedTextColor = CyanLight,
@@ -278,46 +278,6 @@ fun MainAppScreen(viewModel: MainViewModel) {
                                 indicatorColor = Color(0x2606B6D4)
                             ),
                             modifier = Modifier.testTag("nav_tab_library")
-                        )
-
-                        NavigationBarItem(
-                            selected = selectedTab == 3,
-                            onClick = { viewModel.setTab(3) },
-                            icon = {
-                                Icon(
-                                    imageVector = if (selectedTab == 3) Icons.Filled.Radio else Icons.Outlined.Radio,
-                                    contentDescription = "Radio"
-                                )
-                            },
-                            label = { Text("Radio", fontSize = 11.sp, fontWeight = if (selectedTab == 3) FontWeight.Bold else FontWeight.Normal) },
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = CyanLight,
-                                selectedTextColor = CyanLight,
-                                unselectedIconColor = TextMuted,
-                                unselectedTextColor = TextMuted,
-                                indicatorColor = Color(0x2606B6D4)
-                            ),
-                            modifier = Modifier.testTag("nav_tab_radio")
-                        )
-
-                        NavigationBarItem(
-                            selected = selectedTab == 4,
-                            onClick = { viewModel.setTab(4) },
-                            icon = {
-                                Icon(
-                                    imageVector = if (selectedTab == 4) Icons.Filled.ElectricBolt else Icons.Outlined.ElectricBolt,
-                                    contentDescription = "AMR Pay"
-                                )
-                            },
-                            label = { Text("AMR Pay", fontSize = 11.sp, fontWeight = if (selectedTab == 4) FontWeight.Bold else FontWeight.Normal) },
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = CyanLight,
-                                selectedTextColor = CyanLight,
-                                unselectedIconColor = TextMuted,
-                                unselectedTextColor = TextMuted,
-                                indicatorColor = Color(0x2606B6D4)
-                            ),
-                            modifier = Modifier.testTag("nav_tab_amr")
                         )
                     }
                 }

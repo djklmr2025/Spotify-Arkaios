@@ -479,8 +479,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
         searchJob = viewModelScope.launch {
             _isTidalSearching.value = true
-            kotlinx.coroutines.delay(200) // debounce
-            val results = tidalApiService.searchMultiSourceTracks(trimmed, tidalApiService.selectedSource.value)
+            kotlinx.coroutines.delay(250) // debounce
+            val results = musicRepository.searchOnlineTracks(trimmed)
             _tidalSearchResults.value = results
             _isTidalSearching.value = false
         }

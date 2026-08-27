@@ -95,7 +95,7 @@ fun HomeScreen(
             .padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Top Header with User Profile, Creator Studio, TIDAL API pill, and AMR Balance Badge
+        // Top Header with Title and Search/Downloader Shortcuts
         item {
             Row(
                 modifier = Modifier
@@ -107,13 +107,11 @@ fun HomeScreen(
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    modifier = Modifier
-                        .clickable { onOpenAuthModal() }
-                        .testTag("home_user_profile_header")
+                    modifier = Modifier.testTag("home_user_profile_header")
                 ) {
                     AsyncImage(
                         model = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200",
-                        contentDescription = "Perfil Usuario",
+                        contentDescription = "Arkaios Player",
                         modifier = Modifier
                             .size(42.dp)
                             .clip(CircleShape)
@@ -121,171 +119,41 @@ fun HomeScreen(
                         contentScale = ContentScale.Crop
                     )
                     Column {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text(
-                                text = wallet.userName.ifEmpty { "Arkaios Master" },
-                                color = TextPrimary,
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                            if (wallet.isGodOwnerLicensed) {
-                                Icon(
-                                    imageVector = Icons.Default.Verified,
-                                    contentDescription = "God Owner",
-                                    tint = CyanLight,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            }
-                        }
                         Text(
-                            text = if (wallet.isGodOwnerLicensed) "⚡ Membresía Anual 100GB VIP" else "100GB Nube • Google Drive",
-                            color = if (wallet.isGodOwnerLicensed) CyanLight else EmeraldLight,
+                            text = "Spotify-Arkaios",
+                            color = TextPrimary,
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "Reproductor Libre • Búsqueda YouTube & YT Music",
+                            color = CyanLight,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Medium
                         )
                     }
                 }
 
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
-                    // VIP Creators Directory Pill Button (Karaoplay Style)
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(Color(0x26F59E0B))
-                            .border(1.dp, Color(0x66F59E0B), RoundedCornerShape(20.dp))
-                            .clickable { onOpenVipCreators() }
-                            .padding(horizontal = 7.dp, vertical = 5.dp)
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(SurfaceDark)
+                        .border(1.dp, BorderSubtleCyan, RoundedCornerShape(20.dp))
+                        .clickable { onOpenTidalModal() }
+                        .padding(horizontal = 10.dp, vertical = 6.dp)
+                        .testTag("home_yt_pill_button")
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(2.dp)
-                        ) {
-                            Text("👥", fontSize = 10.sp)
-                            Text(
-                                text = "VIP Creadores",
-                                color = ArkaiosGold,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-
-                    // Karaoke Studio Pill Button
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(Color(0x26EC4899))
-                            .border(1.dp, Color(0x66EC4899), RoundedCornerShape(20.dp))
-                            .clickable { onOpenKaraokeStudio() }
-                            .padding(horizontal = 7.dp, vertical = 5.dp)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(2.dp)
-                        ) {
-                            Text("🎤", fontSize = 10.sp)
-                            Text(
-                                text = "Karaoke",
-                                color = Color(0xFFF472B6),
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-
-                    // Community Voting Pill Button
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(Color(0x2610B981))
-                            .border(1.dp, Color(0x6610B981), RoundedCornerShape(20.dp))
-                            .clickable { onOpenCommunityVoting() }
-                            .padding(horizontal = 7.dp, vertical = 5.dp)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(2.dp)
-                        ) {
-                            Text("🌟", fontSize = 10.sp)
-                            Text(
-                                text = "Votos",
-                                color = EmeraldLight,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-
-                    // Creator Studio Pill Button (Google Drive 100GB)
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(Color(0x26F59E0B))
-                            .border(1.dp, Color(0x66F59E0B), RoundedCornerShape(20.dp))
-                            .clickable { onOpenCreatorStudio() }
-                            .padding(horizontal = 7.dp, vertical = 5.dp)
-                            .testTag("home_creator_studio_pill_button")
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(2.dp)
-                        ) {
-                            Text(
-                                text = "100GB Studio",
-                                color = ArkaiosGold,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-
-                    // TIDAL API Pill Button
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(SurfaceDark)
-                            .border(1.dp, BorderSubtleCyan, RoundedCornerShape(20.dp))
-                            .clickable { onOpenTidalModal() }
-                            .padding(horizontal = 8.dp, vertical = 6.dp)
-                            .testTag("home_tidal_pill_button")
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Text("🌊", fontSize = 11.sp)
-                            Text(
-                                text = "TIDAL",
-                                color = CyanLight,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-
-                    // AMR Balance Quick Pill
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(SurfaceDark)
-                            .border(1.dp, BorderSubtle, RoundedCornerShape(20.dp))
-                            .clickable { onNavigateToAmrStore() }
-                            .padding(horizontal = 8.dp, vertical = 6.dp)
-                            .testTag("home_amr_pill_button")
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Text("🪙", fontSize = 11.sp)
-                            Text(
-                                text = "${"%.2f".format(wallet.balance)} AMR",
-                                color = CyanLight,
-                                fontSize = 11.sp,
-                                fontFamily = FontFamily.Monospace,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
+                        Text("⚡", fontSize = 11.sp)
+                        Text(
+                            text = "Servidores HQ",
+                            color = CyanLight,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 }
             }

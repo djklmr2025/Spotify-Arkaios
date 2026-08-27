@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 import kotlin.random.Random
 
@@ -121,42 +122,47 @@ class AudioPlayerEngine(private val context: Context) {
     }
 
     fun playTrack(track: Track) {
-        try {
-            val qIdx = playlistQueue.indexOfFirst { it.id == track.id }.let { if (it >= 0) it else currentQueueIndex }
-            currentQueueIndex = qIdx
-            _playbackState.value = _playbackState.value.copy(
-                currentTrack = track,
-                isBuffering = true,
-                currentPositionMs = 0L,
-                durationMs = track.durationMs,
-                queue = if (playlistQueue.isEmpty()) listOf(track) else playlistQueue,
-                queueIndex = currentQueueIndex
-            )
+        scope.launch(Dispatchers.Main) {
+            try {
+                val qIdx = playlistQueue.indexOfFirst { it.id == track.id }.let { if (it >= 0) it else currentQueueIndex }
+                currentQueueIndex = qIdx
+                _playbackState.value = _playbackState.value.copy(
+                    currentTrack = track,
+                    isBuffering = true,
+                    currentPositionMs = 0L,
+                    durationMs = track.durationMs,
+                    queue = if (playlistQueue.isEmpty()) listOf(track) else playlistQueue,
+                    queueIndex = currentQueueIndex
+                )
 
-            mediaPlayer?.reset()
+                mediaPlayer?.reset()
 
-            val audioUri: Uri = if (track.isDownloaded && track.localFilePath != null && File(track.localFilePath).exists()) {
-                val localFile = File(track.localFilePath)
-                val playableFile = com.example.data.crypto.ArkaiosOfflineCryptoEngine.getDecryptedPlayableFile(context, localFile)
-                if (playableFile != null && playableFile.exists()) {
-                    Uri.fromFile(playableFile)
+                val resolvedStreamUrl = if (track.audioUrl.contains("youtube") || track.id.startsWith("yt_")) {
+                    withContext(Dispatchers.IO) {
+                        com.example.data.repository.YouTubeMusicProvider.resolveAudioStream(track.audioUrl)
+                    } ?: track.audioUrl
                 } else {
-                    Uri.fromFile(localFile)
+                    track.audioUrl
                 }
-            } else {
-                Uri.parse(track.audioUrl)
-            }
 
-            if (audioUri.scheme?.startsWith("http") == true) {
-                val headers = mapOf("User-Agent" to "Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36 ArkaiosTify/2.0")
-                mediaPlayer?.setDataSource(context, audioUri, headers)
-            } else {
-                mediaPlayer?.setDataSource(context, audioUri)
+                val audioUri: Uri = if (track.isDownloaded && track.localFilePath != null && File(track.localFilePath).exists()) {
+                    val localFile = File(track.localFilePath)
+                    Uri.fromFile(localFile)
+                } else {
+                    Uri.parse(resolvedStreamUrl)
+                }
+
+                if (audioUri.scheme?.startsWith("http") == true) {
+                    val headers = mapOf("User-Agent" to "Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36")
+                    mediaPlayer?.setDataSource(context, audioUri, headers)
+                } else {
+                    mediaPlayer?.setDataSource(context, audioUri)
+                }
+                mediaPlayer?.prepareAsync()
+            } catch (e: Exception) {
+                Log.e("AudioPlayerEngine", "Error playing track ${track.title}", e)
+                _playbackState.value = _playbackState.value.copy(isBuffering = false, isPlaying = false)
             }
-            mediaPlayer?.prepareAsync()
-        } catch (e: Exception) {
-            Log.e("AudioPlayerEngine", "Error playing track ${track.title}", e)
-            _playbackState.value = _playbackState.value.copy(isBuffering = false, isPlaying = false)
         }
     }
 
