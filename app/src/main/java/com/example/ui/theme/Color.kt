@@ -27,6 +27,7 @@ val ArkaiosGoldGlow = Color(0x33F59E0B)
 val EmeraldAccent = Color(0xFF10B981)
 val EmeraldLight = Color(0xFF34D399)
 val EmeraldGlow = Color(0x3310B981)
+val SpotifyGreen = Color(0xFF1DB954)
 
 val TidalCyan = CyanLight
 val TidalCyanGlow = CyanGlow

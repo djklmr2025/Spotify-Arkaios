@@ -85,6 +85,8 @@ import com.example.ui.theme.TextMuted
 import com.example.ui.theme.TextPrimary
 import com.example.ui.theme.TextSecondary
 
+import com.example.ui.components.UpdateAlertModal
+
 class MainActivity : ComponentActivity() {
 
     private val viewModel: MainViewModel by viewModels()
@@ -143,6 +145,16 @@ fun MainAppScreen(viewModel: MainViewModel) {
     val radioStations by viewModel.radioStations.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
+    val appUpdateInfo by viewModel.appUpdateInfo.collectAsState()
+
+    appUpdateInfo?.let { info ->
+        if (info.isUpdateAvailable) {
+            UpdateAlertModal(
+                updateInfo = info,
+                onDismiss = { viewModel.dismissUpdateDialog() }
+            )
+        }
+    }
 
     LaunchedEffect(snackbarMessage) {
         snackbarMessage?.let { msg ->

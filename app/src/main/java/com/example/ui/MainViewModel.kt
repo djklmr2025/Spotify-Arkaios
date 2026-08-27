@@ -160,6 +160,27 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _isDownloaderSheetOpen = MutableStateFlow(false)
     val isDownloaderSheetOpen: StateFlow<Boolean> = _isDownloaderSheetOpen.asStateFlow()
 
+    // App Update OTA State
+    private val _appUpdateInfo = MutableStateFlow<com.example.data.update.AppUpdateInfo?>(null)
+    val appUpdateInfo: StateFlow<com.example.data.update.AppUpdateInfo?> = _appUpdateInfo.asStateFlow()
+
+    init {
+        checkForUpdates()
+    }
+
+    fun checkForUpdates() {
+        viewModelScope.launch {
+            val info = com.example.data.update.AppUpdateManager.checkForUpdates()
+            if (info.isUpdateAvailable) {
+                _appUpdateInfo.value = info
+            }
+        }
+    }
+
+    fun dismissUpdateDialog() {
+        _appUpdateInfo.value = null
+    }
+
     // Search query state
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
