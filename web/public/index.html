@@ -3,158 +3,290 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spotify-Arkaios — El Ecosistema Inteligente de Música & Radio FM</title>
-    <meta name="description" content="Descarga oficial de la APK Spotify-Arkaios. Reproductor de música nativo, radio FM en vivo, escáner de archivos locales y monedero AMR Pay.">
+    <title>Spotify-Arkaios — Plataforma Web & APK Nativa Android v2.0.0</title>
+    <meta name="description" content="Plataforma web integrada y APK nativa de Spotify-Arkaios. Búsqueda multi-fuente (YouTube #1, TIDAL #2), reproductor de audio, descargas en MP3/FLAC sin cifrar y radio 24/7.">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
-
-    <!-- Header / Navbar -->
-    <header class="navbar">
-        <div class="nav-container">
-            <div class="logo">
-                <i class="fa-solid fa-bolt logo-bolt"></i>
-                <span>SPOTIFY <span class="cyan-gradient">ARKAIOS</span></span>
+    <div class="app-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="logo-container">
+                <i class="fa-solid fa-bolt logo-icon"></i>
+                <span class="logo-text">Spotify<span class="highlight">Arkaios</span></span>
+                <span class="version-chip">v2.0.0</span>
             </div>
             
-            <nav class="nav-links">
-                <a href="#features"><i class="fa-solid fa-star"></i> Características</a>
-                <a href="#preview"><i class="fa-solid fa-mobile-screen-button"></i> Vista Previa</a>
-                <a href="https://github.com/djklmr2025/Spotify-Arkaios" target="_blank"><i class="fa-brands fa-github"></i> GitHub</a>
+            <div class="mode-switcher-sidebar">
+                <button class="mode-btn active" id="btnModeWeb" onclick="setAppMode('web')">
+                    <i class="fa-solid fa-globe"></i> Plataforma Web
+                </button>
+                <button class="mode-btn" id="btnModeApk" onclick="setAppMode('apk')">
+                    <i class="fa-solid fa-mobile-screen-button"></i> Modo APK / App
+                </button>
+            </div>
+
+            <nav class="nav-menu">
+                <button class="nav-btn active" data-tab="home" onclick="switchTab('home')">
+                    <i class="fa-solid fa-house"></i> Inicio
+                </button>
+                <button class="nav-btn" data-tab="search" onclick="switchTab('search')">
+                    <i class="fa-solid fa-magnifying-glass"></i> Buscar (YouTube/TIDAL)
+                </button>
+                <button class="nav-btn" data-tab="library" onclick="switchTab('library')">
+                    <i class="fa-solid fa-list-ul"></i> Biblioteca / Descargas
+                </button>
+                <button class="nav-btn" data-tab="radio" onclick="switchTab('radio')">
+                    <i class="fa-solid fa-radio"></i> Radio FM / Jango Live
+                </button>
+                <button class="nav-btn" data-tab="apkConsole" onclick="switchTab('apkConsole')">
+                    <i class="fa-solid fa-cloud-arrow-down"></i> Consola APK Release
+                </button>
             </nav>
 
-            <a href="https://github.com/djklmr2025/Spotify-Arkaios/releases" class="btn-download-nav">
-                <i class="fa-solid fa-download"></i> Descargar Ahora
-            </a>
-        </div>
-    </header>
-
-    <!-- Hero Section -->
-    <section class="hero-section">
-        <div class="hero-container">
-            <div class="hero-content">
-                <div class="version-badge">
-                    <span class="pulse-dot"></span> Spotify-Arkaios APK Oficial
-                </div>
-
-                <h1 class="hero-title">
-                    El Ecosistema Inteligente de <span class="cyan-gradient">Música & Radio FM</span>
-                </h1>
-
-                <p class="hero-description">
-                    Reproducción de alta fidelidad, escáner de almacenamiento local para tus canciones en celular, emisoras de Radio FM en vivo y pasarela de pago tokenizada <strong>AMR Pay</strong>.
-                </p>
-
-                <div class="hero-cta-buttons">
-                    <a href="https://github.com/djklmr2025/Spotify-Arkaios/releases" class="btn-primary-hero">
-                        <i class="fa-solid fa-cloud-arrow-down"></i> Descargar Spotify-Arkaios APK (Servidor Principal)
-                    </a>
-                    <a href="https://drive.google.com/uc?id=1qx7US8ceQdLYn0ydELmDMqWcorxgdw55" target="_blank" class="btn-alt-hero">
-                        <i class="fa-brands fa-google-drive"></i> Descargar Servidor Externo (Opción 2)
-                    </a>
-                    <a href="https://github.com/djklmr2025/Spotify-Arkaios" target="_blank" class="btn-secondary-hero">
-                        <i class="fa-brands fa-github"></i> Código Fuente
-                    </a>
-                </div>
-
-                <div class="license-notice">
-                    <i class="fa-solid fa-shield-halved"></i> * Aplicación nativa en Kotlin Jetpack Compose para terminales Android.
+            <div class="daemon-badge">
+                <div class="status-dot"></div>
+                <div class="daemon-info">
+                    <span class="title">Servidor & Demonio API</span>
+                    <span class="status-text" id="daemonStatusText">Conectando...</span>
                 </div>
             </div>
+        </aside>
 
-            <!-- Preview Card Window -->
-            <div class="hero-preview" id="preview">
-                <div class="mockup-window">
-                    <div class="window-header">
-                        <div class="window-dots">
-                            <span class="dot red"></span>
-                            <span class="dot yellow"></span>
-                            <span class="dot green"></span>
-                        </div>
-                        <div class="window-title">Spotify_Arkaios.apk</div>
-                    </div>
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Header Bar -->
+            <header class="top-bar">
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input type="text" id="globalSearchInput" placeholder="Buscar canciones en YouTube Music, TIDAL, Audius, Jamendo..." onkeyup="handleGlobalSearchKeyUp(event)">
+                </div>
 
-                    <div class="window-body">
-                        <div class="app-card-header">
-                            <i class="fa-solid fa-bolt icon-cyan"></i>
-                            <div>
-                                <h3>Spotify-Arkaios Native</h3>
-                                <p>Motor Kotlin Jetpack Compose • Android 8.0+</p>
-                            </div>
-                        </div>
+                <div class="header-actions">
+                    <button class="btn-header-apk" onclick="downloadApkDirect()">
+                        <i class="fa-solid fa-download"></i> Descargar APK (24.3 MB)
+                    </button>
+                    <a href="https://github.com/djklmr2025/Spotify-Arkaios/releases/tag/v2.0.0" target="_blank" class="btn-header-github">
+                        <i class="fa-brands fa-github"></i> GitHub Release
+                    </a>
+                </div>
+            </header>
 
-                        <div class="mockup-tab-list">
-                            <div class="mockup-tab active"><i class="fa-solid fa-house"></i> Inicio</div>
-                            <div class="mockup-tab"><i class="fa-solid fa-magnifying-glass"></i> Buscar</div>
-                            <div class="mockup-tab"><i class="fa-solid fa-list-ul"></i> Biblioteca</div>
-                            <div class="mockup-tab"><i class="fa-solid fa-radio"></i> Radio FM</div>
-                            <div class="mockup-tab"><i class="fa-solid fa-wallet"></i> AMR Pay</div>
-                        </div>
-
-                        <div class="mockup-player-box">
-                            <div class="track-row">
-                                <i class="fa-solid fa-music track-icon"></i>
-                                <div class="track-details">
-                                    <strong>Starboy — The Weeknd</strong>
-                                    <span>Reproductor Continuo 1 a 1</span>
-                                </div>
-                                <i class="fa-solid fa-circle-play play-icon"></i>
-                            </div>
-                            <div class="progress-bar-mock">
-                                <div class="progress-fill"></div>
-                            </div>
+            <!-- TAB 0: HOME -->
+            <section id="tab-home" class="tab-content active">
+                <div class="hero-banner">
+                    <div class="hero-content-box">
+                        <span class="hero-badge"><i class="fa-solid fa-star"></i> PLATAFORMA INTEGRADA WEB & APK</span>
+                        <h2>Cybernetic Horizon (Master FLAC)</h2>
+                        <p>Búsqueda priorizada en <strong>1.º lugar en YouTube / YouTube Music</strong> y <strong>2.º lugar en TIDAL Master</strong>. Descargas directas en MP3, M4A y FLAC sin cifrar.</p>
+                        <div class="hero-buttons">
+                            <button class="hero-btn-primary" onclick="playHeroTrack()"><i class="fa-solid fa-play"></i> Reproducir Ahora</button>
+                            <button class="hero-btn-secondary" onclick="switchTab('search')"><i class="fa-solid fa-magnifying-glass"></i> Explorar Buscador</button>
                         </div>
                     </div>
                 </div>
+
+                <!-- Featured Albums Carousel -->
+                <div class="section-container">
+                    <h3 class="section-title"><i class="fa-solid fa-compact-disc"></i> Álbumes en Tendencia • TIDAL Master</h3>
+                    <div class="albums-carousel" id="homeAlbumsCarousel">
+                        <!-- Dynamic Albums injected -->
+                    </div>
+                </div>
+
+                <!-- Live Radio Preview -->
+                <div class="section-container">
+                    <div class="section-header-flex">
+                        <h3 class="section-title"><i class="fa-solid fa-radio"></i> Radio FM en Vivo • Jango Streaming</h3>
+                        <span class="live-pill">🔴 24/7 Sin Comerciales</span>
+                    </div>
+                    <div class="radio-cards-grid" id="homeRadioGrid">
+                        <!-- Dynamic Radio Cards -->
+                    </div>
+                </div>
+
+                <!-- Recommended Tracks List -->
+                <div class="section-container">
+                    <h3 class="section-title"><i class="fa-solid fa-music"></i> Pistas Recomendadas (Descargables)</h3>
+                    <div class="tracks-list" id="homeTracksList">
+                        <!-- Dynamic Tracks injected -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 1: SEARCH (Multi-Source YouTube #1 & TIDAL #2) -->
+            <section id="tab-search" class="tab-content">
+                <div class="search-header-panel">
+                    <h3><i class="fa-solid fa-magnifying-glass"></i> Buscador & Extractar Multi-Fuente</h3>
+                    <p>Búsqueda integrada en tiempo real. 1.º Prioridad: YouTube Music | 2.º Prioridad: TIDAL / Lossless Audio.</p>
+                    
+                    <div class="search-input-row">
+                        <input type="text" id="searchTabInput" placeholder="Escribe el nombre de la canción, artista o pega un enlace..." onkeyup="if(event.key==='Enter') executeMultiSourceSearch()">
+                        <button class="btn-search-exec" onclick="executeMultiSourceSearch()"><i class="fa-solid fa-search"></i> Buscar</button>
+                    </div>
+
+                    <!-- Source Filters -->
+                    <div class="source-filters-row">
+                        <button class="source-chip active" data-source="ALL" onclick="setSourceFilter('ALL', this)">🌐 Todas las Fuentes</button>
+                        <button class="source-chip" data-source="YT" onclick="setSourceFilter('YT', this)">▶ YouTube Music (#1)</button>
+                        <button class="source-chip" data-source="TIDAL" onclick="setSourceFilter('TIDAL', this)">⚡ TIDAL Master (#2)</button>
+                        <button class="source-chip" data-source="AUDIUS" onclick="setSourceFilter('AUDIUS', this)">☁ SoundCloud / Audius</button>
+                        <button class="source-chip" data-source="JAMENDO" onclick="setSourceFilter('JAMENDO', this)">🎵 Jamendo Hi-Fi</button>
+                    </div>
+                </div>
+
+                <div class="search-results-container">
+                    <div class="results-header" id="searchResultsHeader">
+                        <span>Ingresa un término arriba para realizar búsquedas en tiempo real.</span>
+                    </div>
+                    <div class="results-tracks-grid" id="searchResultsGrid">
+                        <!-- Dynamic Search Results -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: LIBRARY & DOWNLOADS -->
+            <section id="tab-library" class="tab-content">
+                <div class="library-header-actions">
+                    <h3><i class="fa-solid fa-layer-group"></i> Tu Biblioteca & Gestor de Archivos</h3>
+                    <div class="library-btn-group">
+                        <button class="btn-lib-action" onclick="triggerLocalFilesImport()"><i class="fa-solid fa-folder-open"></i> Elegir Archivos Locales (.mp3/.flac)</button>
+                        <button class="btn-lib-action" onclick="showCreatePlaylistModal()"><i class="fa-solid fa-plus"></i> Nueva Playlist</button>
+                        <button class="btn-lib-action" onclick="triggerM3uImport()"><i class="fa-solid fa-file-audio"></i> Importar .M3U</button>
+                    </div>
+                    <input type="file" id="localFilesInput" accept="audio/*" multiple style="display:none;" onchange="handleLocalFilesSelected(event)">
+                </div>
+
+                <!-- Downloader Dashboard Status -->
+                <div class="downloader-dashboard">
+                    <div class="stat-card">
+                        <div class="stat-icon-box cyan"><i class="fa-solid fa-cloud-arrow-down"></i></div>
+                        <div><h4 id="statActiveCount">0</h4><p>Descargas Activas</p></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon-box yellow"><i class="fa-solid fa-clock"></i></div>
+                        <div><h4 id="statQueueCount">0</h4><p>En Cola</p></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon-box green"><i class="fa-solid fa-circle-check"></i></div>
+                        <div><h4 id="statCompletedCount">0</h4><p>Completadas</p></div>
+                    </div>
+                </div>
+
+                <!-- Subtabs inside Library -->
+                <div class="library-subtabs">
+                    <button class="subtab-btn active" onclick="switchLibrarySubtab('downloads')">💾 Archivos Guardados / Cola</button>
+                    <button class="subtab-btn" onclick="switchLibrarySubtab('playlists')">🎵 Mis Playlists</button>
+                    <button class="subtab-btn" onclick="switchLibrarySubtab('local')">📁 Pistas Locales Importadas</button>
+                </div>
+
+                <div id="lib-subtab-downloads" class="lib-subtab-content active">
+                    <div class="downloads-queue-list" id="downloadsQueueList">
+                        <!-- Dynamic Downloads Injected -->
+                    </div>
+                </div>
+
+                <div id="lib-subtab-playlists" class="lib-subtab-content">
+                    <div class="playlists-grid" id="playlistsGrid">
+                        <!-- Dynamic Playlists -->
+                    </div>
+                </div>
+
+                <div id="lib-subtab-local" class="lib-subtab-content">
+                    <div class="local-tracks-list" id="localTracksList">
+                        <!-- Dynamic Local Imported Tracks -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 3: RADIO FM / JANGO LIVE -->
+            <section id="tab-radio" class="tab-content">
+                <div class="radio-banner">
+                    <div class="radio-banner-text">
+                        <h2><i class="fa-solid fa-tower-broadcast"></i> Estaciones de Radio en Vivo 24/7</h2>
+                        <p>Transmisiones continuas sin anuncios. Compatible con servidores Icecast, Shoutcast, HLS y M3U.</p>
+                    </div>
+                </div>
+
+                <div class="radio-full-grid" id="radioFullGrid">
+                    <!-- Dynamic Radio Stations -->
+                </div>
+            </section>
+
+            <!-- TAB 4: CONSOLA APK RELEASE (Modo APK & Android) -->
+            <section id="tab-apkConsole" class="tab-content">
+                <div class="apk-release-hero">
+                    <div class="apk-info-box">
+                        <span class="badge-tag"><i class="fa-android fa-brands"></i> ANDROID APK NATIVA OFICIAL</span>
+                        <h2>Spotify-Arkaios APK v2.0.0</h2>
+                        <p>Compilada con <strong>Kotlin Jetpack Compose</strong>, OpenJDK 21 y arquitectura reactiva. Descargas directas en almacenamiento público sin cifrado DRM.</p>
+                        
+                        <div class="apk-meta-grid">
+                            <div class="meta-item"><span class="label">Versión:</span> <span class="val">v2.0.0 Release</span></div>
+                            <div class="meta-item"><span class="label">Tamaño:</span> <span class="val">24.38 MB</span></div>
+                            <div class="meta-item"><span class="label">Compatibilidad:</span> <span class="val">Android 8.0 (API 26+)</span></div>
+                            <div class="meta-item"><span class="label">Estado Git:</span> <span class="val">Commit ab3e0d5</span></div>
+                        </div>
+
+                        <div class="apk-download-actions">
+                            <button class="btn-download-apk-main" onclick="downloadApkDirect()">
+                                <i class="fa-solid fa-download"></i> Descargar APK Directa (v2.0.0)
+                            </button>
+                            <a href="https://github.com/djklmr2025/Spotify-Arkaios/releases/tag/v2.0.0" target="_blank" class="btn-github-release">
+                                <i class="fa-brands fa-github"></i> Ver Release en GitHub
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="apk-instructions-box">
+                    <h3><i class="fa-solid fa-terminal"></i> Instalación Rápida en Dispositivo o Emulador</h3>
+                    <div class="code-block">
+                        adb install -r app-debug.apk
+                    </div>
+                    <p class="inst-note">Permite la instalación de orígenes desconocidos en la configuración de tu celular Android.</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Bottom Audio Player Footer Bar -->
+    <footer class="player-bar">
+        <div class="track-info">
+            <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=300" id="playerCover" class="track-cover" alt="Cover">
+            <div class="track-text">
+                <h4 id="playerTitle">Cybernetic Horizon</h4>
+                <p id="playerArtist">Arkaios Sound Lab</p>
+                <span class="badge-format" id="playerFormatBadge">FLAC Master</span>
             </div>
         </div>
-    </section>
 
-    <!-- Features Section -->
-    <section class="features-section" id="features">
-        <div class="section-header">
-            <h2>Características Principales</h2>
-            <p>Diseñado para ofrecer máxima calidad de sonido, sincronización y control multimedia.</p>
-        </div>
-
-        <div class="features-grid">
-            <div class="feature-card">
-                <div class="feature-icon"><i class="fa-solid fa-radio"></i></div>
-                <h3>Radio FM en Vivo</h3>
-                <p>Módulo exclusivo para reproducir emisoras de radio y listas de streaming globales sin interrupciones.</p>
+        <div class="player-controls">
+            <div class="control-buttons">
+                <button onclick="toggleShuffle()" id="btnShuffle" title="Aleatorio"><i class="fa-solid fa-shuffle"></i></button>
+                <button onclick="prevTrack()" title="Anterior"><i class="fa-solid fa-backward-step"></i></button>
+                <button onclick="togglePlayPause()" id="playPauseBtn" class="play-main-btn" title="Reproducir/Pausar"><i class="fa-solid fa-play"></i></button>
+                <button onclick="nextTrack()" title="Siguiente"><i class="fa-solid fa-forward-step"></i></button>
+                <button onclick="toggleRepeat()" id="btnRepeat" title="Repetir"><i class="fa-solid fa-repeat"></i></button>
             </div>
-
-            <div class="feature-card">
-                <div class="feature-icon"><i class="fa-solid fa-bolt"></i></div>
-                <h3>100% Nativo Jetpack Compose</h3>
-                <p>Interfaz ultra fluida escrita en Kotlin nativo para Android, optimizada para consumo mínimo de batería.</p>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-icon"><i class="fa-solid fa-folder-open"></i></div>
-                <h3>Escáner de Audio Local</h3>
-                <p>Detecta e integra al instante las canciones e historias almacenadas en la memoria de tu dispositivo celular.</p>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-icon"><i class="fa-solid fa-wallet"></i></div>
-                <h3>Pasarela AMR Pay & PayPal</h3>
-                <p>Monedero de tokens AMR integrado para recargas directas con PayPal e interconexión con el Ecosistema ARKAIOS.</p>
+            <div class="progress-container">
+                <span id="currentTime">0:00</span>
+                <input type="range" id="progressBar" value="0" min="0" max="100" oninput="seekAudio(this.value)">
+                <span id="totalDuration">3:34</span>
             </div>
         </div>
-    </section>
 
-    <!-- Footer -->
-    <footer class="landing-footer">
-        <div class="footer-container">
-            <p>© 2026 Ecosistema ARKAIOS — Spotify-Arkaios APK Oficial</p>
-            <div class="footer-links">
-                <a href="https://github.com/djklmr2025/Spotify-Arkaios" target="_blank"><i class="fa-brands fa-github"></i> GitHub Repository</a>
+        <div class="extra-controls">
+            <button onclick="downloadCurrentTrack()" class="btn-player-dl" title="Descargar Pista Actual"><i class="fa-solid fa-download"></i></button>
+            <div class="volume-box">
+                <i class="fa-solid fa-volume-high" id="volumeIcon" onclick="toggleMute()"></i>
+                <input type="range" id="volumeBar" value="80" min="0" max="100" oninput="setVolume(this.value)">
             </div>
         </div>
     </footer>
 
+    <script src="app.js"></script>
 </body>
 </html>

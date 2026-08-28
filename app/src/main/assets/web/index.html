@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spotify-Arkaios Web Player & API Daemon</title>
+    <title>Spotify-Arkaios — Plataforma Web & APK Nativa Android v2.0.0</title>
+    <meta name="description" content="Plataforma web integrada y APK nativa de Spotify-Arkaios. Búsqueda multi-fuente (YouTube #1, TIDAL #2), reproductor de audio, descargas en MP3/FLAC sin cifrar y radio 24/7.">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="app-layout">
@@ -15,20 +16,40 @@
             <div class="logo-container">
                 <i class="fa-solid fa-bolt logo-icon"></i>
                 <span class="logo-text">Spotify<span class="highlight">Arkaios</span></span>
+                <span class="version-chip">v2.0.0</span>
             </div>
             
+            <div class="mode-switcher-sidebar">
+                <button class="mode-btn active" id="btnModeWeb" onclick="setAppMode('web')">
+                    <i class="fa-solid fa-globe"></i> Plataforma Web
+                </button>
+                <button class="mode-btn" id="btnModeApk" onclick="setAppMode('apk')">
+                    <i class="fa-solid fa-mobile-screen-button"></i> Modo APK / App
+                </button>
+            </div>
+
             <nav class="nav-menu">
-                <button class="nav-btn active" data-tab="home"><i class="fa-solid fa-house"></i> Inicio</button>
-                <button class="nav-btn" data-tab="search"><i class="fa-solid fa-magnifying-glass"></i> Buscar</button>
-                <button class="nav-btn" data-tab="library"><i class="fa-solid fa-list-ul"></i> Biblioteca</button>
-                <button class="nav-btn" data-tab="radio"><i class="fa-solid fa-radio"></i> Radio FM</button>
-                <button class="nav-btn" data-tab="amr"><i class="fa-solid fa-wallet"></i> AMR Pay</button>
+                <button class="nav-btn active" data-tab="home" onclick="switchTab('home')">
+                    <i class="fa-solid fa-house"></i> Inicio
+                </button>
+                <button class="nav-btn" data-tab="search" onclick="switchTab('search')">
+                    <i class="fa-solid fa-magnifying-glass"></i> Buscar (YouTube/TIDAL)
+                </button>
+                <button class="nav-btn" data-tab="library" onclick="switchTab('library')">
+                    <i class="fa-solid fa-list-ul"></i> Biblioteca / Descargas
+                </button>
+                <button class="nav-btn" data-tab="radio" onclick="switchTab('radio')">
+                    <i class="fa-solid fa-radio"></i> Radio FM / Jango Live
+                </button>
+                <button class="nav-btn" data-tab="apkConsole" onclick="switchTab('apkConsole')">
+                    <i class="fa-solid fa-cloud-arrow-down"></i> Consola APK Release
+                </button>
             </nav>
 
             <div class="daemon-badge">
                 <div class="status-dot"></div>
                 <div class="daemon-info">
-                    <span class="title">Demonio API v1.2</span>
+                    <span class="title">Servidor & Demonio API</span>
                     <span class="status-text" id="daemonStatusText">Conectando...</span>
                 </div>
             </div>
@@ -40,119 +61,229 @@
             <header class="top-bar">
                 <div class="search-box">
                     <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                    <input type="text" id="globalSearchInput" placeholder="Buscar canciones, artistas o streams...">
+                    <input type="text" id="globalSearchInput" placeholder="Buscar canciones en YouTube Music, TIDAL, Audius, Jamendo..." onkeyup="handleGlobalSearchKeyUp(event)">
                 </div>
-                <div class="user-profile">
-                    <span class="amr-balance-pill"><i class="fa-solid fa-coins"></i> <span id="headerAmrBalance">1,250.75</span> AMR</span>
-                    <button class="profile-btn"><i class="fa-solid fa-user-gear"></i> Arkaios User</button>
+
+                <div class="header-actions">
+                    <button class="btn-header-apk" onclick="downloadApkDirect()">
+                        <i class="fa-solid fa-download"></i> Descargar APK (24.3 MB)
+                    </button>
+                    <a href="https://github.com/djklmr2025/Spotify-Arkaios/releases/tag/v2.0.0" target="_blank" class="btn-header-github">
+                        <i class="fa-brands fa-github"></i> GitHub Release
+                    </a>
                 </div>
             </header>
 
-            <!-- Tab 0: Home -->
+            <!-- TAB 0: HOME -->
             <section id="tab-home" class="tab-content active">
                 <div class="hero-banner">
-                    <div class="hero-text">
-                        <h2>Ecosistema Sonora Arkaios</h2>
-                        <p>Reproducción de audio en alta fidelidad, radio en vivo y descargas coordinadas con el Demonio API.</p>
-                        <button class="hero-btn" onclick="switchTab('radio')"><i class="fa-solid fa-radio"></i> Escuchar Radio en Vivo</button>
+                    <div class="hero-content-box">
+                        <span class="hero-badge"><i class="fa-solid fa-star"></i> PLATAFORMA INTEGRADA WEB & APK</span>
+                        <h2>Cybernetic Horizon (Master FLAC)</h2>
+                        <p>Búsqueda priorizada en <strong>1.º lugar en YouTube / YouTube Music</strong> y <strong>2.º lugar en TIDAL Master</strong>. Descargas directas en MP3, M4A y FLAC sin cifrar.</p>
+                        <div class="hero-buttons">
+                            <button class="hero-btn-primary" onclick="playHeroTrack()"><i class="fa-solid fa-play"></i> Reproducir Ahora</button>
+                            <button class="hero-btn-secondary" onclick="switchTab('search')"><i class="fa-solid fa-magnifying-glass"></i> Explorar Buscador</button>
+                        </div>
                     </div>
                 </div>
 
-                <h3 class="section-title">Música en Tendencia</h3>
-                <div class="tracks-grid" id="homeTracksGrid">
-                    <!-- Dynamic Tracks injected by app.js -->
+                <!-- Featured Albums Carousel -->
+                <div class="section-container">
+                    <h3 class="section-title"><i class="fa-solid fa-compact-disc"></i> Álbumes en Tendencia • TIDAL Master</h3>
+                    <div class="albums-carousel" id="homeAlbumsCarousel">
+                        <!-- Dynamic Albums injected -->
+                    </div>
+                </div>
+
+                <!-- Live Radio Preview -->
+                <div class="section-container">
+                    <div class="section-header-flex">
+                        <h3 class="section-title"><i class="fa-solid fa-radio"></i> Radio FM en Vivo • Jango Streaming</h3>
+                        <span class="live-pill">🔴 24/7 Sin Comerciales</span>
+                    </div>
+                    <div class="radio-cards-grid" id="homeRadioGrid">
+                        <!-- Dynamic Radio Cards -->
+                    </div>
+                </div>
+
+                <!-- Recommended Tracks List -->
+                <div class="section-container">
+                    <h3 class="section-title"><i class="fa-solid fa-music"></i> Pistas Recomendadas (Descargables)</h3>
+                    <div class="tracks-list" id="homeTracksList">
+                        <!-- Dynamic Tracks injected -->
+                    </div>
                 </div>
             </section>
 
-            <!-- Tab 1: Search -->
+            <!-- TAB 1: SEARCH (Multi-Source YouTube #1 & TIDAL #2) -->
             <section id="tab-search" class="tab-content">
-                <h3 class="section-title">Buscador y Descargador de Audio API</h3>
-                <div class="search-panel">
-                    <input type="text" id="daemonSearchInput" placeholder="Ingrese nombre de canción o URL para encolar descarga...">
-                    <button class="search-action-btn" onclick="executeDaemonSearch()"><i class="fa-solid fa-search"></i> Buscar</button>
-                    <button class="download-action-btn" onclick="enqueueTrackDownload()"><i class="fa-solid fa-download"></i> Encolar Descarga</button>
+                <div class="search-header-panel">
+                    <h3><i class="fa-solid fa-magnifying-glass"></i> Buscador & Extractar Multi-Fuente</h3>
+                    <p>Búsqueda integrada en tiempo real. 1.º Prioridad: YouTube Music | 2.º Prioridad: TIDAL / Lossless Audio.</p>
+                    
+                    <div class="search-input-row">
+                        <input type="text" id="searchTabInput" placeholder="Escribe el nombre de la canción, artista o pega un enlace..." onkeyup="if(event.key==='Enter') executeMultiSourceSearch()">
+                        <button class="btn-search-exec" onclick="executeMultiSourceSearch()"><i class="fa-solid fa-search"></i> Buscar</button>
+                    </div>
+
+                    <!-- Source Filters -->
+                    <div class="source-filters-row">
+                        <button class="source-chip active" data-source="ALL" onclick="setSourceFilter('ALL', this)">🌐 Todas las Fuentes</button>
+                        <button class="source-chip" data-source="YT" onclick="setSourceFilter('YT', this)">▶ YouTube Music (#1)</button>
+                        <button class="source-chip" data-source="TIDAL" onclick="setSourceFilter('TIDAL', this)">⚡ TIDAL Master (#2)</button>
+                        <button class="source-chip" data-source="AUDIUS" onclick="setSourceFilter('AUDIUS', this)">☁ SoundCloud / Audius</button>
+                        <button class="source-chip" data-source="JAMENDO" onclick="setSourceFilter('JAMENDO', this)">🎵 Jamendo Hi-Fi</button>
+                    </div>
                 </div>
-                <div class="results-list" id="searchResultsList"></div>
+
+                <div class="search-results-container">
+                    <div class="results-header" id="searchResultsHeader">
+                        <span>Ingresa un término arriba para realizar búsquedas en tiempo real.</span>
+                    </div>
+                    <div class="results-tracks-grid" id="searchResultsGrid">
+                        <!-- Dynamic Search Results -->
+                    </div>
+                </div>
             </section>
 
-            <!-- Tab 2: Library -->
+            <!-- TAB 2: LIBRARY & DOWNLOADS -->
             <section id="tab-library" class="tab-content">
-                <h3 class="section-title">Biblioteca de Tareas y Descargas</h3>
+                <div class="library-header-actions">
+                    <h3><i class="fa-solid fa-layer-group"></i> Tu Biblioteca & Gestor de Archivos</h3>
+                    <div class="library-btn-group">
+                        <button class="btn-lib-action" onclick="triggerLocalFilesImport()"><i class="fa-solid fa-folder-open"></i> Elegir Archivos Locales (.mp3/.flac)</button>
+                        <button class="btn-lib-action" onclick="showCreatePlaylistModal()"><i class="fa-solid fa-plus"></i> Nueva Playlist</button>
+                        <button class="btn-lib-action" onclick="triggerM3uImport()"><i class="fa-solid fa-file-audio"></i> Importar .M3U</button>
+                    </div>
+                    <input type="file" id="localFilesInput" accept="audio/*" multiple style="display:none;" onchange="handleLocalFilesSelected(event)">
+                </div>
+
+                <!-- Downloader Dashboard Status -->
                 <div class="downloader-dashboard">
                     <div class="stat-card">
-                        <i class="fa-solid fa-arrow-down stat-icon"></i>
-                        <div><h4 id="statActiveDownloads">0</h4><p>Descargas Activas</p></div>
+                        <div class="stat-icon-box cyan"><i class="fa-solid fa-cloud-arrow-down"></i></div>
+                        <div><h4 id="statActiveCount">0</h4><p>Descargas Activas</p></div>
                     </div>
                     <div class="stat-card">
-                        <i class="fa-solid fa-clock stat-icon"></i>
+                        <div class="stat-icon-box yellow"><i class="fa-solid fa-clock"></i></div>
                         <div><h4 id="statQueueCount">0</h4><p>En Cola</p></div>
                     </div>
                     <div class="stat-card">
-                        <i class="fa-solid fa-circle-check stat-icon"></i>
+                        <div class="stat-icon-box green"><i class="fa-solid fa-circle-check"></i></div>
                         <div><h4 id="statCompletedCount">0</h4><p>Completadas</p></div>
                     </div>
                 </div>
 
-                <h4 class="sub-title">Descargas Recientes</h4>
-                <div class="downloads-list" id="downloadsQueueList"></div>
-            </section>
+                <!-- Subtabs inside Library -->
+                <div class="library-subtabs">
+                    <button class="subtab-btn active" onclick="switchLibrarySubtab('downloads')">💾 Archivos Guardados / Cola</button>
+                    <button class="subtab-btn" onclick="switchLibrarySubtab('playlists')">🎵 Mis Playlists</button>
+                    <button class="subtab-btn" onclick="switchLibrarySubtab('local')">📁 Pistas Locales Importadas</button>
+                </div>
 
-            <!-- Tab 3: Radio -->
-            <section id="tab-radio" class="tab-content">
-                <h3 class="section-title">Estaciones de Radio FM / Web en Vivo</h3>
-                <div class="radio-grid" id="radioStationsGrid">
-                    <!-- Dynamic Radio Cards -->
+                <div id="lib-subtab-downloads" class="lib-subtab-content active">
+                    <div class="downloads-queue-list" id="downloadsQueueList">
+                        <!-- Dynamic Downloads Injected -->
+                    </div>
+                </div>
+
+                <div id="lib-subtab-playlists" class="lib-subtab-content">
+                    <div class="playlists-grid" id="playlistsGrid">
+                        <!-- Dynamic Playlists -->
+                    </div>
+                </div>
+
+                <div id="lib-subtab-local" class="lib-subtab-content">
+                    <div class="local-tracks-list" id="localTracksList">
+                        <!-- Dynamic Local Imported Tracks -->
+                    </div>
                 </div>
             </section>
 
-            <!-- Tab 4: AMR Pay -->
-            <section id="tab-amr" class="tab-content">
-                <h3 class="section-title">Pasarela de Pagos AMR Pay & Wallet</h3>
-                <div class="amr-card">
-                    <div class="card-header">
-                        <i class="fa-solid fa-bolt"></i>
-                        <span>ARKAIOS WALLET</span>
+            <!-- TAB 3: RADIO FM / JANGO LIVE -->
+            <section id="tab-radio" class="tab-content">
+                <div class="radio-banner">
+                    <div class="radio-banner-text">
+                        <h2><i class="fa-solid fa-tower-broadcast"></i> Estaciones de Radio en Vivo 24/7</h2>
+                        <p>Transmisiones continuas sin anuncios. Compatible con servidores Icecast, Shoutcast, HLS y M3U.</p>
                     </div>
-                    <div class="card-balance">
-                        <h1 id="amrWalletBalance">1,250.75 AMR</h1>
-                        <p>~$125.07 USD Equivalent</p>
+                </div>
+
+                <div class="radio-full-grid" id="radioFullGrid">
+                    <!-- Dynamic Radio Stations -->
+                </div>
+            </section>
+
+            <!-- TAB 4: CONSOLA APK RELEASE (Modo APK & Android) -->
+            <section id="tab-apkConsole" class="tab-content">
+                <div class="apk-release-hero">
+                    <div class="apk-info-box">
+                        <span class="badge-tag"><i class="fa-android fa-brands"></i> ANDROID APK NATIVA OFICIAL</span>
+                        <h2>Spotify-Arkaios APK v2.0.0</h2>
+                        <p>Compilada con <strong>Kotlin Jetpack Compose</strong>, OpenJDK 21 y arquitectura reactiva. Descargas directas en almacenamiento público sin cifrado DRM.</p>
+                        
+                        <div class="apk-meta-grid">
+                            <div class="meta-item"><span class="label">Versión:</span> <span class="val">v2.0.0 Release</span></div>
+                            <div class="meta-item"><span class="label">Tamaño:</span> <span class="val">24.38 MB</span></div>
+                            <div class="meta-item"><span class="label">Compatibilidad:</span> <span class="val">Android 8.0 (API 26+)</span></div>
+                            <div class="meta-item"><span class="label">Estado Git:</span> <span class="val">Commit ab3e0d5</span></div>
+                        </div>
+
+                        <div class="apk-download-actions">
+                            <button class="btn-download-apk-main" onclick="downloadApkDirect()">
+                                <i class="fa-solid fa-download"></i> Descargar APK Directa (v2.0.0)
+                            </button>
+                            <a href="https://github.com/djklmr2025/Spotify-Arkaios/releases/tag/v2.0.0" target="_blank" class="btn-github-release">
+                                <i class="fa-brands fa-github"></i> Ver Release en GitHub
+                            </a>
+                        </div>
                     </div>
-                    <div class="card-address" id="amrWalletAddress">0xARKAIOS_W18392817293812739182739</div>
-                    <div class="card-actions">
-                        <button class="btn-primary"><i class="fa-solid fa-paper-plane"></i> Transferir Tokens</button>
-                        <button class="btn-secondary"><i class="fa-brands fa-paypal"></i> Recargar con PayPal</button>
+                </div>
+
+                <div class="apk-instructions-box">
+                    <h3><i class="fa-solid fa-terminal"></i> Instalación Rápida en Dispositivo o Emulador</h3>
+                    <div class="code-block">
+                        adb install -r app-debug.apk
                     </div>
+                    <p class="inst-note">Permite la instalación de orígenes desconocidos en la configuración de tu celular Android.</p>
                 </div>
             </section>
         </main>
     </div>
 
-    <!-- Bottom Audio Player Bar -->
+    <!-- Bottom Audio Player Footer Bar -->
     <footer class="player-bar">
         <div class="track-info">
-            <img src="https://picsum.photos/id/10/300/300" id="playerCover" class="track-cover">
-            <div>
-                <h4 id="playerTitle">Starboy</h4>
-                <p id="playerArtist">The Weeknd</p>
+            <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=300" id="playerCover" class="track-cover" alt="Cover">
+            <div class="track-text">
+                <h4 id="playerTitle">Cybernetic Horizon</h4>
+                <p id="playerArtist">Arkaios Sound Lab</p>
+                <span class="badge-format" id="playerFormatBadge">FLAC Master</span>
             </div>
         </div>
 
         <div class="player-controls">
-            <div class="buttons">
-                <button onclick="prevTrack()"><i class="fa-solid fa-backward-step"></i></button>
-                <button onclick="togglePlayPause()" id="playPauseBtn" class="play-main"><i class="fa-solid fa-play"></i></button>
-                <button onclick="nextTrack()"><i class="fa-solid fa-forward-step"></i></button>
+            <div class="control-buttons">
+                <button onclick="toggleShuffle()" id="btnShuffle" title="Aleatorio"><i class="fa-solid fa-shuffle"></i></button>
+                <button onclick="prevTrack()" title="Anterior"><i class="fa-solid fa-backward-step"></i></button>
+                <button onclick="togglePlayPause()" id="playPauseBtn" class="play-main-btn" title="Reproducir/Pausar"><i class="fa-solid fa-play"></i></button>
+                <button onclick="nextTrack()" title="Siguiente"><i class="fa-solid fa-forward-step"></i></button>
+                <button onclick="toggleRepeat()" id="btnRepeat" title="Repetir"><i class="fa-solid fa-repeat"></i></button>
             </div>
             <div class="progress-container">
                 <span id="currentTime">0:00</span>
-                <input type="range" id="progressBar" value="0" max="100">
-                <span id="totalDuration">3:50</span>
+                <input type="range" id="progressBar" value="0" min="0" max="100" oninput="seekAudio(this.value)">
+                <span id="totalDuration">3:34</span>
             </div>
         </div>
 
-        <div class="volume-controls">
-            <i class="fa-solid fa-volume-high"></i>
-            <input type="range" id="volumeBar" value="80" max="100">
+        <div class="extra-controls">
+            <button onclick="downloadCurrentTrack()" class="btn-player-dl" title="Descargar Pista Actual"><i class="fa-solid fa-download"></i></button>
+            <div class="volume-box">
+                <i class="fa-solid fa-volume-high" id="volumeIcon" onclick="toggleMute()"></i>
+                <input type="range" id="volumeBar" value="80" min="0" max="100" oninput="setVolume(this.value)">
+            </div>
         </div>
     </footer>
 
