@@ -102,7 +102,7 @@ fun SearchScreen(
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
                 .testTag("search_input_field"),
-            placeholder = { Text("Buscar en YouTube Music, SoundCloud, Drive & TIDAL...", color = TextMuted, fontSize = 13.sp) },
+            placeholder = { Text("Search songs, artists, albums...", color = TextMuted, fontSize = 13.sp) },
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Default.Search,

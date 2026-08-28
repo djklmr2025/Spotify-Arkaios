@@ -137,13 +137,7 @@ class AudioPlayerEngine(private val context: Context) {
 
                 mediaPlayer?.reset()
 
-                val resolvedStreamUrl = if (track.audioUrl.contains("youtube") || track.id.startsWith("yt_")) {
-                    withContext(Dispatchers.IO) {
-                        com.example.data.repository.YouTubeMusicProvider.resolveAudioStream(track.audioUrl)
-                    } ?: track.audioUrl
-                } else {
-                    track.audioUrl
-                }
+                val resolvedStreamUrl = track.audioUrl
 
                 val audioUri: Uri = if (track.isDownloaded && track.localFilePath != null && File(track.localFilePath).exists()) {
                     val localFile = File(track.localFilePath)

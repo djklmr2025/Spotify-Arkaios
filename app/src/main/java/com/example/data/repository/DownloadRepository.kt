@@ -49,7 +49,11 @@ class DownloadRepository(
             val extension = if (isPremiumVaultEncrypted) "arkcache" else if (track.audioFormat.equals("FLAC", ignoreCase = true)) "flac" else "mp3"
             val targetFile = File(downloadsDir, "${track.id}_vault_${System.currentTimeMillis()}.$extension")
 
-            val request = Request.Builder().url(track.audioUrl).build()
+            val request = Request.Builder()
+                .url(track.audioUrl)
+                .addHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
+                .addHeader("Accept", "*/*")
+                .build()
             
             try {
                 val response = okHttpClient.newCall(request).execute()

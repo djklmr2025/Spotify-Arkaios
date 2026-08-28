@@ -19,12 +19,12 @@ import java.net.URLEncoder
 import java.util.concurrent.TimeUnit
 
 enum class MusicSourceFilter(val id: String, val displayName: String, val icon: String) {
-    ALL("ALL", "🌐 Todas las Fuentes", "🌟"),
-    YOUTUBE("YT", "▶ YouTube Music", "▶️"),
-    SOUNDCLOUD_AUDIUS("AUDIUS", "☁ SoundCloud / Audius", "☁️"),
-    JAMENDO("JAMENDO", "🎵 Jamendo Hi-Fi", "🎵"),
+    ALL("ALL", "🌐 All Sources", "🌟"),
+    YOUTUBE("YT", "▶ Global Network 1", "▶️"),
+    SOUNDCLOUD_AUDIUS("AUDIUS", "☁ Global Network 2", "☁️"),
+    JAMENDO("JAMENDO", "🎵 High Quality Stream", "🎵"),
     DRIVE("DRIVE", "📁 DriveMusic & Local", "📁"),
-    TIDAL("TIDAL", "⚡ TIDAL / Lossless", "⚡")
+    TIDAL("TIDAL", "⚡ Lossless Network", "⚡")
 }
 
 class TidalApiService(private val context: Context) {
@@ -48,7 +48,7 @@ class TidalApiService(private val context: Context) {
     private val _selectedSource = MutableStateFlow(MusicSourceFilter.ALL)
     val selectedSource: StateFlow<MusicSourceFilter> = _selectedSource.asStateFlow()
 
-    private val _connectionLog = MutableStateFlow("Motor Multi-Fuente Activo: YouTube Music, SoundCloud/Audius, Jamendo, Drive & TIDAL")
+    private val _connectionLog = MutableStateFlow("Arkaios Audio Server Connected")
     val connectionLog: StateFlow<String> = _connectionLog.asStateFlow()
 
     fun updateClientToken(newToken: String) {
@@ -89,7 +89,7 @@ class TidalApiService(private val context: Context) {
 
         val startTime = System.currentTimeMillis()
 
-        // Handle direct Google Drive link search
+        // Handle direct Google Drive link search locally just in case
         if (trimmed.contains("drive.google.com") || (trimmed.startsWith("http") && (trimmed.endsWith(".mp3") || trimmed.endsWith(".flac") || trimmed.endsWith(".m4a")))) {
             val directTrack = parseDirectUrlTrack(trimmed)
             if (directTrack != null) return@withContext listOf(directTrack)
@@ -97,74 +97,50 @@ class TidalApiService(private val context: Context) {
 
         val allResults = mutableListOf<Track>()
 
-        coroutineScope {
-            val audiusDeferred = if (sourceFilter == MusicSourceFilter.ALL || sourceFilter == MusicSourceFilter.SOUNDCLOUD_AUDIUS) {
-                async { queryAudiusTracks(trimmed) }
-            } else null
+        try {
+            val encoded = URLEncoder.encode(trimmed, "UTF-8")
+            val url = "https://dj-intelligence-engine.vercel.app/api/search?q=$encoded"
+            val request = Request.Builder()
+                .url(url)
+                .addHeader("User-Agent", "ArkaiosTify/2.0 Android")
+                .build()
 
-            val jamendoDeferred = if (sourceFilter == MusicSourceFilter.ALL || sourceFilter == MusicSourceFilter.JAMENDO) {
-                async { queryJamendoTracks(trimmed) }
-            } else null
+            val response = okHttpClient.newCall(request).execute()
+            if (response.isSuccessful && response.body != null) {
+                val jsonStr = response.body!!.string()
+                val root = JSONObject(jsonStr)
+                val resultsArray = root.optJSONArray("results") ?: JSONArray()
 
-            val ytDeferred = if (sourceFilter == MusicSourceFilter.ALL || sourceFilter == MusicSourceFilter.YOUTUBE) {
-                async { queryYouTubeMusicTracks(trimmed) }
-            } else null
-
-            val archiveDeferred = if (sourceFilter == MusicSourceFilter.ALL || sourceFilter == MusicSourceFilter.DRIVE) {
-                async { queryArchiveTracks(trimmed) }
-            } else null
-
-            val tidalDeferred = if (sourceFilter == MusicSourceFilter.ALL || sourceFilter == MusicSourceFilter.TIDAL) {
-                async { queryTidalAndDeezerTracks(trimmed) }
-            } else null
-
-            val audiusList = audiusDeferred?.await() ?: emptyList()
-            val jamendoList = jamendoDeferred?.await() ?: emptyList()
-            val ytList = ytDeferred?.await() ?: emptyList()
-            val archiveList = archiveDeferred?.await() ?: emptyList()
-            val tidalList = tidalDeferred?.await() ?: emptyList()
-
-            // Interleave & prioritize based on filter
-            when (sourceFilter) {
-                MusicSourceFilter.YOUTUBE -> {
-                    allResults.addAll(ytList)
-                    allResults.addAll(audiusList)
-                }
-                MusicSourceFilter.SOUNDCLOUD_AUDIUS -> {
-                    allResults.addAll(audiusList)
-                    allResults.addAll(jamendoList)
-                }
-                MusicSourceFilter.JAMENDO -> {
-                    allResults.addAll(jamendoList)
-                    allResults.addAll(audiusList)
-                }
-                MusicSourceFilter.DRIVE -> {
-                    allResults.addAll(archiveList)
-                    allResults.addAll(audiusList)
-                }
-                MusicSourceFilter.TIDAL -> {
-                    allResults.addAll(tidalList)
-                    allResults.addAll(audiusList)
-                }
-                MusicSourceFilter.ALL -> {
-                    // Combine with rich variety: YouTube Music + Audius/SoundCloud + Jamendo + Tidal
-                    val maxLen = maxOf(ytList.size, audiusList.size, jamendoList.size, tidalList.size, archiveList.size)
-                    for (i in 0 until maxLen) {
-                        if (i < ytList.size) allResults.add(ytList[i])
-                        if (i < audiusList.size) allResults.add(audiusList[i])
-                        if (i < jamendoList.size) allResults.add(jamendoList[i])
-                        if (i < tidalList.size) allResults.add(tidalList[i])
-                        if (i < archiveList.size) allResults.add(archiveList[i])
-                    }
+                for (i in 0 until resultsArray.length()) {
+                    val item = resultsArray.getJSONObject(i)
+                    
+                    allResults.add(
+                        Track(
+                            id = item.optString("id", "yt_${System.currentTimeMillis()}_$i"),
+                            title = item.optString("title", "Unknown Track"),
+                            artist = item.optString("artist", "Unknown Artist"),
+                            album = item.optString("album", "Vercel Search Result"),
+                            durationMs = 210000L, // Dummy default, ideally parse item.duration
+                            audioUrl = item.optString("streamUrl", item.optString("url", "")),
+                            coverUrl = item.optString("cover", "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&auto=format&fit=crop&q=80"),
+                            genre = item.optString("genre", "Music • Vercel Source"),
+                            bitrate = item.optString("bitrate", "256 kbps"),
+                            tidalId = item.optString("id", "yt_${System.currentTimeMillis()}_$i"),
+                            downloadSizeMb = 6.0,
+                            audioFormat = item.optString("format", "M4A")
+                        )
+                    )
                 }
             }
+        } catch (e: Exception) {
+            Log.w(TAG, "Vercel search failed: ${e.message}")
         }
 
         // Deduplicate tracks by id and title
         val distinctResults = allResults.distinctBy { "${it.title.lowercase()}_${it.artist.lowercase()}" }
 
         val elapsed = System.currentTimeMillis() - startTime
-        _connectionLog.value = "Búsqueda Multi-Fuente \"$trimmed\": ${distinctResults.size} pistas reales (${elapsed}ms)"
+        _connectionLog.value = "Búsqueda Vercel \"$trimmed\": ${distinctResults.size} pistas reales (${elapsed}ms)"
         return@withContext distinctResults
     }
 

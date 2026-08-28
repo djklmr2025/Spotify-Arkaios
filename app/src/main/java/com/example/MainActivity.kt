@@ -170,6 +170,15 @@ fun MainAppScreen(viewModel: MainViewModel) {
         }
     }
 
+    val prevDownloadStatus = remember { androidx.compose.runtime.mutableStateOf(downloadStatus) }
+    LaunchedEffect(downloadStatus) {
+        val completed = downloadStatus.values.filter { it.isCompleted && prevDownloadStatus.value[it.trackId]?.isCompleted != true }
+        completed.forEach { progress ->
+            snackbarHostState.showSnackbar("Descarga Completada: ${progress.trackId.take(8)}")
+        }
+        prevDownloadStatus.value = downloadStatus
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -245,7 +254,7 @@ fun MainAppScreen(viewModel: MainViewModel) {
                                     contentDescription = "Buscar"
                                 )
                             },
-                            label = { Text("Buscar (YouTube)", fontSize = 11.sp, fontWeight = if (selectedTab == 1) FontWeight.Bold else FontWeight.Normal) },
+                            label = { Text("Buscar", fontSize = 11.sp, fontWeight = if (selectedTab == 1) FontWeight.Bold else FontWeight.Normal) },
                             colors = NavigationBarItemDefaults.colors(
                                 selectedIconColor = CyanLight,
                                 selectedTextColor = CyanLight,

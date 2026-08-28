@@ -942,32 +942,6 @@ fun LibraryScreen(
                                             }
                                         }
                                     }
-
-                                    // Upload to Cloud & Share Banner
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clip(RoundedCornerShape(10.dp))
-                                            .background(Color(0x1F38BDF8))
-                                            .border(1.dp, Color(0x3338BDF8), RoundedCornerShape(10.dp))
-                                            .clickable { onOpenCreatorStudio() }
-                                            .padding(horizontal = 10.dp, vertical = 8.dp)
-                                    ) {
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.SpaceBetween
-                                        ) {
-                                            Row(
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                            ) {
-                                                Icon(Icons.Default.CloudUpload, contentDescription = null, tint = CyanLight, modifier = Modifier.size(16.dp))
-                                                Text("¿Quieres compartir o subir tu música?", color = CyanLight, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                                            }
-                                            Text("Subir a Nube 5TB ➔", color = ArkaiosGoldLight, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                                        }
-                                    }
                                 }
                             }
                         }
