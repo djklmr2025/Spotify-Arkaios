@@ -1,81 +1,52 @@
-# ARKAIOS-TIFY (Arkaios Music & Hi-Fi Lossless Streaming) 🎵⚡
+# Spotify-Arkaios v2.0.0 (Versión Oficial & Final) 🎵⚡
 
+[![Release v2.0.0](https://img.shields.io/badge/Release-v2.0.0%20Official-06B6D4?style=for-the-badge&logo=android)](https://github.com/djklmr2025/Spotify-Arkaios/releases/tag/v2.0.0)
+[![Plataforma Web](https://img.shields.io/badge/Web%20Platform-Vercel%20Live-22C55E?style=for-the-badge&logo=vercel)](https://spotify-arkaios.vercel.app)
+[![Licencia](https://img.shields.io/badge/License-MIT%20Free-purple?style=for-the-badge)](https://github.com/djklmr2025/Spotify-Arkaios)
 
-
-
-https://github.com/user-attachments/assets/801ac834-7d53-4516-a84d-b361ec39d68a
-
-
-
-
-
-**ArkaiosTify** es una plataforma y aplicación móvil de streaming musical en alta fidelidad y estudio construida en **Kotlin** y **Jetpack Compose** para Android. Combina la fidelidad de TIDAL/FLAC con un motor multi-fuente universal (YouTube Music, SoundCloud/Audius, Jamendo Hi-Fi, Google Drive 5TB y Servidores Subsonic/Navidrome), complementada con la pasarela de pagos descentralizada y fiat **ARKAIOS Pay & PayPal.Me**.
+**Spotify-Arkaios** es un ecosistema inteligente y reproductor de música nativo en **Kotlin (Jetpack Compose)** para Android, acompañado de su plataforma web unificada. Ofrece calidad de audio sin pérdidas, búsqueda multi-fuente en tiempo real, radio FM en vivo 24/7 y **descargas de audio originales sin cifrar**.
 
 ---
 
-## 🌟 Características Principales
+## 📥 Enlaces Oficiales de Descarga & Plataforma Web
 
-1. **Motor de Búsqueda y Streaming Multi-Fuente (Canciones Completas sin Cortes)**:
-   - **YouTube Music Engine**: Streams continuos de alta tasa de bits en formatos AAC/Opus/M4A.
-   - **SoundCloud / Audius Network**: Más de 10 millones de pistas y remixes en MP3 a 320 kbps.
-   - **Jamendo Hi-Fi Studio**: Pistas completas sin restricciones.
-   - **Google Drive 5TB & Local Cloud**: Detección y reproducción de archivos de audio directos desde enlaces o almacenamiento del dispositivo.
-   - **TIDAL Hi-Res Lossless**: Calidades seleccionables (Normal, High 320k, HiFi Lossless 1411k, Master FLAC 24-bit/192kHz).
-
-2. **ARKAIOS Pay & Checkout Híbrido**:
-   - Integración nativa de **PayPal.Me** directo (`paypal.me/klmroffcialchannel`).
-   - Enlace y validación con el **Portal Web ARKAIOS Pay**: `https://arkaios-puterlab-nexus-ide.vercel.app/arkaios-pay-demo`.
-   - Sistema de Tokenomics **AMR** (Tokens de Cartera, Membresías VIP, Pro Studio y Master).
-
-3. **Arquitectura y Reproductor**:
-   - **Jetpack Compose & Material 3**: Interfaz oscura cyberpunk/neon con paleta Cyber Cyan (`#06B6D4`) y Arkaios Gold (`#EAB308`).
-   - **AudioPlayerEngine**: Reproductor en segundo plano con soporte para metadata enriquecida, carátulas y reproducción en bucle/aleatoria.
-   - **Gestor de Descargas Offline**: Persistencia y almacenamiento local en SQLite (Room Database).
-   - **Creator Studio**: Panel para subir, organizar y publicar pistas con metadata personalizada.
+- 📱 **Descargar APK v2.0.0 (Servidor Directo GitHub)**: [app-debug.apk (24.38 MB)](https://github.com/djklmr2025/Spotify-Arkaios/releases/download/v2.0.0/app-debug.apk)
+- ☁ **Mirror de Descarga (Google Drive)**: [Descargar Servidor Externo (Opción 2)](https://drive.google.com/uc?id=1qx7US8ceQdLYn0ydELmDMqWcorxgdw55)
+- 🌐 **Página Web Oficial de Descarga (Vercel)**: [https://spotify-arkaios.vercel.app](https://spotify-arkaios.vercel.app)
+- ⚡ **Integración Web Engine (DJ Intelligence)**: [https://dj-intelligence-engine.vercel.app/spotify](https://dj-intelligence-engine.vercel.app/spotify)
 
 ---
 
-## 📱 Guía de Construcción y Generación del APK (`.apk`)
+## 🌟 Novedades y Cambios de la Versión Final v2.0.0
 
-### 1. Generación Directa en AI Studio / Antigravity
-Para descargar el APK directamente desde el panel de AI Studio:
-1. Dirígete a la barra superior o menú de configuración del proyecto (**Settings** / **Export**).
-2. Selecciona **Download APK** o **Build AAB/APK**.
-3. El sistema compilará el paquete optimizado `app-debug.apk` o `app-release.apk` listo para transferir o instalar en cualquier dispositivo Android.
+1. **Descargas Directas Sin Cifrado DRM**:
+   - Se eliminó completamente el motor de encriptación `.arkcache`.
+   - Las canciones descargadas se guardan en **formato original sin cifrar** (`.mp3`, `.m4a`, `.flac`) en la carpeta pública del teléfono (`Música/SpotifyArkaios`), totalmente accesibles desde cualquier reproductor externo o computadora.
+
+2. **Motor de Búsqueda Multi-Fuente Resiliente (YouTube #1)**:
+   - **1.º Lugar de Prioridad**: **YouTube & YouTube Music**, adaptando el motor ultra-rápido de `DJ_Assistant` con 15 instancias de APIs Piped/Invidious y un **scraper de búsqueda en tiempo real de YouTube HTML** como fallback definitivo.
+   - **2.º Lugar de Prioridad**: **TIDAL Hi-Fi Master** (Stream sin pérdidas).
+   - **Fuentes Adicionales**: SoundCloud / Audius, Jamendo Hi-Fi, Archive.org y enlaces directos de Google Drive.
+
+3. **App 100% Gratuita e Ilimitada**:
+   - Se retiraron totalmente la tienda AMR Pay, carteras de tokens, concursos de karaoke, cuentas premium restringidas y cuotas de almacenamiento.
+   - Acceso total e ilimitado a todas las funciones sin costo ni registros.
+
+4. **Radio FM & Estaciones en Vivo 24/7**:
+   - Emisoras en vivo sin comerciales (Reggaeton Flow, Exa FM, SomaFM Groove Salad, Synthwave 80s).
+
+5. **Corrección de Detección de Versión**:
+   - `versionCode` actualizado a `200` y `versionName` a `"2.0.0"`.
+   - `AppUpdateManager` sincronizado con la versión `v2.0.0` para evitar avisos falsos de actualización.
 
 ---
 
-### 2. Construcción Manual vía Terminal (Gradle)
+## 📱 Especificaciones Técnicas (Android APK)
 
-#### Requisitos Previos:
-- **JDK**: Java 17 o superior.
-- **Android SDK**: `compileSdk = 35`, `minSdk = 24`.
-- **Gradle**: 8.x con soporte de Kotlin DSL (`.gradle.kts`).
-
-#### Comandos de Construcción:
-
-```bash
-# 1. Compilar y generar APK de desarrollo (Debug)
-gradle :app:assembleDebug
-
-# El archivo generado se ubicará en:
-# app/build/outputs/apk/debug/app-debug.apk
-
-# 2. Compilar APK optimizado para Producción (Release)
-gradle :app:assembleRelease
-
-# El archivo generado se ubicará en:
-# app/build/outputs/apk/release/app-release-unsigned.apk
-```
-
-#### Firma del APK de Release (Opcional):
-```bash
-# Alinear el APK
-zipalign -v -p 4 app/build/outputs/apk/release/app-release-unsigned.apk app-release-aligned.apk
-
-# Firmar con tu Keystore de producción
-apksigner sign --ks tu_keystore.jks --out arkaios-tify-release.apk app-release-aligned.apk
-```
+- **Lenguaje & UI**: Kotlin 100% Nativo • Jetpack Compose • Material Design 3.
+- **SDK Objetivo**: `compileSdk = 36`, `targetSdk = 36`, `minSdk = 24` (Android 8.0 Oreo en adelante).
+- **Control de Audio**: `AudioPlayerEngine` en segundo plano con controles multimedia en la barra de notificaciones.
+- **Base de Datos Local**: SQLite / Room (`TrackDao`, `PlaylistDao`).
 
 ---
 
@@ -84,21 +55,38 @@ apksigner sign --ks tu_keystore.jks --out arkaios-tify-release.apk app-release-a
 ```
 app/src/main/java/com/example/
 ├── data/
+│   ├── crypto/             # ArkaiosOfflineCryptoEngine (Passthrough sin cifrar)
 │   ├── local/              # Base de datos Room (TrackEntity, AppDatabase, TrackDao)
-│   ├── model/              # Modelos de datos (Track, PlaybackState, User, Download)
-│   ├── repository/         # Repositorios (MusicRepository, AmrWalletRepository, DownloadRepository)
-│   └── tidal/              # Motor de APIs (TidalApiService, MusicSourceFilter, Config)
-├── player/                 # Motor de reproducción de audio y background services (AudioPlayerEngine)
+│   ├── model/              # Modelos de datos (Track, PlaybackState, Playlist)
+│   ├── repository/         # Repositorios (MusicRepository, YouTubeMusicProvider, DownloadRepository)
+│   └── update/             # AppUpdateManager (Verificador v2.0.0)
+├── player/                 # Motor de reproducción de audio (AudioPlayerEngine)
 ├── ui/
-│   ├── components/         # Modales y componentes (ArkaiosPayModal, MiniPlayer, BottomNav, TrackItemRow)
-│   ├── screens/            # Pantallas (HomeScreen, SearchScreen, LibraryScreen, AmrStoreScreen, etc.)
-│   ├── theme/              # Esquema de color Cyberpunk M3 (Theme, Color, Type)
-│   └── MainViewModel.kt    # StateFlow y arquitectura MVVM reactiva
-└── MainActivity.kt         # Punto de entrada principal y navegación
+│   ├── components/         # Componentes UI (FullPlayerSheet, BottomNav, AddToPlaylistDialog)
+│   ├── screens/            # Pantallas (HomeScreen, SearchScreen, LibraryScreen)
+│   └── MainViewModel.kt    # ViewModel y Estado MVVM
+└── MainActivity.kt         # Punto de entrada de la aplicación
 ```
 
 ---
 
-## 🚀 Transferencia y Entrega a Antigravity
+## 🚀 Compilación Manual del APK
 
-El proyecto se encuentra en estado **100% verde y compilado con éxito**. Todos los servicios, pasarelas de pago (PayPal & ARKAIOS Pay) y el motor multi-fuente de audio continuo están plenamente enlazados y validados.
+Si deseas compilar la APK desde tu equipo local:
+
+```bash
+# 1. Ejecutar el script compilador optimizado con JDK 21
+run_build.bat
+
+# 2. O compilar manualmente mediante Gradle Wrapper:
+cmd.exe /c "set \"JAVA_HOME=C:\Android\Android Studio\jbr\" && gradle.bat assembleDebug"
+```
+
+El APK resultante estará listo en:
+`app/build/outputs/apk/debug/app-debug.apk`
+
+---
+
+## 📄 Licencia
+
+Este proyecto está bajo la Licencia **MIT** — Libre para uso personal y distribución. © 2026 Ecosistema ARKAIOS.
