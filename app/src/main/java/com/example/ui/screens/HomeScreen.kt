@@ -80,14 +80,9 @@ fun HomeScreen(
     onFavoriteToggle: (Track) -> Unit,
     onDownloadClick: (Track) -> Unit,
     onRemoveDownloadClick: (Track) -> Unit,
-    onNavigateToAmrStore: () -> Unit,
     onGenreSelect: (String) -> Unit,
     onOpenTidalModal: () -> Unit = {},
-    onOpenCreatorStudio: () -> Unit = {},
-    onOpenCommunityVoting: () -> Unit = {},
-    onOpenVipCreators: () -> Unit = {},
-    onOpenKaraokeStudio: () -> Unit = {},
-    onOpenAuthModal: () -> Unit = {}
+    onOpenCreatorStudio: () -> Unit = {}
 ) {
     LazyColumn(
         modifier = Modifier

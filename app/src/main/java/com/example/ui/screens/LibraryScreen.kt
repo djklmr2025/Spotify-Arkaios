@@ -114,7 +114,6 @@ fun LibraryScreen(
     onCreatePlaylist: (String, String) -> Unit,
     onDeletePlaylist: (String) -> Unit,
     onOpenDownloaderSheet: () -> Unit = {},
-    onOpenAuthModal: () -> Unit = {},
     onOpenCreatorStudio: () -> Unit = {}
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -219,29 +218,6 @@ fun LibraryScreen(
                         Text(
                             text = "50GB Drive",
                             color = CyanLight,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-
-                // Auth Account Button
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(Color(0x26F59E0B))
-                        .border(1.dp, Color(0x66F59E0B), RoundedCornerShape(20.dp))
-                        .clickable { onOpenAuthModal() }
-                        .padding(horizontal = 8.dp, vertical = 6.dp)
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Icon(Icons.Default.Shield, contentDescription = "Cuenta Arkaios", tint = ArkaiosGoldLight, modifier = Modifier.size(14.dp))
-                        Text(
-                            text = "Cuenta",
-                            color = ArkaiosGoldLight,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -766,13 +742,13 @@ fun LibraryScreen(
                                     )
                                     Column {
                                         Text(
-                                            text = "${downloadedTracks.size} pistas en Caché Offline Precifrado (.arkcache)",
+                                            text = "${downloadedTracks.size} canciones guardadas (.mp3 / .m4a / .flac)",
                                             color = EmeraldLight,
                                             fontSize = 13.sp,
                                             fontWeight = FontWeight.Bold
                                         )
                                         Text(
-                                            text = "Protección Vault DRM Arkaios • Almacenamiento: ${"%.1f".format(totalDownloadSize)} MB",
+                                            text = "Archivos originales de audio sin cifrar • Almacenamiento: ${"%.1f".format(totalDownloadSize)} MB",
                                             color = TextSecondary,
                                             fontSize = 11.sp
                                         )

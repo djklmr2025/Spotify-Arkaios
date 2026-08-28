@@ -63,14 +63,10 @@ import androidx.compose.material.icons.outlined.Radio
 import com.example.ui.MainViewModel
 import com.example.ui.components.AddToPlaylistDialog
 import com.example.ui.components.AlbumDetailModal
-import com.example.ui.components.ArkaiosAuthModal
-import com.example.ui.components.ArkaiosPayModal
 import com.example.ui.components.BackgroundDownloaderSheet
-import com.example.ui.components.CreatorStudioModal
 import com.example.ui.components.FullPlayerSheet
 import com.example.ui.components.MiniPlayerBar
 import com.example.ui.components.TidalServerModal
-import com.example.ui.screens.AmrStoreScreen
 import com.example.ui.screens.HomeScreen
 import com.example.ui.screens.LibraryScreen
 import com.example.ui.screens.RadioScreen
@@ -304,17 +300,12 @@ fun MainAppScreen(viewModel: MainViewModel) {
                         onFavoriteToggle = { viewModel.toggleFavorite(it) },
                         onDownloadClick = { viewModel.downloadTrack(it) },
                         onRemoveDownloadClick = { viewModel.removeDownload(it) },
-                        onNavigateToAmrStore = { viewModel.setTab(4) },
                         onGenreSelect = { genre ->
                             viewModel.setGenreFilter(genre)
                             viewModel.setTab(1)
                         },
                         onOpenTidalModal = { viewModel.setTidalModalOpen(true) },
-                        onOpenCreatorStudio = { viewModel.setCreatorStudioOpen(true) },
-                        onOpenCommunityVoting = { viewModel.setCommunityVotingOpen(true) },
-                        onOpenVipCreators = { viewModel.setVipCreatorsModalOpen(true) },
-                        onOpenKaraokeStudio = { viewModel.setKaraokeModalOpen(true) },
-                        onOpenAuthModal = { viewModel.openAuthModal() }
+                        onOpenCreatorStudio = { viewModel.setCreatorStudioOpen(true) }
                     )
                     1 -> SearchScreen(
                         searchQuery = searchQuery,
@@ -358,7 +349,6 @@ fun MainAppScreen(viewModel: MainViewModel) {
                         onCreatePlaylist = { name, desc -> viewModel.createPlaylist(name, desc) },
                         onDeletePlaylist = { id -> viewModel.deletePlaylist(id) },
                         onOpenDownloaderSheet = { viewModel.setDownloaderSheetOpen(true) },
-                        onOpenAuthModal = { viewModel.openAuthModal() },
                         onOpenCreatorStudio = { viewModel.setCreatorStudioOpen(true) }
                     )
                     3 -> RadioScreen(
@@ -366,15 +356,6 @@ fun MainAppScreen(viewModel: MainViewModel) {
                         playbackState = playbackState,
                         onRadioClick = { viewModel.playRadioStation(it) },
                         onAddRadioClick = { name, genre, url -> viewModel.addCustomRadioStation(name, genre, url) }
-                    )
-                    4 -> AmrStoreScreen(
-                        wallet = wallet,
-                        premiumTiers = viewModel.premiumTiers,
-                        transactions = transactions,
-                        onOpenCheckout = { viewModel.openArkaiosPayCheckout(it) },
-                        onTransferTokens = { addr, amt -> viewModel.transferAmrTokens(addr, amt) },
-                        onBuyTokensPayPal = { usd, tokens -> viewModel.buyTokensWithPayPal(usd, tokens) },
-                        onRedeemCode = { code -> viewModel.redeemAmrCode(code) }
                     )
                 }
 
@@ -468,14 +449,6 @@ fun MainAppScreen(viewModel: MainViewModel) {
             )
         }
 
-        // Arkaios Pay Checkout Modal Overlay
-        ArkaiosPayModal(
-            modalState = checkoutModal,
-            wallet = wallet,
-            onConfirmPay = { viewModel.confirmArkaiosPayCheckout() },
-            onClose = { viewModel.closeCheckoutModal() }
-        )
-
         // TIDAL Hi-Fi API Direct & Cloud Servers Modal
         AnimatedVisibility(
             visible = isTidalModalOpen,
@@ -543,110 +516,6 @@ fun MainAppScreen(viewModel: MainViewModel) {
                     onAddToPlaylist = { tr -> viewModel.openAddToPlaylistDialog(tr) }
                 )
             }
-        }
-
-        // Arkaios & Google Auth Modal
-        AnimatedVisibility(
-            visible = isAuthModalOpen,
-            enter = fadeIn() + slideInVertically(initialOffsetY = { it / 2 }),
-            exit = fadeOut() + slideOutVertically(targetOffsetY = { it / 2 })
-        ) {
-            ArkaiosAuthModal(
-                userProfile = userProfile,
-                onDismiss = { viewModel.closeAuthModal() },
-                onLoginGoogle = { viewModel.loginWithGoogle() },
-                onLoginEmail = { email -> viewModel.loginWithEmail(email) },
-                onToggleOfflineCache = { enabled -> viewModel.toggleOfflineCache(enabled) },
-                onUpgradeTier = { tier -> viewModel.updateUserTier(tier) }
-            )
-        }
-
-        // Arkaios Creator Studio 50GB & Google Drive 5TB Modal
-        AnimatedVisibility(
-            visible = isCreatorStudioOpen,
-            enter = fadeIn() + slideInVertically(initialOffsetY = { it / 2 }),
-            exit = fadeOut() + slideOutVertically(targetOffsetY = { it / 2 })
-        ) {
-            CreatorStudioModal(
-                stats = creatorStats,
-                creatorTracks = creatorTracks,
-                onUploadNewTrack = { t, a, alb, g, mb ->
-                    viewModel.uploadCreatorTrack(t, a, alb, g, mb)
-                },
-                onPlayTrack = { tr ->
-                    viewModel.playTrack(tr)
-                    viewModel.setCreatorStudioOpen(false)
-                },
-                onShareTrack = { ct ->
-                    viewModel.showSnackbar("Enlace copiado: https://arkaios.music/track/${ct.id}")
-                },
-                onClaimEarnings = {
-                    viewModel.claimCreatorEarnings()
-                },
-                onDismiss = { viewModel.setCreatorStudioOpen(false) }
-            )
-        }
-
-        // Arkaios Pay & PayPal SDK v6 Checkout Modal
-        if (checkoutModal.isOpen) {
-            ArkaiosPayModal(
-                modalState = checkoutModal,
-                wallet = wallet,
-                onConfirmPay = { viewModel.confirmArkaiosPayCheckout() },
-                onConfirmPayPal = { viewModel.confirmPayPalCheckout() },
-                onClose = { viewModel.closeCheckoutModal() }
-            )
-        }
-
-        // Community Voting & Live Listening Status Modal
-        com.example.ui.components.CommunityVotingModal(
-            isOpen = isCommunityVotingOpen,
-            onClose = { viewModel.setCommunityVotingOpen(false) },
-            votedTracks = votedTracks,
-            userListeningStatuses = userListeningStatuses,
-            onVoteTrack = { id -> viewModel.voteTrack(id) },
-            onPlayTrack = { tr ->
-                viewModel.playTrack(tr)
-                viewModel.setCommunityVotingOpen(false)
-            },
-            onProposeNewSong = { title, artist ->
-                viewModel.proposeSongForVoting(title, artist)
-            }
-        )
-
-        // VIP Creators Directory Modal (Karaoplay Style - $500 MXN Annual Members)
-        if (isVipCreatorsModalOpen) {
-            com.example.ui.components.VipCreatorsDirectoryModal(
-                creators = vipCreators,
-                isCurrentUserVip = wallet.isGodOwnerLicensed,
-                onToggleFollow = { id -> viewModel.toggleFollowVipCreator(id) },
-                onVoteCreatorTrack = { title ->
-                    viewModel.proposeSongForVoting(title, "Creador VIP")
-                },
-                onOpenStoreForVip = {
-                    viewModel.setTab(4)
-                },
-                onDismiss = { viewModel.setVipCreatorsModalOpen(false) }
-            )
-        }
-
-        // Karaoke Studio & Karaoplay Engine Modal
-        if (isKaraokeModalOpen) {
-            com.example.ui.components.KaraokeStudioModal(
-                karaokeTracks = karaokeTracks,
-                onSearchKaraoke = { q -> viewModel.searchKaraokeTracks(q) },
-                onPlayKaraoke = { tr ->
-                    viewModel.playTrack(tr)
-                    viewModel.setKaraokeModalOpen(false)
-                },
-                onDownloadKaraoke = { kt ->
-                    viewModel.enqueueCustomUrlDownload(kt.sourceUrl, format = "MP3 (Karaoke HD)")
-                },
-                onForceLinkDownload = { url ->
-                    viewModel.enqueueCustomUrlDownload(url, format = "MP3 (Multi-Downloader Engine)")
-                },
-                onDismiss = { viewModel.setKaraokeModalOpen(false) }
-            )
         }
     }
 }
