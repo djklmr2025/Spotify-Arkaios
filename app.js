@@ -1,4 +1,7 @@
-const API_BASE = window.location.origin.includes('8788') ? 'http://localhost:8788/api' : '/api';
+const SERVER_HOST = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? `http://${window.location.hostname}:8788` 
+    : (window.location.origin.startsWith('http') && !window.location.origin.includes('file:') ? window.location.origin : 'http://192.168.101.106:8788');
+const API_BASE = `${SERVER_HOST}/api`;
 
 // Global Audio Engine & State
 const audioPlayer = new Audio();
@@ -14,10 +17,10 @@ let customPlaylists = JSON.parse(localStorage.getItem('arkaios_playlists') || '[
 let importedLocalTracks = [];
 
 const featuredAlbums = [
-    { id: 'al_01', title: 'Starboy (TIDAL Master)', artist: 'The Weeknd', cover: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600', tracksCount: 18 },
-    { id: 'al_02', title: 'Future Nostalgia', artist: 'Dua Lipa', cover: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=600', tracksCount: 12 },
-    { id: 'al_03', title: 'Endless Summer Vacation', artist: 'Miley Cyrus', cover: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600', tracksCount: 13 },
-    { id: 'al_04', title: 'Subatomic Frequencies', artist: 'Arkaios God Node', cover: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600', tracksCount: 10 }
+    { id: 'al_01', title: 'DJ KLMR Vault (19,000+ Master Pistas)', artist: 'DJ KLMR', cover: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600', tracksCount: 19026 },
+    { id: 'al_02', title: 'Krazy Rhythm & Urban Remixes', artist: 'DJ KLMR Extended', cover: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=600', tracksCount: 420 },
+    { id: 'al_03', title: 'VirtualDJ UltraReggaeton 2026', artist: 'DJ KLMR Master Edit', cover: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600', tracksCount: 185 },
+    { id: 'al_04', title: 'Google Drive 5TB Cloud Vault', artist: 'ARKAIOS Sovereign Node', cover: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600', tracksCount: 5000 }
 ];
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -238,9 +241,11 @@ function loadTrackToPlayer(track, autoPlay = true) {
     document.getElementById('playerTitle').textContent = track.title;
     document.getElementById('playerArtist').textContent = track.artist;
     document.getElementById('playerCover').src = track.cover || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=300';
-    document.getElementById('playerFormatBadge').textContent = track.format || 'MP3 HQ';
-
-    audioPlayer.src = track.streamUrl || track.url;
+    let streamSrc = track.streamUrl || track.url;
+    if (streamSrc && streamSrc.startsWith('/')) {
+        streamSrc = `${SERVER_HOST}${streamSrc}`;
+    }
+    audioPlayer.src = streamSrc;
     if (autoPlay) {
         audioPlayer.play().then(() => {
             isPlaying = true;

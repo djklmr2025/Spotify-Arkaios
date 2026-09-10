@@ -42,6 +42,14 @@ class MusicRepository(private val context: Context, private val db: AppDatabase)
 
     suspend fun searchOnlineTracks(query: String): List<Track> = withContext(Dispatchers.IO) {
         if (query.isBlank()) return@withContext emptyList()
+        // 1. Priorizar el Servidor Real de ARKAIOS Node (19,000+ pistas DJ KLMR)
+        val localNodeTracks = ArkaiosNodeMusicProvider.searchTracks(query)
+        if (localNodeTracks.isNotEmpty()) {
+            val entities = localNodeTracks.map { TrackEntity.fromTrack(it) }
+            trackDao.insertOrUpdateTracks(entities)
+            return@withContext localNodeTracks
+        }
+        // 2. Fallback Multi-Fuente online (YouTube Music / Piped / Invidious)
         val online = YouTubeMusicProvider.searchTracks(query, limit = 25)
         if (online.isNotEmpty()) {
             val entities = online.map { TrackEntity.fromTrack(it) }
@@ -51,21 +59,82 @@ class MusicRepository(private val context: Context, private val db: AppDatabase)
     }
 
     suspend fun getInitialCatalog(): List<Track> = withContext(Dispatchers.IO) {
+        // 1. Intentar cargar directamente del Servidor Real ARKAIOS Node
+        val liveNodeTracks = ArkaiosNodeMusicProvider.getInitialCatalog(limit = 35)
+        if (liveNodeTracks.isNotEmpty()) {
+            val entities = liveNodeTracks.map { TrackEntity.fromTrack(it) }
+            trackDao.insertOrUpdateTracks(entities)
+            return@withContext liveNodeTracks
+        }
+
+        // 2. Catálogo base con temas insignia de DJ KLMR
         val defaultTracks = listOf(
             Track(
-                id = "ark_01",
-                title = "Cybernetic Horizon (FLAC Master)",
-                artist = "Arkaios Sound Lab",
-                album = "Nexus Echoes 2026",
+                id = "klmr_init_01",
+                title = "Medicina (Krazy Rhythm Feat Muzikal Princess Extended Edit)",
+                artist = "Anitta / DJ KLMR",
+                album = "DJ KLMR Private Vault",
                 durationMs = 214000L,
-                audioUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-                coverUrl = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80",
-                genre = "Cyberpunk / Synth",
-                bitrate = "9216 kbps (24-bit/192kHz Tidal)",
-                tidalId = "tidal_track_99812",
+                audioUrl = "http://192.168.101.106:8788/api/stream/klmr_init_01",
+                coverUrl = "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600&auto=format&fit=crop&q=80",
+                genre = "DJ Edit / Urban",
+                bitrate = "320 kbps (HQ Master)",
                 isFavorite = true,
-                downloadSizeMb = 14.2,
-                audioFormat = "FLAC"
+                downloadSizeMb = 9.2,
+                audioFormat = "MP3"
+            ),
+            Track(
+                id = "klmr_init_02",
+                title = "La Diabla (Krazy Rhythm Extended Rumbaton Mix)",
+                artist = "Alex Sensation Ft Nicky Jam / DJ KLMR",
+                album = "DJ KLMR Private Vault",
+                durationMs = 198000L,
+                audioUrl = "http://192.168.101.106:8788/api/stream/klmr_init_02",
+                coverUrl = "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=600&auto=format&fit=crop&q=80",
+                genre = "Rumbaton / Reggaeton",
+                bitrate = "320 kbps (HQ Master)",
+                downloadSizeMb = 8.5,
+                audioFormat = "MP3"
+            ),
+            Track(
+                id = "klmr_init_03",
+                title = "El Tiburon (Krazy Rhythm Extended Old School Mix)",
+                artist = "Alexis & Fido / DJ KLMR",
+                album = "DJ KLMR Private Vault",
+                durationMs = 224000L,
+                audioUrl = "http://192.168.101.106:8788/api/stream/klmr_init_03",
+                coverUrl = "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80",
+                genre = "Old School Reggaeton",
+                bitrate = "320 kbps (HQ Master)",
+                isFavorite = true,
+                downloadSizeMb = 8.9,
+                audioFormat = "MP3"
+            ),
+            Track(
+                id = "klmr_init_04",
+                title = "Loco Por Ella (Krazy Rhythm & BeatDrumz Extended Edit)",
+                artist = "Andy Rivera Ft Lenny Tavarez / DJ KLMR",
+                album = "DJ KLMR Private Vault",
+                durationMs = 205000L,
+                audioUrl = "http://192.168.101.106:8788/api/stream/klmr_init_04",
+                coverUrl = "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&auto=format&fit=crop&q=80",
+                genre = "Urban Remix",
+                bitrate = "320 kbps (HQ Master)",
+                downloadSizeMb = 8.1,
+                audioFormat = "MP3"
+            ),
+            Track(
+                id = "klmr_init_05",
+                title = "Bailoteame (Krazy Rhythm & Flow Sensationz Extended Edit)",
+                artist = "Agustin Casanova Ft Mau & Ricky / DJ KLMR",
+                album = "DJ KLMR Private Vault",
+                durationMs = 210000L,
+                audioUrl = "http://192.168.101.106:8788/api/stream/klmr_init_05",
+                coverUrl = "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600&auto=format&fit=crop&q=80",
+                genre = "Pop Urbano",
+                bitrate = "320 kbps (HQ Master)",
+                downloadSizeMb = 8.4,
+                audioFormat = "MP3"
             ),
             Track(
                 id = "ark_02",
