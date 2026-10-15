@@ -519,8 +519,9 @@ function renderPublicTracks(tracksToRender = null) {
     const query = (document.getElementById('infrSearchInput')?.value || '').trim().toLowerCase();
     if (query) {
         tracks = tracks.filter(t => 
-            t.title.toLowerCase().includes(query) || 
-            t.playlistTitle.toLowerCase().includes(query) ||
+            (t.title && t.title.toLowerCase().includes(query)) || 
+            (t.playlistTitle && t.playlistTitle.toLowerCase().includes(query)) ||
+            (t.album && t.album.toLowerCase().includes(query)) ||
             (t.genre && t.genre.toLowerCase().includes(query))
         );
     }
@@ -532,20 +533,23 @@ function renderPublicTracks(tracksToRender = null) {
 
     container.innerHTML = tracks.map(t => {
         const isFav = infrFavorites.includes(t.videoId);
+        const thumb = t.coverUrl || t.thumbnailUrl || `https://i.ytimg.com/vi/${t.videoId}/hqdefault.jpg`;
+        const vUrl = t.originalUrl || t.videoUrl || `https://www.youtube.com/watch?v=${t.videoId}`;
+        const plTitle = t.album || t.playlistTitle || 'Infraction Music';
         return `
         <div class="track-item-card">
             <div style="position:relative;">
-                <img src="${t.thumbnailUrl}" alt="${t.title}" loading="lazy">
+                <img src="${thumb}" alt="${t.title}" loading="lazy">
                 <span style="position:absolute; bottom:8px; right:8px; background:rgba(0,0,0,0.8); color:#fff; font-size:0.75rem; padding:2px 6px; border-radius:4px; font-weight:700;">${t.duration}</span>
             </div>
             <h4>${t.title}</h4>
             <p>${t.artist}</p>
             <div style="display:flex; justify-content:space-between; align-items:center; margin:6px 0 10px;">
                 <span style="font-size:0.75rem; color:var(--cyan-light); font-weight:700;">${t.genre || 'Royalty-Free'}</span>
-                <span style="font-size:0.7rem; color:var(--text-muted);">${t.playlistTitle}</span>
+                <span style="font-size:0.7rem; color:var(--text-muted);">${plTitle}</span>
             </div>
             <div class="track-actions">
-                <button class="btn-track-play" onclick="playOfficialYouTubeTrack('${t.videoId}', '${t.title.replace(/'/g, "\\'")}', '${t.videoUrl}')">
+                <button class="btn-track-play" onclick="playOfficialYouTubeTrack('${t.videoId}', '${t.title.replace(/'/g, "\\'")}', '${vUrl}')">
                     <i class="fa-brands fa-youtube" style="color:#ef4444;"></i> Reproducir Oficial
                 </button>
                 <button class="btn-track-download ${isFav ? 'active' : ''}" style="color:${isFav ? '#ef4444' : 'var(--text-muted)'};" title="Añadir a Favoritos" onclick="toggleFavorite('${t.videoId}')">
