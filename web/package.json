@@ -5,7 +5,9 @@
   "main": "daemon.js",
   "scripts": {
     "start": "node daemon.js",
-    "dev": "nodemon daemon.js"
+    "dev": "nodemon daemon.js",
+    "import:infraction": "node infraction_importer.js",
+    "test:importer": "node ../scripts/test_infraction_import.js"
   },
   "dependencies": {
     "cors": "^2.8.6",

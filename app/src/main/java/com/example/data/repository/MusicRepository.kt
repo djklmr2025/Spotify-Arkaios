@@ -42,7 +42,7 @@ class MusicRepository(private val context: Context, private val db: AppDatabase)
 
     suspend fun searchOnlineTracks(query: String): List<Track> = withContext(Dispatchers.IO) {
         if (query.isBlank()) return@withContext emptyList()
-        // 1. Priorizar el Servidor Real de ARKAIOS Node (19,000+ pistas DJ KLMR)
+        // 1. Priorizar el Servidor Real de ARKAIOS Node (19,000+ pistas DJ KLMR + Colección Infraction)
         val localNodeTracks = ArkaiosNodeMusicProvider.searchTracks(query)
         if (localNodeTracks.isNotEmpty()) {
             val entities = localNodeTracks.map { TrackEntity.fromTrack(it) }
@@ -56,6 +56,15 @@ class MusicRepository(private val context: Context, private val db: AppDatabase)
             trackDao.insertOrUpdateTracks(entities)
         }
         online
+    }
+
+    suspend fun getInfractionTracks(): List<Track> = withContext(Dispatchers.IO) {
+        val tracks = ArkaiosNodeMusicProvider.getInfractionCatalog()
+        if (tracks.isNotEmpty()) {
+            val entities = tracks.map { TrackEntity.fromTrack(it) }
+            trackDao.insertOrUpdateTracks(entities)
+        }
+        tracks
     }
 
     suspend fun getInitialCatalog(): List<Track> = withContext(Dispatchers.IO) {

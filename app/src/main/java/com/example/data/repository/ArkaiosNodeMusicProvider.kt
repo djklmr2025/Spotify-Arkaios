@@ -89,4 +89,64 @@ object ArkaiosNodeMusicProvider {
     suspend fun getInitialCatalog(limit: Int = 40): List<Track> = withContext(Dispatchers.IO) {
         searchTracks("", limit)
     }
+
+    suspend fun getInfractionCatalog(limit: Int = 100): List<Track> = withContext(Dispatchers.IO) {
+        val tracks = mutableListOf<Track>()
+        val endpoints = if (activeEndpoint != null) listOf(activeEndpoint!!) + NODE_ENDPOINTS else NODE_ENDPOINTS
+
+        for (base in endpoints.distinct()) {
+            try {
+                val url = "$base/api/infraction/catalog"
+                val req = Request.Builder().url(url).build()
+                val resp = client.newCall(req).execute()
+
+                if (resp.isSuccessful) {
+                    val body = resp.body?.string()
+                    if (!body.isNullOrBlank()) {
+                        val json = JSONObject(body)
+                        val arr = json.optJSONArray("tracks")
+                        if (arr != null && arr.length() > 0) {
+                            activeEndpoint = base
+                            val count = Math.min(arr.length(), limit)
+                            for (i in 0 until count) {
+                                val item = arr.getJSONObject(i)
+                                val id = item.optString("id")
+                                val title = item.optString("title", "Pista Infraction")
+                                val artist = item.optString("artist", "Infraction")
+                                val album = item.optString("album", "Infraction Collection")
+                                val durationMs = item.optLong("durationMs", 180000L)
+                                val streamPath = item.optString("streamUrl", "/api/infraction/stream/$id")
+                                val fullAudioUrl = if (streamPath.startsWith("http")) streamPath else "$base$streamPath"
+                                val cover = item.optString("cover", "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600")
+                                val genre = item.optString("genre", "Royalty-Free / Infraction")
+                                val format = item.optString("format", "MP3")
+                                val sizeBytes = item.optLong("sizeBytes", 0L)
+
+                                tracks.add(
+                                    Track(
+                                        id = id,
+                                        title = title,
+                                        artist = artist,
+                                        album = album,
+                                        durationMs = durationMs,
+                                        audioUrl = fullAudioUrl,
+                                        coverUrl = cover,
+                                        genre = genre,
+                                        bitrate = "Original HQ (Infraction)",
+                                        downloadSizeMb = (sizeBytes / (1024.0 * 1024.0)).coerceAtLeast(1.0),
+                                        audioFormat = format
+                                    )
+                                )
+                            }
+                            Log.i(TAG, "Cargado catálogo Infraction de ARKAIOS Node: $base con ${tracks.size} pistas.")
+                            return@withContext tracks
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                // Siguiente endpoint
+            }
+        }
+        tracks
+    }
 }

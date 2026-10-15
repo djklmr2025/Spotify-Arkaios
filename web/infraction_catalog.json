@@ -1,0 +1,66 @@
+{
+  "generatedAt": "2026-10-15T18:32:14.548Z",
+  "sourceDirectory": "C:\\ARKAIOS\\MUSIC\\INFRACTION",
+  "totalUniqueTracks": 2,
+  "totalDuplicatesSkipped": 1,
+  "supportedFormats": [
+    "MP3",
+    "M4A",
+    "FLAC",
+    "WAV"
+  ],
+  "tracks": [
+    {
+      "id": "infr_c165fd90d37b",
+      "title": "Inspiring Waves",
+      "artist": "Infraction",
+      "album": "Ambient Cinematic",
+      "genre": "Ambient Cinematic",
+      "duration": "0:03",
+      "durationMs": 3000,
+      "sizeBytes": 576078,
+      "format": "WAV",
+      "fileName": "Inspiring Waves.wav",
+      "filePath": "C:\\ARKAIOS\\MUSIC\\INFRACTION\\Ambient Cinematic\\Inspiring Waves.wav",
+      "sha256": "c165fd90d37be73824d51daba1935c707d610f2961abdb7b266f6e2ef561ab6c",
+      "streamUrl": "/api/infraction/stream/infr_c165fd90d37b",
+      "cover": "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&auto=format&fit=crop&q=80",
+      "licenseStatus": "AUTHORIZED_ROYALTY_FREE_ATTRIBUTION",
+      "licenseAttribution": "Music provided by Infraction / InAudio (https://inaudio.org)",
+      "distributionScope": "PRIVATE_LOCAL_ONLY",
+      "allowPublicDownload": false,
+      "isPrivateFile": true,
+      "importedAt": "2026-10-15T18:32:14.423Z"
+    },
+    {
+      "id": "infr_29dc11940f72",
+      "title": "Duplicate_Renamed_Percussion",
+      "artist": "Infraction",
+      "album": "Rhythmic No Copyright Music",
+      "genre": "Rhythmic No Copyright Music",
+      "duration": "1:26",
+      "durationMs": 86007,
+      "sizeBytes": 2977724,
+      "format": "MP3",
+      "fileName": "Duplicate_Renamed_Percussion.mp3",
+      "filePath": "C:\\ARKAIOS\\MUSIC\\INFRACTION\\Rhythmic No Copyright Music\\Duplicate_Renamed_Percussion.mp3",
+      "sha256": "29dc11940f720c790a5202fc89036341759ce79875fb89576801e684555a0336",
+      "streamUrl": "/api/infraction/stream/infr_29dc11940f72",
+      "cover": "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&auto=format&fit=crop&q=80",
+      "licenseStatus": "AUTHORIZED_ROYALTY_FREE_ATTRIBUTION",
+      "licenseAttribution": "Music provided by Infraction / InAudio (https://inaudio.org)",
+      "distributionScope": "PRIVATE_LOCAL_ONLY",
+      "allowPublicDownload": false,
+      "isPrivateFile": true,
+      "importedAt": "2026-10-15T18:32:14.532Z"
+    }
+  ],
+  "duplicates": [
+    {
+      "duplicateFilePath": "C:\\ARKAIOS\\MUSIC\\INFRACTION\\Rhythmic No Copyright Music\\Percussion Drums by Infraction [No Copyright Music].mp3",
+      "originalTrackId": "infr_29dc11940f72",
+      "originalFilePath": "C:\\ARKAIOS\\MUSIC\\INFRACTION\\Rhythmic No Copyright Music\\Duplicate_Renamed_Percussion.mp3",
+      "sha256": "29dc11940f720c790a5202fc89036341759ce79875fb89576801e684555a0336"
+    }
+  ]
+}

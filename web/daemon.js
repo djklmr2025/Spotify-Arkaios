@@ -9,6 +9,10 @@ const app = express();
 const PORT = process.env.PORT || 8788;
 const DB_FILE = path.join(__dirname, 'arkaios_music_db.json');
 const MUSIC_DIR = process.env.MUSIC_DIR || 'C:\\DJKLMR\\Music';
+const INFRACTION_DIR = process.env.INFRACTION_DIR || 'C:\\ARKAIOS\\MUSIC\\INFRACTION';
+const INFRACTION_DB_FILE = path.join(__dirname, 'infraction_catalog.json');
+
+const { scanInfractionLibrary } = require('./infraction_importer');
 
 app.use(cors());
 app.use(express.json());
@@ -18,9 +22,36 @@ app.use('/assets', express.static(path.join(__dirname, '../app/src/main/assets/w
 // Estado global
 let realTracksCatalog = [];
 const tracksMap = new Map();
+let infractionCatalog = { totalUniqueTracks: 0, totalDuplicatesSkipped: 0, tracks: [], duplicates: [] };
+const infractionTracksMap = new Map();
+
 const downloadQueue = [];
 const activeDownloads = new Map();
 const completedDownloads = [];
+
+// Cargar catálogo Infraction
+function loadInfractionDatabase() {
+    if (fs.existsSync(INFRACTION_DB_FILE)) {
+        try {
+            console.log(`[INFO] Cargando colección Infraction desde ${INFRACTION_DB_FILE}...`);
+            infractionCatalog = JSON.parse(fs.readFileSync(INFRACTION_DB_FILE, 'utf-8'));
+            infractionTracksMap.clear();
+            for (const t of infractionCatalog.tracks || []) {
+                infractionTracksMap.set(t.id, t);
+            }
+            console.log(`[OK] Colección Infraction cargada: ${infractionTracksMap.size} pistas únicas.`);
+        } catch (e) {
+            console.error('[ERROR] Error cargando DB Infraction:', e);
+        }
+    } else {
+        console.log(`[INFO] No se encontró catálogo Infraction. Ejecutando escaneo inicial en ${INFRACTION_DIR}...`);
+        infractionCatalog = scanInfractionLibrary(INFRACTION_DIR);
+        infractionTracksMap.clear();
+        for (const t of infractionCatalog.tracks || []) {
+            infractionTracksMap.set(t.id, t);
+        }
+    }
+}
 
 // Cargar base de datos local de 19,000+ pistas
 function loadMusicDatabase() {
@@ -42,6 +73,7 @@ function loadMusicDatabase() {
     }
 }
 
+loadInfractionDatabase();
 loadMusicDatabase();
 
 // Helper de MIME type
@@ -103,6 +135,80 @@ app.get('/api/stream/:id', (req, res) => {
     }
 });
 
+// 1.1 Endpoint de Streaming para Colección Infraction (HTTP 206, sólo reproducción local, sin descarga pública)
+app.get('/api/infraction/stream/:id', (req, res) => {
+    const track = infractionTracksMap.get(req.params.id);
+    if (!track || !track.filePath || !fs.existsSync(track.filePath)) {
+        return res.status(404).json({ error: 'Pista Infraction no encontrada en la biblioteca local' });
+    }
+
+    const filePath = track.filePath;
+    const stat = fs.statSync(filePath);
+    const fileSize = stat.size;
+    const range = req.headers.range;
+
+    // Respetar separación: archivo privado para reproducción local, no descarga pública adjunta
+    res.setHeader('X-ARKAIOS-Scope', track.distributionScope || 'PRIVATE_LOCAL_ONLY');
+    res.setHeader('X-ARKAIOS-License', track.licenseStatus || 'AUTHORIZED_ROYALTY_FREE_ATTRIBUTION');
+
+    if (range) {
+        const parts = range.replace(/bytes=/, "").split("-");
+        const start = parseInt(parts[0], 10);
+        const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+
+        if (start >= fileSize) {
+            res.status(416).send('Requested range not satisfiable\n' + start + ' >= ' + fileSize);
+            return;
+        }
+
+        const chunksize = (end - start) + 1;
+        const file = fs.createReadStream(filePath, { start, end });
+        const head = {
+            'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+            'Accept-Ranges': 'bytes',
+            'Content-Length': chunksize,
+            'Content-Type': getMimeType(filePath),
+            'Cache-Control': 'private, no-cache'
+        };
+        res.writeHead(206, head);
+        file.pipe(res);
+    } else {
+        const head = {
+            'Content-Length': fileSize,
+            'Content-Type': getMimeType(filePath),
+            'Accept-Ranges': 'bytes',
+            'Cache-Control': 'private, no-cache'
+        };
+        res.writeHead(200, head);
+        fs.createReadStream(filePath).pipe(res);
+    }
+});
+
+// 1.2 Catálogo Infraction JSON
+app.get('/api/infraction/catalog', (req, res) => {
+    res.json(infractionCatalog);
+});
+
+// 1.3 Re-escanear biblioteca Infraction en C:\ARKAIOS\MUSIC\INFRACTION
+app.post('/api/infraction/rescan', (req, res) => {
+    try {
+        const targetDir = req.body.dir || INFRACTION_DIR;
+        infractionCatalog = scanInfractionLibrary(targetDir);
+        infractionTracksMap.clear();
+        for (const t of infractionCatalog.tracks || []) {
+            infractionTracksMap.set(t.id, t);
+        }
+        res.json({
+            ok: true,
+            message: 'Biblioteca Infraction re-escaneada con éxito.',
+            totalUniqueTracks: infractionCatalog.totalUniqueTracks,
+            totalDuplicatesSkipped: infractionCatalog.totalDuplicatesSkipped
+        });
+    } catch (e) {
+        res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
 // 2. Health & Node Status Endpoint
 app.get('/api/status', (req, res) => {
     res.json({
@@ -111,20 +217,39 @@ app.get('/api/status', (req, res) => {
         version: 'v2.1.0',
         port: PORT,
         totalTracks: realTracksCatalog.length,
+        infractionTracksCount: infractionTracksMap.size,
+        infractionDuplicatesCount: infractionCatalog.totalDuplicatesSkipped || 0,
         musicDirectory: MUSIC_DIR,
+        infractionDirectory: INFRACTION_DIR,
         cluster5TB: 'GOOGLE_DRIVE_5TB_CONNECTED',
         activeDownloadsCount: activeDownloads.size,
         timestamp: new Date().toISOString()
     });
 });
 
-// 3. Catálogo y Búsqueda Ultrarrápida
+// 3. Catálogo y Búsqueda Ultrarrápida (incluye Infraction)
 app.get('/api/search', (req, res) => {
     const query = (req.query.q || '').trim().toLowerCase();
     
-    // Si no hay query, devolver una selección destacada del catálogo real
+    // Si no hay query, devolver una selección combinada (KLMR + Infraction)
     if (!query) {
-        const topSlice = realTracksCatalog.slice(0, 60).map(t => ({
+        const infractionSlice = (infractionCatalog.tracks || []).slice(0, 20).map(t => ({
+            id: t.id,
+            title: t.title,
+            artist: t.artist,
+            album: t.album,
+            duration: t.duration || '3:30',
+            url: t.streamUrl,
+            streamUrl: t.streamUrl,
+            cover: t.cover,
+            genre: t.genre,
+            format: t.format,
+            bitrate: 'Original Lossless/HQ (Infraction Royalty-Free)',
+            isInfraction: true,
+            licenseStatus: t.licenseStatus
+        }));
+
+        const klmrSlice = realTracksCatalog.slice(0, 40).map(t => ({
             id: t.id,
             title: t.title,
             artist: t.artist,
@@ -135,23 +260,50 @@ app.get('/api/search', (req, res) => {
             cover: t.cover,
             genre: t.genre,
             format: t.format,
-            bitrate: '320 kbps (HQ Lossless/Master)'
+            bitrate: '320 kbps (HQ Lossless/Master)',
+            isInfraction: false
         }));
+
+        const combined = [...infractionSlice, ...klmrSlice];
+
         return res.json({ 
-            results: topSlice, 
-            count: topSlice.length, 
-            totalCatalog: realTracksCatalog.length, 
-            source: 'DJ KLMR Vault (19,000+ Tracks)' 
+            results: combined, 
+            count: combined.length, 
+            totalCatalog: realTracksCatalog.length + infractionTracksMap.size, 
+            source: 'ARKAIOS Unified Vault (KLMR + Infraction Royalty-Free)' 
         });
     }
 
-    // Búsqueda en memoria sobre las 19,000+ canciones
+    // Búsqueda en memoria sobre Infraction + DJ KLMR
     const matches = [];
     const limit = 80;
+
+    // 1. Buscar en Infraction
+    for (const t of infractionCatalog.tracks || []) {
+        if (matches.length >= limit) break;
+        if (t.title.toLowerCase().includes(query) || t.artist.toLowerCase().includes(query) || t.album.toLowerCase().includes(query) || t.genre.toLowerCase().includes(query)) {
+            matches.push({
+                id: t.id,
+                title: t.title,
+                artist: t.artist,
+                album: t.album,
+                duration: t.duration || '3:30',
+                url: t.streamUrl,
+                streamUrl: t.streamUrl,
+                cover: t.cover,
+                genre: t.genre,
+                format: t.format,
+                bitrate: 'Original HQ (Infraction Royalty-Free)',
+                isInfraction: true,
+                licenseStatus: t.licenseStatus
+            });
+        }
+    }
     
+    // 2. Buscar en canciones de DJ KLMR
     for (let i = 0; i < realTracksCatalog.length && matches.length < limit; i++) {
         const t = realTracksCatalog[i];
-        if (t.title.toLowerCase().includes(query) || t.artist.toLowerCase().includes(query)) {
+        if (t.title.toLowerCase().includes(query) || t.artist.toLowerCase().includes(query) || (t.album && t.album.toLowerCase().includes(query))) {
             matches.push({
                 id: t.id,
                 title: t.title,
@@ -163,7 +315,8 @@ app.get('/api/search', (req, res) => {
                 cover: t.cover,
                 genre: t.genre,
                 format: t.format,
-                bitrate: '320 kbps (HQ Audio)'
+                bitrate: '320 kbps (HQ Audio)',
+                isInfraction: false
             });
         }
     }
@@ -171,9 +324,9 @@ app.get('/api/search', (req, res) => {
     res.json({
         query,
         count: matches.length,
-        totalCatalog: realTracksCatalog.length,
+        totalCatalog: realTracksCatalog.length + infractionTracksMap.size,
         results: matches,
-        source: 'DJ KLMR Live Search'
+        source: 'ARKAIOS Live Search'
     });
 });
 

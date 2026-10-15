@@ -27,6 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
     checkDaemonStatus();
     loadHomeData();
     loadRadioStations();
+    loadInfractionCollection();
     renderPlaylists();
 
     audioPlayer.addEventListener('timeupdate', updateProgress);
@@ -465,4 +466,219 @@ async function loadDownloadsQueue() {
 
 function downloadApkDirect() {
     window.location.href = `${API_BASE}/apk/download`;
+}
+
+// ==========================================
+// COLECCIÓN MUSICAL INFRACTION (ROYALTY-FREE)
+// ==========================================
+let allInfractionTracks = [];
+let filteredInfractionTracks = [];
+let currentInfractionAlbum = 'ALL';
+
+async function loadInfractionCollection() {
+    try {
+        let data = null;
+        try {
+            const res = await fetch(`${API_BASE}/infraction/catalog`);
+            if (res.ok) data = await res.json();
+        } catch (e) {
+            // Fallback local a json estático
+            const res = await fetch('infraction_catalog.json');
+            if (res.ok) data = await res.json();
+        }
+
+        if (!data || !data.tracks) return;
+
+        allInfractionTracks = data.tracks;
+        filteredInfractionTracks = [...allInfractionTracks];
+
+        const uniqueCountEl = document.getElementById('infrUniqueCount');
+        const dupCountEl = document.getElementById('infrDupCount');
+        if (uniqueCountEl) uniqueCountEl.textContent = data.totalUniqueTracks || allInfractionTracks.length;
+        if (dupCountEl) dupCountEl.textContent = data.totalDuplicatesSkipped || 0;
+
+        renderInfractionAlbumFilter();
+        renderInfractionTracks(filteredInfractionTracks);
+    } catch (err) {
+        console.error('Error cargando catálogo Infraction:', err);
+    }
+}
+
+function renderInfractionAlbumFilter() {
+    const container = document.getElementById('infrAlbumChips');
+    if (!container) return;
+
+    const albums = ['ALL', ...new Set(allInfractionTracks.map(t => t.album))];
+    container.innerHTML = albums.map(alb => `
+        <button class="source-chip ${alb === currentInfractionAlbum ? 'active' : ''}" onclick="filterInfractionByAlbum('${alb.replace(/'/g, "\\'")}', this)">
+            ${alb === 'ALL' ? '📁 Todos los Álbumes' : alb}
+        </button>
+    `).join('');
+}
+
+function filterInfractionByAlbum(album, btnEl) {
+    currentInfractionAlbum = album;
+    if (btnEl) {
+        document.querySelectorAll('#infrAlbumChips .source-chip').forEach(c => c.classList.remove('active'));
+        btnEl.classList.add('active');
+    }
+    if (album === 'ALL') {
+        filteredInfractionTracks = [...allInfractionTracks];
+    } else {
+        filteredInfractionTracks = allInfractionTracks.filter(t => t.album === album);
+    }
+    renderInfractionTracks(filteredInfractionTracks);
+}
+
+function renderInfractionTracks(tracks) {
+    const container = document.getElementById('infractionTracksGrid');
+    if (!container) return;
+
+    if (tracks.length === 0) {
+        container.innerHTML = `<p style="grid-column:1/-1; padding:30px; text-align:center; color:var(--text-muted);">No se encontraron pistas de Infraction en esta carpeta.</p>`;
+        return;
+    }
+
+    container.innerHTML = tracks.map((t, idx) => `
+        <div class="track-item-card">
+            <img src="${t.cover}" alt="${t.title}">
+            <h4>${t.title}</h4>
+            <p>${t.artist} • <span style="color:var(--cyan-light);">${t.album}</span></p>
+            <div style="font-size:0.75rem; margin-bottom:8px; display:flex; gap:6px; flex-wrap:wrap;">
+                <span style="background:rgba(6,182,212,0.15); color:var(--cyan-light); border:1px solid var(--cyan-primary); padding:2px 6px; border-radius:6px; font-weight:700;">${t.format}</span>
+                <span style="background:rgba(34,197,94,0.15); color:var(--green-accent); border:1px solid var(--green-accent); padding:2px 6px; border-radius:6px; font-weight:600;">Royalty-Free</span>
+                <span style="color:var(--text-muted);">${t.duration}</span>
+            </div>
+            <div class="track-actions">
+                <button class="btn-track-play" onclick="playInfractionTrack(${idx})"><i class="fa-solid fa-play"></i> Escuchar</button>
+                <button class="btn-track-download" title="Añadir a Playlist" onclick="showAddToPlaylistModal('${t.id}')"><i class="fa-solid fa-plus"></i></button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function playInfractionTrack(index) {
+    if (index < 0 || index >= filteredInfractionTracks.length) return;
+    currentTrackList = filteredInfractionTracks;
+    currentTrackIndex = index;
+    loadTrackToPlayer(currentTrackList[index], true);
+}
+
+async function rescanInfractionLibrary() {
+    try {
+        const btn = document.querySelector('.btn-rescan-infr');
+        if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Escaneando C:\\ARKAIOS\\MUSIC\\INFRACTION...';
+
+        const res = await fetch(`${API_BASE}/infraction/rescan`, { method: 'POST' });
+        const data = await res.json();
+        if (data.ok) {
+            alert(`✔ ${data.message}\nTotal únicas: ${data.totalUniqueTracks} | Duplicados filtrados: ${data.totalDuplicatesSkipped}`);
+            await loadInfractionCollection();
+        } else {
+            alert(`Error al re-escanear: ${data.error}`);
+        }
+    } catch (e) {
+        alert('Error conectando con el demonio local para re-escanear.');
+    } finally {
+        const btn = document.querySelector('.btn-rescan-infr');
+        if (btn) btn.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i> Re-escanear C:\\ARKAIOS\\MUSIC\\INFRACTION';
+    }
+}
+
+// ==========================================
+// GESTOR DE PLAYLISTS (CREACIÓN & REPRODUCCIÓN)
+// ==========================================
+function renderPlaylists() {
+    const container = document.getElementById('playlistsGrid');
+    if (!container) return;
+
+    if (customPlaylists.length === 0) {
+        container.innerHTML = `<p style="grid-column:1/-1; padding:20px; text-align:center; color:var(--text-muted);">Aún no has creado playlists personalizadas. Pulsa "Nueva Playlist".</p>`;
+        return;
+    }
+
+    container.innerHTML = customPlaylists.map((pl, idx) => `
+        <div class="track-item-card" style="cursor:pointer;" onclick="playPlaylist(${idx})">
+            <img src="${pl.cover || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400'}" alt="${pl.name}">
+            <h4>${pl.name}</h4>
+            <p>${(pl.tracks || []).length} pistas • Playlist Personalizada</p>
+            <div class="track-actions" style="margin-top:8px;">
+                <button class="btn-track-play" onclick="event.stopPropagation(); playPlaylist(${idx})"><i class="fa-solid fa-play"></i> Reproducir</button>
+                <button class="btn-track-download" title="Eliminar" onclick="event.stopPropagation(); deletePlaylist(${idx})"><i class="fa-solid fa-trash"></i></button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function showCreatePlaylistModal() {
+    const name = prompt('Ingresa el nombre de tu nueva playlist:', 'Mi Playlist Infraction');
+    if (!name || !name.trim()) return;
+
+    const newPlaylist = {
+        id: 'pl_' + Date.now(),
+        name: name.trim(),
+        cover: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400',
+        tracks: []
+    };
+
+    customPlaylists.push(newPlaylist);
+    localStorage.setItem('arkaios_playlists', JSON.stringify(customPlaylists));
+    renderPlaylists();
+    alert(`✔ Playlist "${name.trim()}" creada con éxito.`);
+    switchTab('library');
+    switchLibrarySubtab('playlists');
+}
+
+function showAddToPlaylistModal(trackId) {
+    if (customPlaylists.length === 0) {
+        if (confirm('No tienes ninguna playlist creada. ¿Deseas crear una ahora?')) {
+            showCreatePlaylistModal();
+        }
+        return;
+    }
+
+    // Buscar track en catálogo Infraction o lista actual
+    const track = allInfractionTracks.find(t => t.id === trackId) || currentTrackList.find(t => t.id === trackId);
+    if (!track) return;
+
+    const options = customPlaylists.map((pl, i) => `${i + 1}. ${pl.name} (${(pl.tracks || []).length} pistas)`).join('\n');
+    const choice = prompt(`Selecciona el número de la playlist donde añadir "${track.title}":\n\n${options}`);
+    const selectedIdx = parseInt(choice, 10) - 1;
+
+    if (isNaN(selectedIdx) || selectedIdx < 0 || selectedIdx >= customPlaylists.length) {
+        return;
+    }
+
+    const targetPlaylist = customPlaylists[selectedIdx];
+    if (!targetPlaylist.tracks) targetPlaylist.tracks = [];
+    
+    // Evitar duplicar en la misma playlist
+    if (targetPlaylist.tracks.some(t => t.id === track.id)) {
+        alert(`La pista ya se encuentra en "${targetPlaylist.name}".`);
+        return;
+    }
+
+    targetPlaylist.tracks.push(track);
+    localStorage.setItem('arkaios_playlists', JSON.stringify(customPlaylists));
+    renderPlaylists();
+    alert(`✔ Pista "${track.title}" añadida a la playlist "${targetPlaylist.name}".`);
+}
+
+function deletePlaylist(index) {
+    if (confirm(`¿Seguro que deseas eliminar la playlist "${customPlaylists[index].name}"?`)) {
+        customPlaylists.splice(index, 1);
+        localStorage.setItem('arkaios_playlists', JSON.stringify(customPlaylists));
+        renderPlaylists();
+    }
+}
+
+function playPlaylist(index) {
+    const pl = customPlaylists[index];
+    if (!pl || !pl.tracks || pl.tracks.length === 0) {
+        alert('Esta playlist no tiene canciones aún. Añade canciones pulsando el botón "+" en la Colección Infraction o en el buscador.');
+        return;
+    }
+    currentTrackList = pl.tracks;
+    currentTrackIndex = 0;
+    playTrackFromList(0);
 }
