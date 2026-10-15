@@ -89,4 +89,63 @@ object ArkaiosNodeMusicProvider {
     suspend fun getInitialCatalog(limit: Int = 40): List<Track> = withContext(Dispatchers.IO) {
         searchTracks("", limit)
     }
+
+    suspend fun getPublicInfractionTracks(limit: Int = 64): List<Track> = withContext(Dispatchers.IO) {
+        val tracks = mutableListOf<Track>()
+        val endpoints = if (activeEndpoint != null) listOf(activeEndpoint!!) + NODE_ENDPOINTS else NODE_ENDPOINTS
+
+        for (base in endpoints.distinct()) {
+            try {
+                val url = "$base/api/infraction/public-catalog"
+                val req = Request.Builder().url(url).build()
+                val resp = client.newCall(req).execute()
+
+                if (resp.isSuccessful) {
+                    val body = resp.body?.string()
+                    if (!body.isNullOrBlank()) {
+                        val json = JSONObject(body)
+                        val arr = json.optJSONArray("sampleTracks")
+                        if (arr != null && arr.length() > 0) {
+                            activeEndpoint = base
+                            val count = Math.min(arr.length(), limit)
+                            for (i in 0 until count) {
+                                val item = arr.getJSONObject(i)
+                                val id = item.optString("id")
+                                val title = item.optString("title", "Infraction Track")
+                                val artist = item.optString("artist", "Infraction (Ivan Malkov)")
+                                val playlistTitle = item.optString("playlistTitle", "Infraction Collection")
+                                val durationSec = item.optLong("durationSec", 180L)
+                                val embedUrl = item.optString("embedUrl", "")
+                                val videoUrl = item.optString("videoUrl", "")
+                                val thumb = item.optString("thumbnailUrl", "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600")
+                                val genre = item.optString("genre", "Royalty-Free / Infraction")
+
+                                tracks.add(
+                                    Track(
+                                        id = id,
+                                        title = title,
+                                        artist = artist,
+                                        album = playlistTitle,
+                                        durationMs = durationSec * 1000L,
+                                        audioUrl = if (embedUrl.isNotBlank()) embedUrl else videoUrl,
+                                        coverUrl = thumb,
+                                        genre = genre,
+                                        bitrate = "YouTube Official Embed (Stream Only)",
+                                        isDownloaded = false,
+                                        downloadSizeMb = 0.0,
+                                        audioFormat = "YT-EMBED"
+                                    )
+                                )
+                            }
+                            Log.i(TAG, "Cargado catálogo público Infraction: ${tracks.size} pistas.")
+                            return@withContext tracks
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                // Siguiente endpoint
+            }
+        }
+        tracks
+    }
 }
