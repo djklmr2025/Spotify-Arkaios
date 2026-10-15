@@ -20,6 +20,7 @@ object ArkaiosNodeMusicProvider {
 
     // Endpoints candidatos del Servidor Real ARKAIOS Node
     private val NODE_ENDPOINTS = listOf(
+        "https://arkaios-music-access-staging.vercel.app",
         "http://192.168.101.106:8788",
         "http://10.0.2.2:8788",
         "http://localhost:8788"
