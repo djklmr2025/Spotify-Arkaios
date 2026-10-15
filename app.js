@@ -1,3 +1,4 @@
+const CLOUD_VAULT_URL = 'https://arkaios-music-access-staging.vercel.app';
 const SERVER_HOST = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? `http://${window.location.hostname}:8788` 
     : (window.location.origin.startsWith('http') && !window.location.origin.includes('file:') ? window.location.origin : 'http://192.168.101.106:8788');
@@ -20,7 +21,9 @@ const featuredAlbums = [
     { id: 'al_01', title: 'DJ KLMR Vault (19,000+ Master Pistas)', artist: 'DJ KLMR', cover: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600', tracksCount: 19026 },
     { id: 'al_02', title: 'Krazy Rhythm & Urban Remixes', artist: 'DJ KLMR Extended', cover: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=600', tracksCount: 420 },
     { id: 'al_03', title: 'VirtualDJ UltraReggaeton 2026', artist: 'DJ KLMR Master Edit', cover: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600', tracksCount: 185 },
-    { id: 'al_04', title: 'Google Drive 5TB Cloud Vault', artist: 'ARKAIOS Sovereign Node', cover: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600', tracksCount: 5000 }
+    { id: 'al_04', title: 'Google Drive 5TB Cloud Vault', artist: 'ARKAIOS Sovereign Node', cover: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600', tracksCount: 5000 },
+    { id: 'al_05', title: 'KLMR House 2025 (Staging Cloud)', artist: '9ethes & 4sta. / DJ KLMR', cover: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600', tracksCount: 12 },
+    { id: 'al_06', title: 'Doxer Singles Vault IA', artist: 'ARKAIOS AI Music Lab', cover: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600', tracksCount: 88 }
 ];
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -67,17 +70,37 @@ function switchLibrarySubtab(subtabId) {
 }
 
 async function checkDaemonStatus() {
+    const statusText = document.getElementById('daemonStatusText');
+    const statusDot = document.querySelector('.status-dot');
+
+    // 1. Probar demonio local en primer término
     try {
-        const res = await fetch(`${API_BASE}/status`);
+        const res = await fetch(`${API_BASE}/status`, { signal: AbortSignal.timeout(2000) });
         const data = await res.json();
         if (data.status === 'online') {
-            document.getElementById('daemonStatusText').textContent = `Activo (Puerto ${data.port})`;
-            document.querySelector('.status-dot').style.backgroundColor = '#22c55e';
+            if (statusText) statusText.textContent = `Local Activo (Puerto ${data.port})`;
+            if (statusDot) statusDot.style.backgroundColor = '#22c55e';
+            return;
         }
     } catch (e) {
-        document.getElementById('daemonStatusText').textContent = 'Demonio Local (Standby)';
-        document.querySelector('.status-dot').style.backgroundColor = '#ef4444';
+        // Demonio local inactivo, verificar Nube Soberana Vercel
     }
+
+    // 2. Probar Nube Soberana Vercel (Staging Cloud Vault)
+    try {
+        const cloudRes = await fetch(`${CLOUD_VAULT_URL}/health`, { signal: AbortSignal.timeout(3000) });
+        if (cloudRes.ok) {
+            const cloudData = await cloudRes.json();
+            if (statusText) statusText.textContent = `Nube Soberana (${cloudData.vaultMode || 'Vercel Staging'})`;
+            if (statusDot) statusDot.style.backgroundColor = '#06b6d4'; // Cyan neon
+            return;
+        }
+    } catch (e) {
+        // Nube no accesible sin credenciales o fuera de línea
+    }
+
+    if (statusText) statusText.textContent = 'Demonio Local (Standby)';
+    if (statusDot) statusDot.style.backgroundColor = '#ef4444';
 }
 
 async function loadHomeData() {
