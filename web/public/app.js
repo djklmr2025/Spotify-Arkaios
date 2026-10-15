@@ -27,6 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
     checkDaemonStatus();
     loadHomeData();
     loadRadioStations();
+    loadPublicInfractionLibrary();
     renderPlaylists();
 
     audioPlayer.addEventListener('timeupdate', updateProgress);
@@ -465,4 +466,340 @@ async function loadDownloadsQueue() {
 
 function downloadApkDirect() {
     window.location.href = `${API_BASE}/apk/download`;
+}
+
+// =========================================================================
+// BIBLIOTECA PÚBLICA INFRACTION — MÚSICA DEL ARTISTA ORIGINAL (IVAN MALKOV)
+// =========================================================================
+let publicInfractionData = { playlists: [], sampleTracks: [] };
+let publicInfractionFilter = 'ALL';
+let infrFavorites = JSON.parse(localStorage.getItem('arkaios_infr_favorites') || '[]');
+
+async function loadPublicInfractionLibrary() {
+    try {
+        let data = null;
+        try {
+            const res = await fetch(`${API_BASE}/infraction/public-catalog`);
+            if (res.ok) data = await res.json();
+        } catch (e) {
+            // Fallback a JSON estático relativo
+            const res = await fetch('infraction_public_playlists.json');
+            if (res.ok) data = await res.json();
+        }
+
+        if (!data) return;
+
+        publicInfractionData = data;
+
+        const totalPlEl = document.getElementById('totalPlaylistsCount');
+        const totalTrEl = document.getElementById('publicTracksCount');
+        const totalFavEl = document.getElementById('favoritesCount');
+
+        if (totalPlEl) totalPlEl.textContent = (data.playlists || []).length;
+        if (totalTrEl) totalTrEl.textContent = (data.sampleTracks || []).length;
+        if (totalFavEl) totalFavEl.textContent = infrFavorites.length;
+
+        renderPublicTracks();
+        renderOfficialPlaylists();
+    } catch (err) {
+        console.error('Error cargando biblioteca pública Infraction:', err);
+    }
+}
+
+function renderPublicTracks(tracksToRender = null) {
+    const container = document.getElementById('publicTracksGrid');
+    if (!container) return;
+
+    let tracks = tracksToRender || publicInfractionData.sampleTracks || [];
+
+    if (publicInfractionFilter === 'FAVORITES') {
+        tracks = (publicInfractionData.sampleTracks || []).filter(t => infrFavorites.includes(t.videoId));
+    }
+
+    const query = (document.getElementById('infrSearchInput')?.value || '').trim().toLowerCase();
+    if (query) {
+        tracks = tracks.filter(t => 
+            t.title.toLowerCase().includes(query) || 
+            t.playlistTitle.toLowerCase().includes(query) ||
+            (t.genre && t.genre.toLowerCase().includes(query))
+        );
+    }
+
+    if (tracks.length === 0) {
+        container.innerHTML = `<p style="grid-column:1/-1; padding:30px; text-align:center; color:var(--text-muted);">No se encontraron canciones en esta vista.</p>`;
+        return;
+    }
+
+    container.innerHTML = tracks.map(t => {
+        const isFav = infrFavorites.includes(t.videoId);
+        return `
+        <div class="track-item-card">
+            <div style="position:relative;">
+                <img src="${t.thumbnailUrl}" alt="${t.title}" loading="lazy">
+                <span style="position:absolute; bottom:8px; right:8px; background:rgba(0,0,0,0.8); color:#fff; font-size:0.75rem; padding:2px 6px; border-radius:4px; font-weight:700;">${t.duration}</span>
+            </div>
+            <h4>${t.title}</h4>
+            <p>${t.artist}</p>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin:6px 0 10px;">
+                <span style="font-size:0.75rem; color:var(--cyan-light); font-weight:700;">${t.genre || 'Royalty-Free'}</span>
+                <span style="font-size:0.7rem; color:var(--text-muted);">${t.playlistTitle}</span>
+            </div>
+            <div class="track-actions">
+                <button class="btn-track-play" onclick="playOfficialYouTubeTrack('${t.videoId}', '${t.title.replace(/'/g, "\\'")}', '${t.videoUrl}')">
+                    <i class="fa-brands fa-youtube" style="color:#ef4444;"></i> Reproducir Oficial
+                </button>
+                <button class="btn-track-download ${isFav ? 'active' : ''}" style="color:${isFav ? '#ef4444' : 'var(--text-muted)'};" title="Añadir a Favoritos" onclick="toggleFavorite('${t.videoId}')">
+                    <i class="${isFav ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
+                </button>
+                <button class="btn-track-download" title="Añadir a Playlist ARKAIOS" onclick="showAddToPlaylistModal('${t.id}')">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+            </div>
+            <div style="font-size:0.7rem; color:var(--text-muted); margin-top:8px; display:flex; align-items:center; gap:6px;">
+                <i class="fa-solid fa-shield-halved" style="color:var(--green-accent);"></i> Stream Oficial • Descarga deshabilitada
+            </div>
+        </div>
+        `;
+    }).join('');
+}
+
+function renderOfficialPlaylists() {
+    const container = document.getElementById('officialPlaylistsGrid');
+    if (!container) return;
+
+    let playlists = publicInfractionData.playlists || [];
+    const query = (document.getElementById('infrSearchInput')?.value || '').trim().toLowerCase();
+    if (query) {
+        playlists = playlists.filter(p => 
+            p.title.toLowerCase().includes(query) || 
+            (p.genre && p.genre.toLowerCase().includes(query))
+        );
+    }
+
+    container.innerHTML = playlists.map((pl, idx) => `
+        <div class="playlist-official-card">
+            <div>
+                <div class="playlist-card-title">${pl.title}</div>
+                <div class="playlist-card-genre"><i class="fa-solid fa-tag"></i> ${pl.genre}</div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:8px; margin-top:12px;">
+                <button class="btn-play-playlist-yt" onclick="playOfficialYouTubePlaylist('${pl.id}', '${pl.title.replace(/'/g, "\\'")}', '${pl.url}')">
+                    <i class="fa-brands fa-youtube"></i> Reproducir en IFrame
+                </button>
+                <a href="${pl.url}" target="_blank" rel="noopener noreferrer" style="font-size:0.75rem; color:var(--text-muted); text-align:center; text-decoration:none;">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir en YouTube.com
+                </a>
+            </div>
+        </div>
+    `).join('');
+}
+
+function setPublicFilter(mode, btnEl) {
+    publicInfractionFilter = mode;
+    document.querySelectorAll('.infr-view-modes .chip-filter').forEach(c => c.classList.remove('active'));
+    if (btnEl) btnEl.classList.add('active');
+
+    const tracksSection = document.getElementById('infrTracksSection');
+    const playlistsSection = document.getElementById('infrPlaylistsSection');
+    const titleEl = document.getElementById('infrSectionTitle');
+
+    if (mode === 'PLAYLISTS') {
+        if (tracksSection) tracksSection.style.display = 'none';
+        if (playlistsSection) playlistsSection.style.display = 'block';
+    } else {
+        if (tracksSection) tracksSection.style.display = 'block';
+        if (playlistsSection) playlistsSection.style.display = 'none';
+
+        if (titleEl) {
+            titleEl.innerHTML = mode === 'FAVORITES' 
+                ? '<i class="fa-solid fa-heart" style="color:#ef4444;"></i> Tus Canciones Favoritas de Infraction'
+                : '<i class="fa-solid fa-compact-disc"></i> Canciones y Composiciones Originales';
+        }
+        renderPublicTracks();
+    }
+}
+
+function filterPublicInfraction() {
+    if (publicInfractionFilter === 'PLAYLISTS') {
+        renderOfficialPlaylists();
+    } else {
+        renderPublicTracks();
+    }
+}
+
+function toggleFavorite(videoId) {
+    const idx = infrFavorites.indexOf(videoId);
+    if (idx === -1) {
+        infrFavorites.push(videoId);
+    } else {
+        infrFavorites.splice(idx, 1);
+    }
+    localStorage.setItem('arkaios_infr_favorites', JSON.stringify(infrFavorites));
+    
+    const favCountEl = document.getElementById('favoritesCount');
+    if (favCountEl) favCountEl.textContent = infrFavorites.length;
+
+    renderPublicTracks();
+}
+
+// Reproductor Oficial YouTube IFrame
+function playOfficialYouTubeTrack(videoId, title, videoUrl) {
+    // Pausar audio local si estaba reproduciendo
+    if (audioPlayer && isPlaying) {
+        audioPlayer.pause();
+        isPlaying = false;
+        updatePlayPauseButton();
+    }
+
+    const card = document.getElementById('embeddedPlayerCard');
+    const iframe = document.getElementById('youtubeIframePlayer');
+    const titleEl = document.getElementById('embedPlayingTitle');
+    const extLink = document.getElementById('embedExternalLink');
+
+    if (titleEl) titleEl.textContent = `${title} — Infraction (Ivan Malkov)`;
+    if (extLink) extLink.href = videoUrl || `https://www.youtube.com/watch?v=${videoId}`;
+
+    if (iframe) {
+        iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&enablejsapi=1`;
+    }
+
+    if (card) {
+        card.style.display = 'block';
+        card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+}
+
+function playOfficialYouTubePlaylist(listId, title, url) {
+    if (audioPlayer && isPlaying) {
+        audioPlayer.pause();
+        isPlaying = false;
+        updatePlayPauseButton();
+    }
+
+    const card = document.getElementById('embeddedPlayerCard');
+    const iframe = document.getElementById('youtubeIframePlayer');
+    const titleEl = document.getElementById('embedPlayingTitle');
+    const extLink = document.getElementById('embedExternalLink');
+
+    if (titleEl) titleEl.textContent = `Playlist: ${title} — Infraction (Ivan Malkov)`;
+    if (extLink) extLink.href = url || `https://www.youtube.com/playlist?list=${listId}`;
+
+    if (iframe) {
+        iframe.src = `https://www.youtube-nocookie.com/embed/videoseries?list=${listId}&autoplay=1`;
+    }
+
+    if (card) {
+        card.style.display = 'block';
+        card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+}
+
+function closeEmbeddedPlayer() {
+    const card = document.getElementById('embeddedPlayerCard');
+    const iframe = document.getElementById('youtubeIframePlayer');
+    if (iframe) iframe.src = '';
+    if (card) card.style.display = 'none';
+}
+
+// ==========================================
+// GESTOR DE PLAYLISTS (CREACIÓN & REPRODUCCIÓN)
+// ==========================================
+function renderPlaylists() {
+    const container = document.getElementById('playlistsGrid');
+    if (!container) return;
+
+    if (customPlaylists.length === 0) {
+        container.innerHTML = `<p style="grid-column:1/-1; padding:20px; text-align:center; color:var(--text-muted);">Aún no has creado playlists personalizadas. Pulsa "Nueva Playlist".</p>`;
+        return;
+    }
+
+    container.innerHTML = customPlaylists.map((pl, idx) => `
+        <div class="track-item-card" style="cursor:pointer;" onclick="playPlaylist(${idx})">
+            <img src="${pl.cover || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400'}" alt="${pl.name}">
+            <h4>${pl.name}</h4>
+            <p>${(pl.tracks || []).length} pistas • Playlist Personalizada</p>
+            <div class="track-actions" style="margin-top:8px;">
+                <button class="btn-track-play" onclick="event.stopPropagation(); playPlaylist(${idx})"><i class="fa-solid fa-play"></i> Reproducir</button>
+                <button class="btn-track-download" title="Eliminar" onclick="event.stopPropagation(); deletePlaylist(${idx})"><i class="fa-solid fa-trash"></i></button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function showCreatePlaylistModal() {
+    const name = prompt('Ingresa el nombre de tu nueva playlist:', 'Mi Playlist Favorita');
+    if (!name || !name.trim()) return;
+
+    const newPlaylist = {
+        id: 'pl_' + Date.now(),
+        name: name.trim(),
+        cover: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400',
+        tracks: []
+    };
+
+    customPlaylists.push(newPlaylist);
+    localStorage.setItem('arkaios_playlists', JSON.stringify(customPlaylists));
+    renderPlaylists();
+    alert(`✔ Playlist "${name.trim()}" creada con éxito.`);
+    switchTab('library');
+    switchLibrarySubtab('playlists');
+}
+
+function showAddToPlaylistModal(trackId) {
+    if (customPlaylists.length === 0) {
+        if (confirm('No tienes ninguna playlist creada. ¿Deseas crear una ahora?')) {
+            showCreatePlaylistModal();
+        }
+        return;
+    }
+
+    // Buscar track en catálogo público Infraction o lista actual
+    const track = (publicInfractionData.sampleTracks || []).find(t => t.id === trackId) || currentTrackList.find(t => t.id === trackId);
+    if (!track) return;
+
+    const options = customPlaylists.map((pl, i) => `${i + 1}. ${pl.name} (${(pl.tracks || []).length} pistas)`).join('\n');
+    const choice = prompt(`Selecciona el número de la playlist donde añadir "${track.title}":\n\n${options}`);
+    const selectedIdx = parseInt(choice, 10) - 1;
+
+    if (isNaN(selectedIdx) || selectedIdx < 0 || selectedIdx >= customPlaylists.length) {
+        return;
+    }
+
+    const targetPlaylist = customPlaylists[selectedIdx];
+    if (!targetPlaylist.tracks) targetPlaylist.tracks = [];
+    
+    // Evitar duplicar en la misma playlist
+    if (targetPlaylist.tracks.some(t => t.id === track.id)) {
+        alert(`La pista ya se encuentra en "${targetPlaylist.name}".`);
+        return;
+    }
+
+    targetPlaylist.tracks.push(track);
+    localStorage.setItem('arkaios_playlists', JSON.stringify(customPlaylists));
+    renderPlaylists();
+    alert(`✔ Pista "${track.title}" añadida a la playlist "${targetPlaylist.name}".`);
+}
+
+function deletePlaylist(index) {
+    if (confirm(`¿Seguro que deseas eliminar la playlist "${customPlaylists[index].name}"?`)) {
+        customPlaylists.splice(index, 1);
+        localStorage.setItem('arkaios_playlists', JSON.stringify(customPlaylists));
+        renderPlaylists();
+    }
+}
+
+function playPlaylist(index) {
+    const pl = customPlaylists[index];
+    if (!pl || !pl.tracks || pl.tracks.length === 0) {
+        alert('Esta playlist no tiene canciones aún.');
+        return;
+    }
+    const firstTrack = pl.tracks[0];
+    if (firstTrack.playbackMode === 'YOUTUBE_OFFICIAL_EMBED') {
+        playOfficialYouTubeTrack(firstTrack.videoId, firstTrack.title, firstTrack.videoUrl);
+    } else {
+        currentTrackList = pl.tracks;
+        currentTrackIndex = 0;
+        playTrackFromList(0);
+    }
 }

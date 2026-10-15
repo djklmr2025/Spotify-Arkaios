@@ -9,11 +9,25 @@ const app = express();
 const PORT = process.env.PORT || 8788;
 const DB_FILE = path.join(__dirname, 'arkaios_music_db.json');
 const MUSIC_DIR = process.env.MUSIC_DIR || 'C:\\DJKLMR\\Music';
+const PUBLIC_INFRACTION_FILE = path.join(__dirname, 'infraction_public_playlists.json');
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/assets', express.static(path.join(__dirname, '../app/src/main/assets/web')));
+
+// Endpoint del Catálogo Público Infraction (YouTube Oficial)
+app.get('/api/infraction/public-catalog', (req, res) => {
+    if (fs.existsSync(PUBLIC_INFRACTION_FILE)) {
+        try {
+            const data = JSON.parse(fs.readFileSync(PUBLIC_INFRACTION_FILE, 'utf-8'));
+            return res.json(data);
+        } catch (e) {
+            return res.status(500).json({ error: 'Error leyendo catálogo público de Infraction' });
+        }
+    }
+    res.status(404).json({ error: 'Catálogo público de Infraction no encontrado' });
+});
 
 // Estado global
 let realTracksCatalog = [];
