@@ -479,12 +479,19 @@ async function loadPublicInfractionLibrary() {
     try {
         let data = null;
         try {
-            const res = await fetch(`${API_BASE}/infraction/public-catalog`);
-            if (res.ok) data = await res.json();
-        } catch (e) {
-            // Fallback a JSON estático relativo
             const res = await fetch('infraction_public_playlists.json');
             if (res.ok) data = await res.json();
+        } catch (e) {
+            // Intento secundario desde API
+        }
+
+        if (!data) {
+            try {
+                const res = await fetch(`${API_BASE}/infraction/public-catalog`);
+                if (res.ok) data = await res.json();
+            } catch (e) {
+                console.warn('No se pudo conectar a API de catálogo Infraction');
+            }
         }
 
         if (!data) return;

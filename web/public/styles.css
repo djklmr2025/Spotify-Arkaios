@@ -1269,3 +1269,74 @@ body {
     background: #ef4444;
     color: #fff;
 }
+
+/* =========================================================================
+   OPTIMIZACIONES MODO HORIZONTAL / SPOTIFY LANDSCAPE PLAYER
+   ========================================================================= */
+@media screen and (orientation: landscape) and (max-height: 600px) {
+    :root {
+        --player-height: 72px;
+    }
+
+    .sidebar {
+        width: 220px;
+        padding: 12px 14px;
+        gap: 12px;
+    }
+
+    .logo-container {
+        font-size: 1.1rem;
+    }
+
+    .main-content {
+        padding: 16px 20px;
+    }
+
+    .player-container {
+        height: var(--player-height);
+        padding: 0 16px;
+    }
+
+    .current-track-thumb {
+        width: 48px;
+        height: 48px;
+    }
+
+    .current-track-title {
+        font-size: 0.85rem;
+    }
+
+    .player-btn-play {
+        width: 40px;
+        height: 40px;
+    }
+
+    .public-tracks-grid, .official-playlists-grid {
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 14px;
+    }
+
+    .infraction-public-banner {
+        padding: 16px;
+        margin-bottom: 16px;
+    }
+
+    .infr-player-modal {
+        max-width: 90vw;
+        max-height: 90vh;
+    }
+}
+
+@media screen and (max-width: 768px) and (orientation: portrait) {
+    .sidebar {
+        width: 70px;
+        padding: 10px 6px;
+    }
+    .sidebar span, .sidebar .highlight, .sidebar .mode-switcher-sidebar {
+        display: none;
+    }
+    .public-tracks-grid, .official-playlists-grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    }
+}
+
