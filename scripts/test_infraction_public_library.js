@@ -148,41 +148,35 @@ async function runTests() {
     assert(false, 'ArkaiosNodeMusicProvider.kt existe');
   }
 
-  // TEST 10: Daemon live endpoint test
-  console.log('\n  [INFO] Verificando daemon local express en puerto dinámico...');
+  // TEST 10: Daemon live endpoint test against authentic daemon.js on port 8788
+  console.log('\n  [INFO] Verificando daemon auténtico en puerto 8788...');
   try {
-    const express = require(path.join(ROOT_DIR, 'web', 'node_modules', 'express'));
-    const testApp = express();
-    testApp.get('/api/infraction/public-catalog', (req, res) => {
-      res.sendFile(catalogPath);
-    });
-    const server = testApp.listen(0, async () => {
-      const port = server.address().port;
-      http.get(`http://127.0.0.1:${port}/api/infraction/public-catalog`, (res) => {
-        let raw = '';
-        res.on('data', chunk => raw += chunk);
-        res.on('end', () => {
-          server.close();
-          try {
-            const data = JSON.parse(raw);
-            assert(
-              res.statusCode === 200 && data.playlists.length > 0,
-              `Endpoint /api/infraction/public-catalog responde HTTP 200 con ${data.playlists.length} playlists`
-            );
-            summarize();
-          } catch (e) {
-            assert(false, 'Respuesta del servidor es JSON válido', e.message);
-            summarize();
-          }
-        });
-      }).on('error', (err) => {
-        server.close();
-        assert(false, 'Llamada HTTP al endpoint daemon', err.message);
-        summarize();
+    http.get('http://127.0.0.1:8788/api/infraction/public-catalog', (res) => {
+      let raw = '';
+      res.on('data', chunk => raw += chunk);
+      res.on('end', () => {
+        try {
+          const data = JSON.parse(raw);
+          assert(
+            res.statusCode === 200 && Array.isArray(data.playlists) && data.playlists.length === 281,
+            `Endpoint auténtico /api/infraction/public-catalog responde HTTP 200 con 281 playlists reales`
+          );
+          assert(
+            Array.isArray(data.sampleTracks) && data.sampleTracks.length >= 150,
+            `Endpoint auténtico devuelve ${data.sampleTracks ? data.sampleTracks.length : 0} pistas verificadas`
+          );
+          summarize();
+        } catch (e) {
+          assert(false, 'Respuesta del servidor daemon es JSON válido', e.message);
+          summarize();
+        }
       });
+    }).on('error', (err) => {
+      assert(false, 'Llamada HTTP al demonio auténtico en puerto 8788', err.message);
+      summarize();
     });
   } catch (err) {
-    console.log(`  [NOTE] Express directo en test omitido (${err.message}). Evaluado estáticamente.`);
+    assert(false, 'Excepción en prueba del demonio auténtico', err.message);
     summarize();
   }
 
