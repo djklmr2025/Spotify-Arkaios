@@ -70,6 +70,48 @@ class MusicRepository(private val context: Context, private val db: AppDatabase)
         // 2. Catálogo base con temas insignia de DJ KLMR
         val defaultTracks = listOf(
             Track(
+                id = "cd_trckas_01",
+                title = "01. A dos cuerdas",
+                artist = "KLMR",
+                album = "CD TRCKAS (Edición Oficial)",
+                durationMs = 176000L,
+                audioUrl = "https://drive.usercontent.google.com/download?id=1_9Jcpd3ChvYFo_pH6_EsWrtPcZihVmN5&export=download",
+                coverUrl = "https://cd-trckas.vercel.app/CD%20Cover.png",
+                genre = "House",
+                bitrate = "320 kbps (HQ Master)",
+                isFavorite = true,
+                downloadSizeMb = 6.8,
+                audioFormat = "MP3"
+            ),
+            Track(
+                id = "cd_trckas_02",
+                title = "02. Baila - VRemix djklmr",
+                artist = "KLMR",
+                album = "CD TRCKAS (Edición Oficial)",
+                durationMs = 382000L,
+                audioUrl = "https://drive.usercontent.google.com/download?id=1CE6NjmiyMLQhkhVQxYdYaZGPvsiDgBtZ&export=download",
+                coverUrl = "https://cd-trckas.vercel.app/CD%20Cover.png",
+                genre = "Tech House",
+                bitrate = "320 kbps (HQ Master)",
+                isFavorite = true,
+                downloadSizeMb = 14.2,
+                audioFormat = "MP3"
+            ),
+            Track(
+                id = "cd_trckas_03",
+                title = "03. Baila Baila Baila Ritmo pa soñar Bye_bye",
+                artist = "KLMR",
+                album = "CD TRCKAS (Edición Oficial)",
+                durationMs = 246000L,
+                audioUrl = "https://drive.usercontent.google.com/download?id=17J576eu4Ql2AgBcuYlnI3WwaZytfPWm-&export=download",
+                coverUrl = "https://cd-trckas.vercel.app/CD%20Cover.png",
+                genre = "Pop",
+                bitrate = "320 kbps (HQ Master)",
+                isFavorite = false,
+                downloadSizeMb = 9.4,
+                audioFormat = "MP3"
+            ),
+            Track(
                 id = "klmr_init_01",
                 title = "Medicina (Krazy Rhythm Feat Muzikal Princess Extended Edit)",
                 artist = "Anitta / DJ KLMR",
@@ -239,6 +281,24 @@ class MusicRepository(private val context: Context, private val db: AppDatabase)
 
     fun getFeaturedAlbums(): List<Album> {
         return listOf(
+            Album(
+                id = "cd_trckas_official",
+                title = "CD TRCKAS (Edición Oficial)",
+                artist = "KLMR",
+                coverUrl = "https://cd-trckas.vercel.app/CD%20Cover.png",
+                year = "2025",
+                genre = "House / Electronic / Pop",
+                trackCount = 28
+            ),
+            Album(
+                id = "ssass_vault_01",
+                title = "DOXER-MUSIC Singles Vault",
+                artist = "DOXER / KLMR",
+                coverUrl = "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600",
+                year = "2026",
+                genre = "Synthwave / Cyber-Trance",
+                trackCount = 2
+            ),
             Album(
                 id = "alb_01",
                 title = "Nexus Echoes 2026",

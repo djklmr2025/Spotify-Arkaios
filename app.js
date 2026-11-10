@@ -17,6 +17,7 @@ let customPlaylists = JSON.parse(localStorage.getItem('arkaios_playlists') || '[
 let importedLocalTracks = [];
 
 const featuredAlbums = [
+    { id: 'cd_trckas_official', title: 'CD TRCKAS (28 Tracks Oficial)', artist: 'KLMR', cover: 'https://cd-trckas.vercel.app/CD%20Cover.png', tracksCount: 28, isCdTrckas: true },
     { id: 'al_01', title: 'DJ KLMR Vault (19,000+ Master Pistas)', artist: 'DJ KLMR', cover: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600', tracksCount: 19026 },
     { id: 'al_02', title: 'Krazy Rhythm & Urban Remixes', artist: 'DJ KLMR Extended', cover: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=600', tracksCount: 420 },
     { id: 'al_03', title: 'VirtualDJ UltraReggaeton 2026', artist: 'DJ KLMR Master Edit', cover: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600', tracksCount: 185 },
@@ -29,6 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadRadioStations();
     loadPublicInfractionLibrary();
     renderPlaylists();
+    initCdTrckasModule();
 
     audioPlayer.addEventListener('timeupdate', updateProgress);
     audioPlayer.addEventListener('ended', onTrackEnded);
@@ -242,7 +244,7 @@ function loadTrackToPlayer(track, autoPlay = true) {
     document.getElementById('playerTitle').textContent = track.title;
     document.getElementById('playerArtist').textContent = track.artist;
     document.getElementById('playerCover').src = track.cover || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=300';
-    let streamSrc = track.streamUrl || track.url;
+    let streamSrc = track.streamUrl || track.url || track.stream_url || track.audio_url;
     if (streamSrc && streamSrc.startsWith('/')) {
         streamSrc = `${SERVER_HOST}${streamSrc}`;
     }
@@ -812,5 +814,342 @@ function playPlaylist(index) {
         currentTrackList = pl.tracks;
         currentTrackIndex = 0;
         playTrackFromList(0);
+    }
+}
+
+
+/* ==============================================================================
+   CD-TRCKAS & SSASS MUSICAL DISCOTECA MODULE
+   ============================================================================== */
+let cdTrckasState = {
+    catalog: null,
+    allAlbums: [],
+    selectedAlbumId: 'cd_trckas_official',
+    currentTracks: [],
+    filteredTracks: [],
+    activeFilter: 'all',
+    isLoading: false
+};
+
+async function initCdTrckasModule() {
+    setupCdTrckasAudioFallback();
+    await loadCdTrckasCatalog();
+    refreshCdTrckasFromCloud(false).catch(err => console.warn('Cloud sync background notice:', err));
+}
+
+function setupCdTrckasAudioFallback() {
+    audioPlayer.addEventListener('error', () => {
+        if (!currentTrackList || currentTrackIndex < 0 || currentTrackIndex >= currentTrackList.length) return;
+        const current = currentTrackList[currentTrackIndex];
+        if (current.proxy_stream_url && audioPlayer.src !== current.proxy_stream_url) {
+            console.log('[CD-TRCKAS] Fallback a stream proxy:', current.proxy_stream_url);
+            audioPlayer.src = current.proxy_stream_url;
+            audioPlayer.play().catch(console.warn);
+        } else if (current.static_stream_url && audioPlayer.src !== current.static_stream_url) {
+            console.log('[CD-TRCKAS] Fallback a static MP3:', current.static_stream_url);
+            audioPlayer.src = current.static_stream_url;
+            audioPlayer.play().catch(console.warn);
+        }
+    });
+}
+
+async function loadCdTrckasCatalog() {
+    try {
+        let catalogData = null;
+        try {
+            const res = await fetch('cd_trckas_catalog.json');
+            if (res.ok) catalogData = await res.json();
+        } catch (e) {
+            console.warn('Carga local cd_trckas_catalog.json fallback:', e);
+        }
+
+        if (!catalogData) {
+            const resRemote = await fetch('https://cd-trckas.vercel.app/catalog_manifest.json');
+            if (resRemote.ok) catalogData = await resRemote.json();
+        }
+
+        if (catalogData) {
+            processCdTrckasData(catalogData);
+        }
+    } catch (err) {
+        console.error('Error cargando catálogo CD-TRCKAS:', err);
+    }
+}
+
+function processCdTrckasData(catalogData) {
+    cdTrckasState.catalog = catalogData;
+    const albumsList = [];
+
+    (catalogData.labels || []).forEach(label => {
+        (label.albums || []).forEach(album => {
+            const isOfficial = album.id === 'cd_trckas_official';
+            const isSsass = album.id === 'doxer_singles_vault' || album.id === 'klmr_house_2025' || (album.badge && album.badge.includes('SSASS'));
+            albumsList.push({
+                id: album.id,
+                labelId: label.id,
+                labelName: label.name,
+                title: album.title,
+                artist: album.artist || 'KLMR',
+                year: album.year || 2025,
+                cover: album.cover || album.cover_url || 'https://cd-trckas.vercel.app/CD%20Cover.png',
+                badge: album.badge || (isOfficial ? '28 Tracks • Master' : 'Bóveda Musical'),
+                category: isOfficial ? 'official' : (isSsass ? 'ssass' : 'community'),
+                totalTracks: (album.tracks || []).length,
+                tracks: (album.tracks || []).map((t, idx) => ({
+                    id: t.id || idx + 1,
+                    number: t.number || String(idx + 1).padStart(2, '0'),
+                    title: t.title,
+                    artist: t.artist || album.artist || 'KLMR',
+                    album: album.title,
+                    genre: t.genre || 'Electrónica / House',
+                    bpm: t.bpm || 124,
+                    duration: t.duration || '03:30',
+                    drive_file_id: t.drive_file_id || null,
+                    streamUrl: t.stream_url || t.streamUrl || (t.drive_file_id ? `https://drive.usercontent.google.com/download?id=${t.drive_file_id}&export=download` : (t.audio_url || '')),
+                    proxy_stream_url: t.proxy_stream_url || (t.drive_file_id ? `https://cd-trckas.vercel.app/api/stream?id=${t.drive_file_id}` : ''),
+                    static_stream_url: t.static_stream_url || (t.audio_url ? `https://cd-trckas.vercel.app/${t.audio_url}` : ''),
+                    url: t.stream_url || t.audio_url,
+                    cover: album.cover || album.cover_url || 'https://cd-trckas.vercel.app/CD%20Cover.png'
+                }))
+            });
+        });
+    });
+
+    cdTrckasState.allAlbums = albumsList;
+    updateCdTrckasStats();
+    renderCdTrckasAlbums();
+
+    if (albumsList.length > 0) {
+        const found = albumsList.find(a => a.id === cdTrckasState.selectedAlbumId) || albumsList[0];
+        selectCdAlbum(found.id);
+    }
+}
+
+function updateCdTrckasStats() {
+    const totalAlbums = cdTrckasState.allAlbums.length;
+    let totalTracks = 0;
+    let communityCount = 0;
+
+    cdTrckasState.allAlbums.forEach(a => {
+        totalTracks += a.totalTracks;
+        if (a.category === 'community') communityCount++;
+    });
+
+    const elTracks = document.getElementById('cdStatTracks');
+    const elAlbums = document.getElementById('cdStatAlbums');
+    const elCommunity = document.getElementById('cdStatCommunity');
+
+    if (elTracks) elTracks.textContent = totalTracks;
+    if (elAlbums) elAlbums.textContent = totalAlbums;
+    if (elCommunity) elCommunity.textContent = communityCount > 0 ? `${communityCount} Nuevos` : 'Sincronizado';
+}
+
+function filterCdTrckasAlbums(filterType) {
+    cdTrckasState.activeFilter = filterType;
+    ['cdPillAll', 'cdPillOfficial', 'cdPillSsass', 'cdPillCommunity'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('active');
+    });
+
+    const pillMap = {
+        'all': 'cdPillAll',
+        'official': 'cdPillOfficial',
+        'ssass': 'cdPillSsass',
+        'community': 'cdPillCommunity'
+    };
+    const activePill = document.getElementById(pillMap[filterType]);
+    if (activePill) activePill.classList.add('active');
+
+    renderCdTrckasAlbums();
+}
+
+function renderCdTrckasAlbums() {
+    const grid = document.getElementById('cdtrckasAlbumsGrid');
+    if (!grid) return;
+
+    let filtered = cdTrckasState.allAlbums;
+    if (cdTrckasState.activeFilter !== 'all') {
+        filtered = filtered.filter(a => a.category === cdTrckasState.activeFilter);
+    }
+
+    if (filtered.length === 0) {
+        grid.innerHTML = `
+            <div style="grid-column: 1/-1; text-align: center; padding: 30px; color: #94a3b8;">
+                <i class="fa-solid fa-compact-disc" style="font-size: 2rem; margin-bottom: 10px; color: #06b6d4;"></i>
+                <p>No hay álbumes en esta categoría por el momento.</p>
+                <a href="https://cd-trckas.vercel.app" target="_blank" class="btn-cd-action" style="display: inline-flex; margin-top: 10px;">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> Sube el primero en CD-TRCKAS
+                </a>
+            </div>
+        `;
+        return;
+    }
+
+    grid.innerHTML = filtered.map(album => {
+        const isSelected = album.id === cdTrckasState.selectedAlbumId;
+        return `
+            <div class="cd-album-card ${isSelected ? 'active' : ''}" onclick="selectCdAlbum('${album.id}')">
+                <div class="cd-album-cover-box">
+                    <img src="${album.cover}" alt="${album.title}" onerror="this.src='https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400'">
+                    <span class="cd-album-badge-floating">${album.badge || 'ÁLBUM'}</span>
+                    <div class="cd-album-play-overlay">
+                        <button onclick="event.stopPropagation(); playCdTrckasAlbumDirect('${album.id}')" title="Reproducir álbum">
+                            <i class="fa-solid fa-play"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="cd-album-info">
+                    <h4 title="${album.title}">${album.title}</h4>
+                    <p>${album.artist}</p>
+                    <span class="cd-album-meta-tag">${album.totalTracks} canciones • ${album.year}</span>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function selectCdAlbum(albumId) {
+    cdTrckasState.selectedAlbumId = albumId;
+    const album = cdTrckasState.allAlbums.find(a => a.id === albumId);
+    if (!album) return;
+
+    cdTrckasState.currentTracks = album.tracks || [];
+    cdTrckasState.filteredTracks = [...cdTrckasState.currentTracks];
+
+    const elCover = document.getElementById('cdCurrentAlbumCover');
+    const elTitle = document.getElementById('cdCurrentAlbumTitle');
+    const elMeta = document.getElementById('cdCurrentAlbumMeta');
+    const elBadge = document.getElementById('cdCurrentAlbumBadge');
+    const elSearch = document.getElementById('cdTrackSearchInput');
+
+    if (elCover) elCover.src = album.cover;
+    if (elTitle) elTitle.textContent = album.title;
+    if (elMeta) elMeta.textContent = `${album.artist} • ${album.totalTracks} canciones • ${album.year} • Master HQ`;
+    if (elBadge) elBadge.textContent = album.badge || 'ÁLBUM SELECCIONADO';
+    if (elSearch) elSearch.value = '';
+
+    renderCdTracks(cdTrckasState.filteredTracks);
+    renderCdTrckasAlbums();
+}
+
+function renderCdTracks(tracks) {
+    const container = document.getElementById('cdTracksContainer');
+    if (!container) return;
+
+    if (!tracks || tracks.length === 0) {
+        container.innerHTML = `
+            <div style="text-align: center; padding: 30px; color: #94a3b8;">
+                <p>No se encontraron canciones con ese criterio de búsqueda.</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = tracks.map((t, index) => {
+        const isCurrentPlaying = isPlaying && currentTrackList[currentTrackIndex]?.title === t.title;
+        return `
+            <div class="cd-track-row ${isCurrentPlaying ? 'playing' : ''}" onclick="playCdTrckasTrack('${cdTrckasState.selectedAlbumId}', ${index})">
+                <div class="cd-track-num">
+                    ${isCurrentPlaying ? '<i class="fa-solid fa-volume-high" style="color:#06b6d4;"></i>' : (t.number || (index + 1))}
+                </div>
+                <div class="cd-track-details">
+                    <h4>${t.title}</h4>
+                    <p>${t.artist}</p>
+                </div>
+                <div class="cd-track-badges">
+                    <span class="cd-tag-genre">${t.genre}</span>
+                    <span class="cd-tag-bpm"><i class="fa-solid fa-gauge-high"></i> ${t.bpm} BPM</span>
+                    <span class="cd-tag-source"><i class="fa-solid fa-bolt"></i> 320kbps</span>
+                </div>
+                <div class="cd-track-duration">${t.duration}</div>
+                <button class="btn-cd-play-track" onclick="event.stopPropagation(); playCdTrckasTrack('${cdTrckasState.selectedAlbumId}', ${index})" title="Reproducir">
+                    <i class="fa-solid ${isCurrentPlaying ? 'fa-pause' : 'fa-play'}"></i>
+                </button>
+            </div>
+        `;
+    }).join('');
+}
+
+function filterCdTracks(query) {
+    const q = (query || '').toLowerCase().trim();
+    if (!q) {
+        cdTrckasState.filteredTracks = [...cdTrckasState.currentTracks];
+    } else {
+        cdTrckasState.filteredTracks = cdTrckasState.currentTracks.filter(t => 
+            (t.title && t.title.toLowerCase().includes(q)) ||
+            (t.artist && t.artist.toLowerCase().includes(q)) ||
+            (t.genre && t.genre.toLowerCase().includes(q)) ||
+            String(t.bpm).includes(q)
+        );
+    }
+    renderCdTracks(cdTrckasState.filteredTracks);
+}
+
+function playCdTrckasTrack(albumId, trackIndex) {
+    const album = cdTrckasState.allAlbums.find(a => a.id === albumId);
+    if (!album || !album.tracks || album.tracks.length === 0) return;
+
+    currentTrackList = album.tracks;
+    currentTrackIndex = trackIndex;
+    playTrackFromList(trackIndex);
+    renderCdTracks(cdTrckasState.filteredTracks);
+}
+
+function playCdTrckasAlbumDirect(albumId) {
+    selectCdAlbum(albumId);
+    playCdTrckasTrack(albumId, 0);
+}
+
+function playCdTrckasOfficialAlbum() {
+    switchTab('cdtrckas');
+    selectCdAlbum('cd_trckas_official');
+    playCdTrckasTrack('cd_trckas_official', 0);
+}
+
+function shuffleCdTrckasAlbum() {
+    const album = cdTrckasState.allAlbums.find(a => a.id === cdTrckasState.selectedAlbumId);
+    if (!album || !album.tracks || album.tracks.length === 0) return;
+
+    currentTrackList = [...album.tracks].sort(() => Math.random() - 0.5);
+    currentTrackIndex = 0;
+    playTrackFromList(0);
+    renderCdTracks(cdTrckasState.filteredTracks);
+}
+
+function openCdTrckasFromHome() {
+    switchTab('cdtrckas');
+    selectCdAlbum('cd_trckas_official');
+}
+
+async function refreshCdTrckasFromCloud(showToast = true) {
+    try {
+        const res = await fetch(`https://cd-trckas.vercel.app/catalog_manifest.json?_t=${Date.now()}`);
+        if (!res.ok) throw new Error('Respuesta remota no disponible');
+        const remoteData = await res.json();
+        processCdTrckasData(remoteData);
+
+        // Check local storage for user published labels
+        const localSaved = localStorage.getItem('cd_trckas_manifest');
+        if (localSaved) {
+            try {
+                const parsedLocal = JSON.parse(localSaved);
+                if (parsedLocal && parsedLocal.labels) {
+                    processCdTrckasData({ labels: [...(remoteData.labels || []), ...parsedLocal.labels] });
+                }
+            } catch (le) {
+                console.warn('Local manifest parse err:', le);
+            }
+        }
+
+        if (showToast) {
+            alert(`💿 Catálogo CD-TRCKAS sincronizado con éxito.
+Total Álbumes: ${cdTrckasState.allAlbums.length}
+Pistas totales disponibles: ${document.getElementById('cdStatTracks')?.textContent || '28'}`);
+        }
+    } catch (err) {
+        console.warn('No se pudo contactar el servidor remoto de CD-TRCKAS:', err);
+        if (showToast) {
+            alert('Se está utilizando la copia maestra local de CD-TRCKAS (28 tracks oficiales + Bóveda SSASS).');
+        }
     }
 }

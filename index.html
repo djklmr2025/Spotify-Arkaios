@@ -35,6 +35,9 @@
                 <button class="nav-btn" data-tab="search" onclick="switchTab('search')">
                     <i class="fa-solid fa-magnifying-glass"></i> Buscar (YouTube/TIDAL)
                 </button>
+                <button class="nav-btn" data-tab="cdtrckas" onclick="switchTab('cdtrckas')">
+                    <i class="fa-solid fa-compact-disc" style="color:#06b6d4;"></i> CD-TRCKAS & SSASS Musical
+                </button>
                 <button class="nav-btn" data-tab="infractionPublic" onclick="switchTab('infractionPublic')">
                     <i class="fa-brands fa-youtube" style="color:#ef4444;"></i> Infraction — Artista Original
                 </button>
@@ -120,6 +123,97 @@
             </section>
 
             
+            
+            <!-- TAB: CD-TRCKAS & SSASS MUSICAL DISCOTECA -->
+            <section id="tab-cdtrckas" class="tab-content">
+                <div class="cdtrckas-banner">
+                    <div class="cdtrckas-banner-header">
+                        <div class="cdtrckas-badge">
+                            <i class="fa-solid fa-compact-disc fa-spin" style="--fa-animation-duration: 8s;"></i> 
+                            CONEXIÓN DIRECTA // CD-TRCKAS & SSASS MUSICAL
+                        </div>
+                        <div class="cdtrckas-header-actions">
+                            <button class="btn-cd-action btn-sync" onclick="refreshCdTrckasFromCloud()" title="Sincronizar subidas recientes de usuarios">
+                                <i class="fa-solid fa-rotate"></i> Sincronizar Subidas
+                            </button>
+                            <a href="https://cd-trckas.vercel.app" target="_blank" rel="noopener noreferrer" class="btn-cd-action btn-portal">
+                                <i class="fa-solid fa-cloud-arrow-up"></i> Subir mi CD en CD-TRCKAS
+                            </a>
+                            <a href="https://arkaios-music-access.vercel.app" target="_blank" rel="noopener noreferrer" class="btn-cd-action btn-vault">
+                                <i class="fa-solid fa-vault"></i> Bóveda SSASS
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="cdtrckas-hero-main">
+                        <div class="cd-disc-wrapper" onclick="playCdTrckasOfficialAlbum()" title="Clic para reproducir CD TRCKAS">
+                            <img src="https://cd-trckas.vercel.app/CD%20Cover.png" alt="CD TRCKAS Cover" class="cd-cover-art" onerror="this.src='https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600'">
+                            <div class="cd-vinyl-ring"></div>
+                        </div>
+                        <div class="cd-hero-text">
+                            <span class="cd-subtag">DISCOGRAFÍA OFICIAL & SUBIDAS DE LA COMUNIDAD</span>
+                            <h1 class="cd-title">CD TRCKAS // Bóveda Musical de ARKAIOS</h1>
+                            <p class="cd-desc">
+                                Reproduce en streaming de alta fidelidad los <strong>28 temas oficiales de KLMR</strong>, las entregas exclusivas de la <strong>Bóveda SSASS Musical</strong> y los <strong>álbumes que la comunidad y usuarios suben en tiempo real</strong> a la plataforma CD-TRCKAS.
+                            </p>
+                            <div class="cd-stats-strip">
+                                <span class="stat-pill"><i class="fa-solid fa-music"></i> <strong id="cdStatTracks">28</strong> Pistas Oficiales</span>
+                                <span class="stat-pill"><i class="fa-solid fa-compact-disc"></i> <strong id="cdStatAlbums">3</strong> Álbumes Vault</span>
+                                <span class="stat-pill"><i class="fa-solid fa-users"></i> <strong id="cdStatCommunity">En Vivo</strong> Subidas Comunidad</span>
+                                <span class="stat-pill"><i class="fa-brands fa-google-drive"></i> Audio 320kbps Cloud</span>
+                            </div>
+                            <div class="cd-hero-btns">
+                                <button class="btn-play-all-cd" onclick="playCdTrckasOfficialAlbum()">
+                                    <i class="fa-solid fa-play"></i> Reproducir CD TRCKAS Completo (01-28)
+                                </button>
+                                <button class="btn-shuffle-cd" onclick="shuffleCdTrckasAlbum()">
+                                    <i class="fa-solid fa-shuffle"></i> Modo Aleatorio
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Selectores de Álbum / Bóveda -->
+                <div class="section-container" style="margin-top: 25px;">
+                    <div class="cd-albums-header">
+                        <h3 class="section-title"><i class="fa-solid fa-record-vinyl"></i> Álbumes y Bóvedas Disponibles</h3>
+                        <div class="cd-tabs-filter">
+                            <button class="cd-filter-pill active" id="cdPillAll" onclick="filterCdTrckasAlbums('all')">Todos los Álbumes</button>
+                            <button class="cd-filter-pill" id="cdPillOfficial" onclick="filterCdTrckasAlbums('official')">CD TRCKAS Oficial (KLMR)</button>
+                            <button class="cd-filter-pill" id="cdPillSsass" onclick="filterCdTrckasAlbums('ssass')">Bóvedas SSASS Musical</button>
+                            <button class="cd-filter-pill" id="cdPillCommunity" onclick="filterCdTrckasAlbums('community')">Subidas por Usuarios</button>
+                        </div>
+                    </div>
+                    <div class="cd-albums-grid" id="cdtrckasAlbumsGrid">
+                        <!-- Generado dinámicamente con JS -->
+                    </div>
+                </div>
+
+                <!-- Detalle del Álbum Seleccionado & Lista de Canciones -->
+                <div class="section-container cd-tracklist-section" id="cdSelectedAlbumSection">
+                    <div class="cd-tracklist-header-bar">
+                        <div class="cd-current-album-info">
+                            <img id="cdCurrentAlbumCover" src="https://cd-trckas.vercel.app/CD%20Cover.png" alt="Cover" class="cd-album-thumb" onerror="this.src='https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300'">
+                            <div>
+                                <span class="cd-album-badge" id="cdCurrentAlbumBadge">ÁLBUM SELECCIONADO</span>
+                                <h2 id="cdCurrentAlbumTitle" style="margin: 4px 0; font-size: 1.4rem;">CD TRCKAS (Edición Oficial)</h2>
+                                <p id="cdCurrentAlbumMeta" style="color: var(--text-muted); font-size: 0.85rem; margin: 0;">KLMR • 28 Canciones • Master 320kbps</p>
+                            </div>
+                        </div>
+                        <div class="cd-track-search-wrapper">
+                            <i class="fa-solid fa-magnifying-glass cd-search-icon"></i>
+                            <input type="text" id="cdTrackSearchInput" placeholder="Buscar en este CD (título, BPM, género)..." oninput="filterCdTracks(this.value)">
+                        </div>
+                    </div>
+
+                    <!-- Tabla de Pistas -->
+                    <div class="cd-tracks-container" id="cdTracksContainer">
+                        <!-- Generado dinámicamente con JS -->
+                    </div>
+                </div>
+            </section>
+
             <!-- TAB: INFRACTION — MÚSICA DEL ARTISTA ORIGINAL -->
             <section id="tab-infractionPublic" class="tab-content">
                 <div class="infraction-public-banner">
