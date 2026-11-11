@@ -364,23 +364,31 @@ function loadTrackToPlayer(track, autoPlay = true) {
     }
 
     let streamSrc = '';
+    const isCdTrckasAlbum = (track.album_id === 'cd_trckas_official') || 
+                           (track.album && track.album.toLowerCase().includes('cd trckas'));
     const padNum = track.number ? String(track.number).padStart(2, '0') : null;
 
-    if (padNum && parseInt(padNum, 10) >= 1 && parseInt(padNum, 10) <= 28) {
+    if (isCdTrckasAlbum && padNum && parseInt(padNum, 10) >= 1 && parseInt(padNum, 10) <= 28) {
         streamSrc = `file:///sdcard/Music/CD-TRCKAS/${padNum}.mp3`;
-    } else if (track.static_stream_url) {
-        streamSrc = track.static_stream_url;
+    } else if (track.drive_file_id) {
+        streamSrc = `https://drive.google.com/uc?export=download&id=${track.drive_file_id}`;
+    } else if (track.streamUrl) {
+        streamSrc = track.streamUrl;
+    } else if (track.stream_url) {
+        streamSrc = track.stream_url;
     } else if (track.proxy_stream_url) {
         streamSrc = track.proxy_stream_url;
+    } else if (track.static_stream_url) {
+        streamSrc = track.static_stream_url;
     } else {
-        streamSrc = track.streamUrl || track.url || track.stream_url || track.audio_url || '';
+        streamSrc = track.url || track.audio_url || '';
     }
 
     if (streamSrc && streamSrc.startsWith('/') && !streamSrc.startsWith('//')) {
         streamSrc = `${SERVER_HOST}${streamSrc}`;
     }
 
-    console.log('[PLAYER] Cargando pista:', track.title, 'URL:', streamSrc);
+    console.log('[PLAYER] Cargando pista:', track.title, 'Álbum:', track.album, 'URL:', streamSrc);
 
     audioPlayer.pause();
     audioPlayer.src = streamSrc;
@@ -394,15 +402,24 @@ function loadTrackToPlayer(track, autoPlay = true) {
                 console.log('[PLAYER] Reproduciendo:', track.title);
             }).catch(err => {
                 console.warn('[PLAYER] Error inicial:', err.name, err.message);
-                if (padNum && streamSrc.startsWith('file://')) {
+                if (isCdTrckasAlbum && padNum && streamSrc.startsWith('file://')) {
                     const fallbackUrl = `https://cd-trckas.vercel.app/plataforma/audio/${padNum}.mp3`;
-                    console.log('[PLAYER] Intentando fallback remoto:', fallbackUrl);
+                    console.log('[PLAYER] Intentando fallback remoto CD-TRCKAS:', fallbackUrl);
                     audioPlayer.src = fallbackUrl;
                     audioPlayer.play().then(() => {
                         isPlaying = true;
                         updatePlayPauseButton();
                         console.log('[PLAYER] Fallback remoto reproduciendo:', track.title);
                     }).catch(e2 => console.error('[PLAYER] Error en fallback remoto:', e2));
+                } else if (track.drive_file_id && streamSrc.includes('drive.google.com')) {
+                    const fallbackDriveUrl = `https://drive.usercontent.google.com/download?id=${track.drive_file_id}&export=download`;
+                    console.log('[PLAYER] Intentando fallback usercontent Drive:', fallbackDriveUrl);
+                    audioPlayer.src = fallbackDriveUrl;
+                    audioPlayer.play().then(() => {
+                        isPlaying = true;
+                        updatePlayPauseButton();
+                        console.log('[PLAYER] Fallback usercontent reproduciendo:', track.title);
+                    }).catch(e3 => console.error('[PLAYER] Error en fallback usercontent:', e3));
                 }
             });
         }
@@ -1040,33 +1057,33 @@ function processCdTrckasData(catalogData) {
     (catalogData.labels || []).forEach(label => {
         (label.albums || []).forEach(album => {
             const isOfficial = album.id === 'cd_trckas_official';
-            const isSsass = album.id === 'doxer_singles_vault' || album.id === 'klmr_house_2025' || (album.badge && album.badge.includes('SSASS'));
+            const isSsass = album.id.startsWith('ssass_') || (label.id && label.id.includes('ssass')) || (album.badge && album.badge.includes('SSASS')) || !isOfficial;
             albumsList.push({
                 id: album.id,
                 labelId: label.id,
                 labelName: label.name,
                 title: album.title,
-                artist: album.artist || 'KLMR',
+                artist: album.artist || 'KLMR / SSASS Musical Vault',
                 year: album.year || 2025,
-                cover: album.cover || album.cover_url || 'https://cd-trckas.vercel.app/CD%20Cover.png',
-                badge: album.badge || (isOfficial ? '28 Tracks • Master' : 'Bóveda Musical'),
+                cover: album.cover || album.cover_url || 'cd_cover.svg',
+                badge: album.badge || (isOfficial ? '28 Tracks • Master HQ' : 'Bóveda SSASS'),
                 category: isOfficial ? 'official' : (isSsass ? 'ssass' : 'community'),
                 totalTracks: (album.tracks || []).length,
                 tracks: (album.tracks || []).map((t, idx) => ({
                     id: t.id || idx + 1,
+                    album_id: album.id,
                     number: t.number || String(idx + 1).padStart(2, '0'),
                     title: t.title,
-                    artist: t.artist || album.artist || 'KLMR',
+                    artist: t.artist || album.artist || 'KLMR / SSASS',
                     album: album.title,
                     genre: t.genre || 'Electrónica / House',
                     bpm: t.bpm || 124,
                     duration: t.duration || '03:30',
                     drive_file_id: t.drive_file_id || null,
-                    streamUrl: t.stream_url || t.streamUrl || (t.drive_file_id ? `https://drive.usercontent.google.com/download?id=${t.drive_file_id}&export=download` : (t.audio_url || '')),
-                    proxy_stream_url: t.proxy_stream_url || (t.drive_file_id ? `https://cd-trckas.vercel.app/api/stream?id=${t.drive_file_id}` : ''),
-                    static_stream_url: t.static_stream_url || (t.audio_url ? `https://cd-trckas.vercel.app/${t.audio_url}` : ''),
-                    url: t.stream_url || t.audio_url,
-                    cover: album.cover || album.cover_url || 'https://cd-trckas.vercel.app/CD%20Cover.png'
+                    streamUrl: t.stream_url || t.streamUrl || (t.drive_file_id ? `https://drive.google.com/uc?export=download&id=${t.drive_file_id}` : (t.audio_url || '')),
+                    proxy_stream_url: t.proxy_stream_url || (t.drive_file_id ? `https://drive.google.com/uc?export=download&id=${t.drive_file_id}` : ''),
+                    static_stream_url: t.static_stream_url || '',
+                    cover: album.cover || 'cd_cover.svg'
                 }))
             });
         });
@@ -1101,9 +1118,14 @@ function updateCdTrckasStats() {
     if (elCommunity) elCommunity.textContent = communityCount > 0 ? `${communityCount} Nuevos` : 'Sincronizado';
 }
 
+function filterCdAlbumGrid(query) {
+    cdTrckasState.albumSearchQuery = (query || '').trim();
+    renderCdTrckasAlbums();
+}
+
 function filterCdTrckasAlbums(filterType) {
     cdTrckasState.activeFilter = filterType;
-    ['cdPillAll', 'cdPillOfficial', 'cdPillSsass', 'cdPillCommunity'].forEach(id => {
+    ['cdPillAll', 'cdPillOfficial', 'cdPillSsass2025', 'cdPillSsass', 'cdPillCommunity'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.classList.remove('active');
     });
@@ -1111,6 +1133,7 @@ function filterCdTrckasAlbums(filterType) {
     const pillMap = {
         'all': 'cdPillAll',
         'official': 'cdPillOfficial',
+        'ssass_2025': 'cdPillSsass2025',
         'ssass': 'cdPillSsass',
         'community': 'cdPillCommunity'
     };
@@ -1125,18 +1148,30 @@ function renderCdTrckasAlbums() {
     if (!grid) return;
 
     let filtered = cdTrckasState.allAlbums;
-    if (cdTrckasState.activeFilter !== 'all') {
-        filtered = filtered.filter(a => a.category === cdTrckasState.activeFilter);
+    if (cdTrckasState.activeFilter === 'official') {
+        filtered = filtered.filter(a => a.category === 'official');
+    } else if (cdTrckasState.activeFilter === 'ssass_2025') {
+        filtered = filtered.filter(a => a.labelId === 'label_ssass_2025' || (a.title && a.title.includes('2025')));
+    } else if (cdTrckasState.activeFilter === 'ssass') {
+        filtered = filtered.filter(a => a.category === 'ssass');
+    } else if (cdTrckasState.activeFilter === 'community') {
+        filtered = filtered.filter(a => a.category === 'community');
+    }
+
+    if (cdTrckasState.albumSearchQuery) {
+        const q = cdTrckasState.albumSearchQuery.toLowerCase();
+        filtered = filtered.filter(a => 
+            (a.title && a.title.toLowerCase().includes(q)) || 
+            (a.artist && a.artist.toLowerCase().includes(q)) ||
+            (a.badge && a.badge.toLowerCase().includes(q))
+        );
     }
 
     if (filtered.length === 0) {
         grid.innerHTML = `
             <div style="grid-column: 1/-1; text-align: center; padding: 30px; color: #94a3b8;">
                 <i class="fa-solid fa-compact-disc" style="font-size: 2rem; margin-bottom: 10px; color: #06b6d4;"></i>
-                <p>No hay álbumes en esta categoría por el momento.</p>
-                <a href="https://cd-trckas.vercel.app" target="_blank" class="btn-cd-action" style="display: inline-flex; margin-top: 10px;">
-                    <i class="fa-solid fa-cloud-arrow-up"></i> Sube el primero en CD-TRCKAS
-                </a>
+                <p>No se encontraron álbumes con ese criterio.</p>
             </div>
         `;
         return;
@@ -1165,7 +1200,7 @@ function renderCdTrckasAlbums() {
     }).join('');
 }
 
-function selectCdAlbum(albumId) {
+function selectCdAlbum(albumId, autoScroll = true) {
     cdTrckasState.selectedAlbumId = albumId;
     const album = cdTrckasState.allAlbums.find(a => a.id === albumId);
     if (!album) return;
@@ -1190,6 +1225,13 @@ function selectCdAlbum(albumId) {
 
     renderCdTracks(cdTrckasState.filteredTracks);
     renderCdTrckasAlbums();
+
+    if (autoScroll) {
+        const sec = document.getElementById('cdSelectedAlbumSection');
+        if (sec) {
+            sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
 }
 
 function renderCdTracks(tracks) {
@@ -1284,7 +1326,7 @@ function openCdTrckasFromHome() {
 function openSsassVaultFromHeader() {
     switchTab('cdtrckas');
     filterCdTrckasAlbums('ssass');
-    const ssassAlbum = cdTrckasState.allAlbums.find(a => a.category === 'ssass' || a.id === 'doxer_singles_vault');
+    const ssassAlbum = cdTrckasState.allAlbums.find(a => a.category === 'ssass' || a.id.startsWith('ssass_'));
     if (ssassAlbum) {
         selectCdAlbum(ssassAlbum.id);
     }

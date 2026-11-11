@@ -139,7 +139,7 @@
                             <button class="btn-cd-action btn-vault" onclick="openSsassVaultFromHeader()" title="Abrir y reproducir Bóvedas SSASS Musical en la app">
                                 <i class="fa-solid fa-vault"></i> Bóveda SSASS
                             </button>
-                            <a href="https://drive.google.com/drive/folders/16cs6nVNIalIDTfRCdF3b_BBu5GQJ6asF?usp=sharing" target="_blank" rel="noopener noreferrer" class="btn-cd-action btn-gdrive" title="Abrir Carpeta Google Drive Oficial (5TB Master)">
+                            <a href="https://drive.google.com/drive/folders/1WzdmtjSB7G10EtVy7H41-M_4u30TfL3a?usp=sharing" target="_blank" rel="noopener noreferrer" class="btn-cd-action btn-gdrive" title="Abrir Carpeta Google Drive Oficial (5TB Master)">
                                 <i class="fa-brands fa-google-drive"></i> Carpeta Drive (5TB)
                             </a>
                             <a href="https://cd-trckas.vercel.app" target="_blank" rel="noopener noreferrer" class="btn-cd-action btn-portal">
@@ -180,11 +180,18 @@
                 <!-- Selectores de Álbum / Bóveda -->
                 <div class="section-container" style="margin-top: 25px;">
                     <div class="cd-albums-header">
-                        <h3 class="section-title"><i class="fa-solid fa-record-vinyl"></i> Álbumes y Bóvedas Disponibles</h3>
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; width: 100%; margin-bottom: 12px;">
+                            <h3 class="section-title" style="margin: 0;"><i class="fa-solid fa-record-vinyl"></i> Álbumes y Bóvedas Disponibles</h3>
+                            <div class="cd-album-search-box" style="position: relative; min-width: 280px;">
+                                <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #64748b;"></i>
+                                <input type="text" id="cdAlbumFilterInput" placeholder="Buscar carpeta (ej: House 2025, Techno)..." oninput="filterCdAlbumGrid(this.value)" style="width: 100%; padding: 8px 12px 8px 36px; background: rgba(30,41,59,0.8); border: 1px solid rgba(255,255,255,0.12); border-radius: 20px; color: #fff; font-size: 0.85rem; outline: none;">
+                            </div>
+                        </div>
                         <div class="cd-tabs-filter">
                             <button class="cd-filter-pill active" id="cdPillAll" onclick="filterCdTrckasAlbums('all')">Todos los Álbumes</button>
                             <button class="cd-filter-pill" id="cdPillOfficial" onclick="filterCdTrckasAlbums('official')">CD TRCKAS Oficial (KLMR)</button>
-                            <button class="cd-filter-pill" id="cdPillSsass" onclick="filterCdTrckasAlbums('ssass')">Bóvedas SSASS Musical</button>
+                            <button class="cd-filter-pill" id="cdPillSsass2025" onclick="filterCdTrckasAlbums('ssass_2025')">Bóveda 2025 (DJKLMR)</button>
+                            <button class="cd-filter-pill" id="cdPillSsass" onclick="filterCdTrckasAlbums('ssass')">Todas las Bóvedas SSASS (5TB)</button>
                             <button class="cd-filter-pill" id="cdPillCommunity" onclick="filterCdTrckasAlbums('community')">Subidas por Usuarios</button>
                         </div>
                     </div>

@@ -17,3 +17,9 @@ local.properties
 .env
 debug.keystore
 .vercel
+
+service_account.json
+app-unaligned.apk
+*.idsig
+*.tmp
+build_apk.bat
