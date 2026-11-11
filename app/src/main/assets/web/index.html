@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spotify-Arkaios — Plataforma Web & APK Nativa Android v2.0.0</title>
+    <title>Spotify-Arkaios — Plataforma Web & APK Nativa Android v2.1.0</title>
     <meta name="description" content="Plataforma web integrada y APK nativa de Spotify-Arkaios. Búsqueda multi-fuente (YouTube #1, TIDAL #2), reproductor de audio, descargas en MP3/FLAC sin cifrar y radio 24/7.">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -16,7 +16,7 @@
             <div class="logo-container">
                 <i class="fa-solid fa-bolt logo-icon"></i>
                 <span class="logo-text">Spotify<span class="highlight">Arkaios</span></span>
-                <span class="version-chip">v2.0.0</span>
+                <span class="version-chip">v2.1.0</span>
             </div>
             
             <div class="mode-switcher-sidebar">
@@ -74,7 +74,7 @@
                     <button class="btn-header-apk" onclick="downloadApkDirect()">
                         <i class="fa-solid fa-download"></i> Descargar APK (24.3 MB)
                     </button>
-                    <a href="https://github.com/djklmr2025/Spotify-Arkaios/releases/tag/v2.0.0" target="_blank" class="btn-header-github">
+                    <a href="https://github.com/djklmr2025/Spotify-Arkaios/releases/tag/v2.1.0" target="_blank" class="btn-header-github">
                         <i class="fa-brands fa-github"></i> GitHub Release
                     </a>
                 </div>
@@ -147,7 +147,7 @@
 
                     <div class="cdtrckas-hero-main">
                         <div class="cd-disc-wrapper" onclick="playCdTrckasOfficialAlbum()" title="Clic para reproducir CD TRCKAS">
-                            <img src="https://cd-trckas.vercel.app/CD%20Cover.png" alt="CD TRCKAS Cover" class="cd-cover-art" onerror="this.src='https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600'">
+                            <img src="cd_cover.svg" alt="CD TRCKAS Cover" class="cd-cover-art" onerror="this.onerror=null; this.src='cd_cover.svg'">
                             <div class="cd-vinyl-ring"></div>
                         </div>
                         <div class="cd-hero-text">
@@ -194,7 +194,7 @@
                 <div class="section-container cd-tracklist-section" id="cdSelectedAlbumSection">
                     <div class="cd-tracklist-header-bar">
                         <div class="cd-current-album-info">
-                            <img id="cdCurrentAlbumCover" src="https://cd-trckas.vercel.app/CD%20Cover.png" alt="Cover" class="cd-album-thumb" onerror="this.src='https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300'">
+                            <img id="cdCurrentAlbumCover" src="cd_cover.svg" alt="Cover" class="cd-album-thumb" onerror="this.onerror=null; this.src='cd_cover.svg'">
                             <div>
                                 <span class="cd-album-badge" id="cdCurrentAlbumBadge">ÁLBUM SELECCIONADO</span>
                                 <h2 id="cdCurrentAlbumTitle" style="margin: 4px 0; font-size: 1.4rem;">CD TRCKAS (Edición Oficial)</h2>
@@ -417,21 +417,21 @@
                 <div class="apk-release-hero">
                     <div class="apk-info-box">
                         <span class="badge-tag"><i class="fa-android fa-brands"></i> ANDROID APK NATIVA OFICIAL</span>
-                        <h2>Spotify-Arkaios APK v2.0.0</h2>
+                        <h2>Spotify-Arkaios APK v2.1.0</h2>
                         <p>Compilada con <strong>Kotlin Jetpack Compose</strong>, OpenJDK 21 y arquitectura reactiva. Descargas directas en almacenamiento público sin cifrado DRM.</p>
                         
                         <div class="apk-meta-grid">
-                            <div class="meta-item"><span class="label">Versión:</span> <span class="val">v2.0.0 Release</span></div>
-                            <div class="meta-item"><span class="label">Tamaño:</span> <span class="val">24.38 MB</span></div>
+                            <div class="meta-item"><span class="label">Versión:</span> <span class="val">v2.1.0 Release</span></div>
+                            <div class="meta-item"><span class="label">Tamaño:</span> <span class="val">24.9 MB</span></div>
                             <div class="meta-item"><span class="label">Compatibilidad:</span> <span class="val">Android 8.0 (API 26+)</span></div>
-                            <div class="meta-item"><span class="label">Estado Git:</span> <span class="val">Commit ab3e0d5</span></div>
+                            <div class="meta-item"><span class="label">Estado Git:</span> <span class="val">Release v2.1.0 Oficial</span></div>
                         </div>
 
                         <div class="apk-download-actions">
                             <button class="btn-download-apk-main" onclick="downloadApkDirect()">
-                                <i class="fa-solid fa-download"></i> Descargar APK Directa (v2.0.0)
+                                <i class="fa-solid fa-download"></i> Descargar APK Directa (v2.1.0)
                             </button>
-                            <a href="https://github.com/djklmr2025/Spotify-Arkaios/releases/tag/v2.0.0" target="_blank" class="btn-github-release">
+                            <a href="https://github.com/djklmr2025/Spotify-Arkaios/releases/tag/v2.1.0" target="_blank" class="btn-github-release">
                                 <i class="fa-brands fa-github"></i> Ver Release en GitHub
                             </a>
                         </div>
@@ -452,7 +452,7 @@
     <!-- Bottom Audio Player Footer Bar -->
     <footer class="player-bar">
         <div class="track-info">
-            <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=300" id="playerCover" class="track-cover" alt="Cover">
+            <img src="cd_cover.svg" id="playerCover" class="track-cover" alt="Cover" onerror="this.onerror=null; this.src='cd_cover.svg'">
             <div class="track-text">
                 <h4 id="playerTitle">Cybernetic Horizon</h4>
                 <p id="playerArtist">Arkaios Sound Lab</p>

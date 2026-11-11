@@ -17,7 +17,7 @@ let customPlaylists = JSON.parse(localStorage.getItem('arkaios_playlists') || '[
 let importedLocalTracks = [];
 
 const featuredAlbums = [
-    { id: 'cd_trckas_official', title: 'CD TRCKAS (28 Tracks Oficial)', artist: 'KLMR', cover: 'https://cd-trckas.vercel.app/CD%20Cover.png', tracksCount: 28, isCdTrckas: true },
+    { id: 'cd_trckas_official', title: 'CD TRCKAS (28 Tracks Oficial)', artist: 'KLMR', cover: 'cd_cover.svg', tracksCount: 28, isCdTrckas: true },
     { id: 'al_01', title: 'DJ KLMR Vault (19,000+ Master Pistas)', artist: 'DJ KLMR', cover: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600', tracksCount: 19026 },
     { id: 'al_02', title: 'Krazy Rhythm & Urban Remixes', artist: 'DJ KLMR Extended', cover: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=600', tracksCount: 420 },
     { id: 'al_03', title: 'VirtualDJ UltraReggaeton 2026', artist: 'DJ KLMR Master Edit', cover: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600', tracksCount: 185 },
@@ -86,21 +86,33 @@ async function checkDaemonStatus() {
 async function loadHomeData() {
     renderAlbumsCarousel();
     try {
-        const res = await fetch(`${API_BASE}/search`);
-        const data = await res.json();
-        currentTrackList = data.results || [];
-        renderHomeTracks(currentTrackList);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2000);
+        const res = await fetch(`${API_BASE}/search`, { signal: controller.signal });
+        clearTimeout(timeoutId);
+        if (res.ok) {
+            const data = await res.json();
+            currentTrackList = data.results || [];
+        }
     } catch (e) {
-        console.error('Error cargando datos de inicio:', e);
+        // Demonio no disponible - se utilizará la biblioteca local
     }
+
+    // Si el demonio local está en standby, poblar con las pistas de CD-TRCKAS
+    if (!currentTrackList || currentTrackList.length === 0) {
+        if (cdTrckasState && cdTrckasState.allAlbums && cdTrckasState.allAlbums.length > 0) {
+            currentTrackList = cdTrckasState.allAlbums[0].tracks || [];
+        }
+    }
+    renderHomeTracks(currentTrackList);
 }
 
 function renderAlbumsCarousel() {
     const container = document.getElementById('homeAlbumsCarousel');
     if (!container) return;
     container.innerHTML = featuredAlbums.map(al => `
-        <div class="album-card" onclick="searchByTerm('${al.artist}')">
-            <img src="${al.cover}" alt="${al.title}">
+        <div class="album-card" onclick="${al.isCdTrckas ? 'openCdTrckasFromHome()' : `searchByTerm('${al.artist}')`}">
+            <img src="${al.cover || 'cd_cover.svg'}" alt="${al.title}" onerror="this.onerror=null; this.src='cd_cover.svg';">
             <h4>${al.title}</h4>
             <p>${al.artist} • ${al.tracksCount} Pistas</p>
         </div>
@@ -110,14 +122,15 @@ function renderAlbumsCarousel() {
 function renderHomeTracks(tracks) {
     const container = document.getElementById('homeTracksList');
     if (!container) return;
-    container.innerHTML = `<div class="tracks-grid">` + tracks.map((t, idx) => `
+    const trackItems = (tracks && tracks.length > 0) ? tracks : (cdTrckasState?.currentTracks || []);
+    container.innerHTML = `<div class="tracks-grid">` + trackItems.map((t, idx) => `
         <div class="track-item-card">
-            <img src="${t.cover}" alt="${t.title}">
+            <img src="${t.cover || 'cd_cover.svg'}" alt="${t.title}" onerror="this.onerror=null; this.src='cd_cover.svg';">
             <h4>${t.title}</h4>
             <p>${t.artist} • <span style="color:var(--cyan-light);">${t.genre || 'Pista HQ'}</span></p>
             <div class="track-actions">
                 <button class="btn-track-play" onclick="playTrackFromList(${idx})"><i class="fa-solid fa-play"></i> Escuchar</button>
-                <button class="btn-track-download" onclick="requestDownload('${t.title}', '${t.artist}', '${t.url}')"><i class="fa-solid fa-download"></i></button>
+                <button class="btn-track-download" onclick="requestDownload('${t.title}', '${t.artist}', '${t.url || ''}')"><i class="fa-solid fa-download"></i></button>
             </div>
         </div>
     `).join('') + `</div>`;
@@ -184,47 +197,147 @@ async function executeMultiSourceSearch() {
     const resultsHeader = document.getElementById('searchResultsHeader');
     const resultsGrid = document.getElementById('searchResultsGrid');
 
-    resultsHeader.innerHTML = `<span><i class="fa-solid fa-spinner fa-spin"></i> Buscando en tiempo real "${query}" (1.º YouTube Music, 2.º TIDAL)...</span>`;
+    resultsHeader.innerHTML = `<span><i class="fa-solid fa-spinner fa-spin"></i> Buscando "${query}" en tiempo real y catálogo maestro...</span>`;
     resultsGrid.innerHTML = '';
 
+    let results = [];
+    let sourceLabel = 'Catálogo Offline & CD-TRCKAS';
+
+    // 1. Intento con demonio local si está en ejecución
     try {
-        const res = await fetch(`${API_BASE}/search?q=${encodeURIComponent(query)}`);
-        const data = await res.json();
-        let results = data.results || [];
-
-        // Apply source filtering
-        if (currentSourceFilter === 'YT') {
-            results = results.filter(r => r.genre.includes('YouTube'));
-        } else if (currentSourceFilter === 'TIDAL') {
-            results = results.filter(r => r.genre.includes('TIDAL'));
-        } else if (currentSourceFilter === 'AUDIUS') {
-            results = results.filter(r => r.genre.includes('Audius') || r.genre.includes('SoundCloud'));
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2000);
+        const res = await fetch(`${API_BASE}/search?q=${encodeURIComponent(query)}`, { signal: controller.signal });
+        clearTimeout(timeoutId);
+        if (res.ok) {
+            const data = await res.json();
+            if (data && data.results && data.results.length > 0) {
+                results = data.results;
+                sourceLabel = data.source || 'Demonio Local Arkaios';
+            }
         }
-
-        currentTrackList = results;
-
-        resultsHeader.innerHTML = `<span>Se encontraron <strong>${results.length} resultados</strong> para "${query}" (${data.source || 'Multi-Fuente API'}):</span>`;
-
-        if (results.length === 0) {
-            resultsGrid.innerHTML = `<p style="grid-column:1/-1; padding:30px; text-align:center; color:var(--text-muted);">No se encontraron pistas para este filtro.</p>`;
-            return;
-        }
-
-        resultsGrid.innerHTML = results.map((t, idx) => `
-            <div class="track-item-card">
-                <img src="${t.cover}" alt="${t.title}">
-                <h4>${t.title}</h4>
-                <p>${t.artist}</p>
-                <span style="font-size:0.75rem; color:var(--cyan-light); font-weight:700;">${t.genre} • ${t.format || 'MP3'}</span>
-                <div class="track-actions">
-                    <button class="btn-track-play" onclick="playTrackFromList(${idx})"><i class="fa-solid fa-play"></i> Escuchar</button>
-                    <button class="btn-track-download" onclick="requestDownload('${t.title}', '${t.artist}', '${t.url}')"><i class="fa-solid fa-download"></i></button>
-                </div>
-            </div>
-        `).join('');
     } catch (e) {
-        resultsHeader.innerHTML = `<span style="color:#ef4444;">Error conectando con el motor de búsqueda en tiempo real.</span>`;
+        // Demonio local en standby - proceder inmediatamente con búsqueda nativa
     }
+
+    // 2. Si no hay respuesta del demonio local, buscar en los catálogos integrados
+    if (results.length === 0) {
+        const qLower = query.toLowerCase();
+
+        // Buscar en álbumes y pistas de CD-TRCKAS
+        if (cdTrckasState && cdTrckasState.allAlbums) {
+            cdTrckasState.allAlbums.forEach(al => {
+                (al.tracks || []).forEach(tr => {
+                    const match = (tr.title && tr.title.toLowerCase().includes(qLower)) ||
+                                  (tr.artist && tr.artist.toLowerCase().includes(qLower)) ||
+                                  (tr.genre && tr.genre.toLowerCase().includes(qLower)) ||
+                                  (al.title && al.title.toLowerCase().includes(qLower));
+                    if (match) {
+                        results.push({
+                            title: tr.title,
+                            artist: tr.artist || al.artist || 'DJ KLMR',
+                            genre: tr.genre || 'CD-TRCKAS Master',
+                            cover: tr.cover || 'cd_cover.svg',
+                            url: tr.stream_url || tr.audio_url || tr.url || '',
+                            streamUrl: tr.stream_url || tr.audio_url || tr.url || '',
+                            format: tr.format || 'FLAC/MP3',
+                            source: 'CD-TRCKAS'
+                        });
+                    }
+                });
+            });
+        }
+
+        // Buscar en Biblioteca Pública Infraction
+        if (publicInfractionData && publicInfractionData.sampleTracks) {
+            publicInfractionData.sampleTracks.forEach(tr => {
+                const match = (tr.title && tr.title.toLowerCase().includes(qLower)) ||
+                              (tr.artist && tr.artist.toLowerCase().includes(qLower)) ||
+                              (tr.genre && tr.genre.toLowerCase().includes(qLower));
+                if (match) {
+                    results.push({
+                        title: tr.title,
+                        artist: tr.artist || 'Ivan Malkov (Infraction)',
+                        genre: tr.genre || 'Royalty Free',
+                        cover: 'album_default.svg',
+                        url: tr.url || tr.streamUrl || '',
+                        streamUrl: tr.url || tr.streamUrl || '',
+                        format: 'MP3',
+                        source: 'Infraction Library'
+                    });
+                }
+            });
+        }
+
+        // 3. Si hay conexión a internet y pocos resultados, consultar motor en tiempo real
+        if (results.length < 5 && navigator.onLine) {
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 3500);
+                const itunesRes = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=music&limit=20`, { signal: controller.signal });
+                clearTimeout(timeoutId);
+                if (itunesRes.ok) {
+                    const itunesData = await itunesRes.json();
+                    (itunesData.results || []).forEach(item => {
+                        results.push({
+                            title: item.trackName || item.collectionName,
+                            artist: item.artistName,
+                            genre: item.primaryGenreName || 'Mundial',
+                            cover: item.artworkUrl100 ? item.artworkUrl100.replace('100x100bb', '600x600bb') : 'album_default.svg',
+                            url: item.previewUrl,
+                            streamUrl: item.previewUrl,
+                            format: 'HQ Stream',
+                            source: 'En Tiempo Real'
+                        });
+                    });
+                    if (results.length > 0) sourceLabel = 'En Tiempo Real & Catálogo CD-TRCKAS';
+                }
+            } catch (itErr) {
+                // Modo sin conexión silencioso
+            }
+        }
+    }
+
+    // Filtrado por chip
+    if (currentSourceFilter === 'YT') {
+        const f = results.filter(r => (r.genre || '').includes('YouTube') || (r.source || '').includes('YouTube'));
+        if (f.length > 0) results = f;
+    } else if (currentSourceFilter === 'TIDAL') {
+        const f = results.filter(r => (r.genre || '').includes('TIDAL') || (r.source || '').includes('TIDAL'));
+        if (f.length > 0) results = f;
+    } else if (currentSourceFilter === 'AUDIUS') {
+        const f = results.filter(r => (r.genre || '').includes('Audius') || (r.source || '').includes('CD-TRCKAS'));
+        if (f.length > 0) results = f;
+    }
+
+    currentTrackList = results;
+
+    if (results.length === 0) {
+        resultsHeader.innerHTML = `<span>Búsqueda finalizada para "<strong>${query}</strong>":</span>`;
+        resultsGrid.innerHTML = `
+            <div style="grid-column:1/-1; padding:40px; text-align:center; color:var(--text-muted);">
+                <i class="fa-solid fa-compact-disc" style="font-size:2.5rem; color:var(--cyan-light); margin-bottom:14px; display:block;"></i>
+                <h4 style="color:#f8fafc; margin-bottom:8px;">No se encontraron canciones</h4>
+                <p style="font-size:0.9rem;">Prueba buscando "KLMR", "Baila", o revisa los 28 temas en la pestaña CD-TRCKAS.</p>
+            </div>
+        `;
+        return;
+    }
+
+    resultsHeader.innerHTML = `<span>Se encontraron <strong>${results.length} resultados</strong> para "${query}" (${sourceLabel}):</span>`;
+
+    resultsGrid.innerHTML = results.map((t, idx) => `
+        <div class="track-item-card">
+            <img src="${t.cover || 'cd_cover.svg'}" alt="${t.title}" onerror="this.onerror=null; this.src='cd_cover.svg';">
+            <h4>${t.title}</h4>
+            <p>${t.artist}</p>
+            <span style="font-size:0.75rem; color:var(--cyan-light); font-weight:700;">${t.genre || 'Pista Master'} • ${t.format || 'MP3'}</span>
+            <div class="track-actions">
+                <button class="btn-track-play" onclick="playTrackFromList(${idx})"><i class="fa-solid fa-play"></i> Escuchar</button>
+                <button class="btn-track-download" onclick="requestDownload('${t.title}', '${t.artist}', '${t.url || ''}')"><i class="fa-solid fa-download"></i></button>
+            </div>
+        </div>
+    `).join('');
 }
 
 // Audio Player Execution Engine
@@ -243,7 +356,11 @@ function playTrackFromList(index) {
 function loadTrackToPlayer(track, autoPlay = true) {
     document.getElementById('playerTitle').textContent = track.title;
     document.getElementById('playerArtist').textContent = track.artist;
-    document.getElementById('playerCover').src = track.cover || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=300';
+    const coverEl = document.getElementById('playerCover');
+    if (coverEl) {
+        coverEl.onerror = function() { this.src = 'cd_cover.svg'; };
+        coverEl.src = track.cover || 'cd_cover.svg';
+    }
     let streamSrc = track.streamUrl || track.url || track.stream_url || track.audio_url;
     if (streamSrc && streamSrc.startsWith('/')) {
         streamSrc = `${SERVER_HOST}${streamSrc}`;
@@ -262,7 +379,11 @@ function loadTrackToPlayer(track, autoPlay = true) {
 function playRadioStream(streamUrl, name, genre, cover) {
     document.getElementById('playerTitle').textContent = name;
     document.getElementById('playerArtist').textContent = `📻 Radio En Vivo (${genre})`;
-    document.getElementById('playerCover').src = cover || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300';
+    const radCoverEl = document.getElementById('playerCover');
+    if (radCoverEl) {
+        radCoverEl.onerror = function() { this.src = 'album_default.svg'; };
+        radCoverEl.src = cover || 'album_default.svg';
+    }
     document.getElementById('playerFormatBadge').textContent = 'RADIO 24/7';
 
     audioPlayer.src = streamUrl;
@@ -728,7 +849,7 @@ function renderPlaylists() {
 
     container.innerHTML = customPlaylists.map((pl, idx) => `
         <div class="track-item-card" style="cursor:pointer;" onclick="playPlaylist(${idx})">
-            <img src="${pl.cover || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400'}" alt="${pl.name}">
+            <img src="${pl.cover || 'cd_cover.svg'}" alt="${pl.name}" onerror="this.onerror=null; this.src='cd_cover.svg';">
             <h4>${pl.name}</h4>
             <p>${(pl.tracks || []).length} pistas • Playlist Personalizada</p>
             <div class="track-actions" style="margin-top:8px;">
@@ -746,7 +867,7 @@ function showCreatePlaylistModal() {
     const newPlaylist = {
         id: 'pl_' + Date.now(),
         name: name.trim(),
-        cover: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400',
+        cover: 'cd_cover.svg',
         tracks: []
     };
 
@@ -990,7 +1111,7 @@ function renderCdTrckasAlbums() {
         return `
             <div class="cd-album-card ${isSelected ? 'active' : ''}" onclick="selectCdAlbum('${album.id}')">
                 <div class="cd-album-cover-box">
-                    <img src="${album.cover}" alt="${album.title}" onerror="this.src='https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400'">
+                    <img src="${album.cover || 'cd_cover.svg'}" alt="${album.title}" onerror="this.onerror=null; this.src='cd_cover.svg';">
                     <span class="cd-album-badge-floating">${album.badge || 'ÁLBUM'}</span>
                     <div class="cd-album-play-overlay">
                         <button onclick="event.stopPropagation(); playCdTrckasAlbumDirect('${album.id}')" title="Reproducir álbum">
@@ -1022,7 +1143,10 @@ function selectCdAlbum(albumId) {
     const elBadge = document.getElementById('cdCurrentAlbumBadge');
     const elSearch = document.getElementById('cdTrackSearchInput');
 
-    if (elCover) elCover.src = album.cover;
+    if (elCover) {
+        elCover.onerror = function() { this.src = 'cd_cover.svg'; };
+        elCover.src = album.cover || 'cd_cover.svg';
+    }
     if (elTitle) elTitle.textContent = album.title;
     if (elMeta) elMeta.textContent = `${album.artist} • ${album.totalTracks} canciones • ${album.year} • Master HQ`;
     if (elBadge) elBadge.textContent = album.badge || 'ÁLBUM SELECCIONADO';

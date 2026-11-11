@@ -15,7 +15,7 @@
           "title": "CD TRCKAS (Edición Oficial)",
           "artist": "KLMR",
           "year": 2025,
-          "cover": "https://cd-trckas.vercel.app/CD%20Cover.png",
+          "cover": "cd_cover.svg",
           "badge": "Álbum Completo • 28 Tracks Master HQ",
           "total_tracks": 28,
           "tracks": [
@@ -33,7 +33,7 @@
               "proxy_stream_url": "https://cd-trckas.vercel.app/api/stream?id=1_9Jcpd3ChvYFo_pH6_EsWrtPcZihVmN5",
               "static_stream_url": "https://cd-trckas.vercel.app/plataforma/audio/01.mp3",
               "audio_url": "https://drive.usercontent.google.com/download?id=1_9Jcpd3ChvYFo_pH6_EsWrtPcZihVmN5&export=download",
-              "cover": "https://cd-trckas.vercel.app/CD%20Cover.png"
+              "cover": "cd_cover.svg"
             },
             {
               "id": 2,
@@ -49,7 +49,7 @@
               "proxy_stream_url": "https://cd-trckas.vercel.app/api/stream?id=1CE6NjmiyMLQhkhVQxYdYaZGPvsiDgBtZ",
               "static_stream_url": "https://cd-trckas.vercel.app/plataforma/audio/02.mp3",
               "audio_url": "https://drive.usercontent.google.com/download?id=1CE6NjmiyMLQhkhVQxYdYaZGPvsiDgBtZ&export=download",
-              "cover": "https://cd-trckas.vercel.app/CD%20Cover.png"
+              "cover": "cd_cover.svg"
             },
             {
               "id": 3,
@@ -65,7 +65,7 @@
               "proxy_stream_url": "https://cd-trckas.vercel.app/api/stream?id=17J576eu4Ql2AgBcuYlnI3WwaZytfPWm-",
               "static_stream_url": "https://cd-trckas.vercel.app/plataforma/audio/03.mp3",
               "audio_url": "https://drive.usercontent.google.com/download?id=17J576eu4Ql2AgBcuYlnI3WwaZytfPWm-&export=download",
-              "cover": "https://cd-trckas.vercel.app/CD%20Cover.png"
+              "cover": "cd_cover.svg"
             },
             {
               "id": 4,
@@ -81,7 +81,7 @@
               "proxy_stream_url": "https://cd-trckas.vercel.app/api/stream?id=1zsTqwN4ERNfh4vHvqNCt3KiobPMe5p_Z",
               "static_stream_url": "https://cd-trckas.vercel.app/plataforma/audio/04.mp3",
               "audio_url": "https://drive.usercontent.google.com/download?id=1zsTqwN4ERNfh4vHvqNCt3KiobPMe5p_Z&export=download",
-              "cover": "https://cd-trckas.vercel.app/CD%20Cover.png"
+              "cover": "cd_cover.svg"
             },
             {
               "id": 5,
@@ -97,7 +97,7 @@
               "proxy_stream_url": "https://cd-trckas.vercel.app/api/stream?id=1MAugVDThaz12bKqMKDnTAYc5VCfl4N2d",
               "static_stream_url": "https://cd-trckas.vercel.app/plataforma/audio/05.mp3",
               "audio_url": "https://drive.usercontent.google.com/download?id=1MAugVDThaz12bKqMKDnTAYc5VCfl4N2d&export=download",
-              "cover": "https://cd-trckas.vercel.app/CD%20Cover.png"
+              "cover": "cd_cover.svg"
             },
             {
               "id": 6,
@@ -113,7 +113,7 @@
               "proxy_stream_url": "https://cd-trckas.vercel.app/api/stream?id=1RlDuTm-byVXE5QmoLpH24xNKHaeYBS_D",
               "static_stream_url": "https://cd-trckas.vercel.app/plataforma/audio/06.mp3",
               "audio_url": "https://drive.usercontent.google.com/download?id=1RlDuTm-byVXE5QmoLpH24xNKHaeYBS_D&export=download",
-              "cover": "https://cd-trckas.vercel.app/CD%20Cover.png"
+              "cover": "cd_cover.svg"
             },
             {
               "id": 7,
@@ -129,7 +129,7 @@
               "proxy_stream_url": "https://cd-trckas.vercel.app/api/stream?id=1kCBiWMPV80byZLYsiJxSfgAMDUSUfreJ",
               "static_stream_url": "https://cd-trckas.vercel.app/plataforma/audio/07.mp3",
               "audio_url": "https://drive.usercontent.google.com/download?id=1kCBiWMPV80byZLYsiJxSfgAMDUSUfreJ&export=download",
-              "cover": "https://cd-trckas.vercel.app/CD%20Cover.png"
+              "cover": "cd_cover.svg"
             },
             {
               "id": 8,
@@ -145,7 +145,7 @@
               "proxy_stream_url": "https://cd-trckas.vercel.app/api/stream?id=1Psooj6pMqjkqHGt0GJoWHtG-jnkn_j1K",
               "static_stream_url": "https://cd-trckas.vercel.app/plataforma/audio/08.mp3",
               "audio_url": "https://drive.usercontent.google.com/download?id=1Psooj6pMqjkqHGt0GJoWHtG-jnkn_j1K&export=download",
-              "cover": "https://cd-trckas.vercel.app/CD%20Cover.png"
+              "cover": "cd_cover.svg"
             },
             {
               "id": 9,
@@ -161,7 +161,7 @@
               "proxy_stream_url": "https://cd-trckas.vercel.app/api/stream?id=1gE_zR1OoL-99sUBtivqFtH9k0TmjSp3c",
               "static_stream_url": "https://cd-trckas.vercel.app/plataforma/audio/09.mp3",
               "audio_url": "https://drive.usercontent.google.com/download?id=1gE_zR1OoL-99sUBtivqFtH9k0TmjSp3c&export=download",
-              "cover": "https://cd-trckas.vercel.app/CD%20Cover.png"
+              "cover": "cd_cover.svg"
             },
             {
               "id": 10,
@@ -177,7 +177,7 @@
               "proxy_stream_url": "https://cd-trckas.vercel.app/api/stream?id=1-jRh3iQak9Al4SiJUS9kRaTaVEEdjyFN",
               "static_stream_url": "https://cd-trckas.vercel.app/plataforma/audio/10.mp3",
               "audio_url": "https://drive.usercontent.google.com/download?id=1-jRh3iQak9Al4SiJUS9kRaTaVEEdjyFN&export=download",
-              "cover": "https://cd-trckas.vercel.app/CD%20Cover.png"
+              "cover": "cd_cover.svg"
             },
             {
               "id": 11,
@@ -193,7 +193,7 @@
               "proxy_stream_url": "https://cd-trckas.vercel.app/api/stream?id=1Qtusa6TA57RunYVWyvHfSXNzM_U_outC",
               "static_stream_url": "https://cd-trckas.vercel.app/plataforma/audio/11.mp3",
               "audio_url": "https://drive.usercontent.google.com/download?id=1Qtusa6TA57RunYVWyvHfSXNzM_U_outC&export=download",
-              "cover": "https://cd-trckas.vercel.app/CD%20Cover.png"
+              "cover": "cd_cover.svg"
             },
             {
               "id": 12,
@@ -209,7 +209,7 @@
               "proxy_stream_url": "https://cd-trckas.vercel.app/api/stream?id=1u0TuLetJPuWTbHu56niSoHdSXCWKqMkG",
               "static_stream_url": "https://cd-trckas.vercel.app/plataforma/audio/12.mp3",
               "audio_url": "https://drive.usercontent.google.com/download?id=1u0TuLetJPuWTbHu56niSoHdSXCWKqMkG&export=download",
-              "cover": "https://cd-trckas.vercel.app/CD%20Cover.png"
+              "cover": "cd_cover.svg"
             },
             {
               "id": 13,
@@ -225,7 +225,7 @@
               "proxy_stream_url": "https://cd-trckas.vercel.app/api/stream?id=1TaYcogcKR5LBVdTL5X7GGus6cfBvuTlh",
               "static_stream_url": "https://cd-trckas.vercel.app/plataforma/audio/13.mp3",
               "audio_url": "https://drive.usercontent.google.com/download?id=1TaYcogcKR5LBVdTL5X7GGus6cfBvuTlh&export=download",
-              "cover": "https://cd-trckas.vercel.app/CD%20Cover.png"
+              "cover": "cd_cover.svg"
             },
             {
               "id": 14,
@@ -241,7 +241,7 @@
               "proxy_stream_url": "https://cd-trckas.vercel.app/api/stream?id=1tKAfPsPZgk9m2WOLgKuPIqewilksyqfw",
               "static_stream_url": "https://cd-trckas.vercel.app/plataforma/audio/14.mp3",
               "audio_url": "https://drive.usercontent.google.com/download?id=1tKAfPsPZgk9m2WOLgKuPIqewilksyqfw&export=download",
-              "cover": "https://cd-trckas.vercel.app/CD%20Cover.png"
+              "cover": "cd_cover.svg"
             },
             {
               "id": 15,
@@ -257,7 +257,7 @@
               "proxy_stream_url": "https://cd-trckas.vercel.app/api/stream?id=1K7Ia6nQZBvH2WAWYhLhMfOwEeJuWU_l5",
               "static_stream_url": "https://cd-trckas.vercel.app/plataforma/audio/15.mp3",
               "audio_url": "https://drive.usercontent.google.com/download?id=1K7Ia6nQZBvH2WAWYhLhMfOwEeJuWU_l5&export=download",
-              "cover": "https://cd-trckas.vercel.app/CD%20Cover.png"
+              "cover": "cd_cover.svg"
             },
             {
               "id": 16,
@@ -273,7 +273,7 @@
               "proxy_stream_url": "https://cd-trckas.vercel.app/api/stream?id=1EM8X3UdaQLQdKx8zF_BxC2eHemI7R4Xj",
               "static_stream_url": "https://cd-trckas.vercel.app/plataforma/audio/16.mp3",
               "audio_url": "https://drive.usercontent.google.com/download?id=1EM8X3UdaQLQdKx8zF_BxC2eHemI7R4Xj&export=download",
-              "cover": "https://cd-trckas.vercel.app/CD%20Cover.png"
+              "cover": "cd_cover.svg"
             },
             {
               "id": 17,
@@ -289,7 +289,7 @@
               "proxy_stream_url": "https://cd-trckas.vercel.app/api/stream?id=1iWssiTpae9ekovyiexEqUUglPYvmJ53T",
               "static_stream_url": "https://cd-trckas.vercel.app/plataforma/audio/17.mp3",
               "audio_url": "https://drive.usercontent.google.com/download?id=1iWssiTpae9ekovyiexEqUUglPYvmJ53T&export=download",
-              "cover": "https://cd-trckas.vercel.app/CD%20Cover.png"
+              "cover": "cd_cover.svg"
             },
             {
               "id": 18,
@@ -305,7 +305,7 @@
               "proxy_stream_url": "https://cd-trckas.vercel.app/api/stream?id=1XteodovGEqAnM3VlKtOgftTSVbGUORBT",
               "static_stream_url": "https://cd-trckas.vercel.app/plataforma/audio/18.mp3",
               "audio_url": "https://drive.usercontent.google.com/download?id=1XteodovGEqAnM3VlKtOgftTSVbGUORBT&export=download",
-              "cover": "https://cd-trckas.vercel.app/CD%20Cover.png"
+              "cover": "cd_cover.svg"
             },
             {
               "id": 19,
@@ -321,7 +321,7 @@
               "proxy_stream_url": "https://cd-trckas.vercel.app/api/stream?id=1q7RkooV8L6p3BrkDTZUtkq_-ag5ulOz9",
               "static_stream_url": "https://cd-trckas.vercel.app/plataforma/audio/19.mp3",
               "audio_url": "https://drive.usercontent.google.com/download?id=1q7RkooV8L6p3BrkDTZUtkq_-ag5ulOz9&export=download",
-              "cover": "https://cd-trckas.vercel.app/CD%20Cover.png"
+              "cover": "cd_cover.svg"
             },
             {
               "id": 20,
@@ -337,7 +337,7 @@
               "proxy_stream_url": "https://cd-trckas.vercel.app/api/stream?id=1LXW9CJNSfz4QuXShFNfYupuBJzdxSkFZ",
               "static_stream_url": "https://cd-trckas.vercel.app/plataforma/audio/20.mp3",
               "audio_url": "https://drive.usercontent.google.com/download?id=1LXW9CJNSfz4QuXShFNfYupuBJzdxSkFZ&export=download",
-              "cover": "https://cd-trckas.vercel.app/CD%20Cover.png"
+              "cover": "cd_cover.svg"
             },
             {
               "id": 21,
@@ -353,7 +353,7 @@
               "proxy_stream_url": "https://cd-trckas.vercel.app/api/stream?id=1KfFFSbZxOdhT8TasqAezie1X0NnjqqQs",
               "static_stream_url": "https://cd-trckas.vercel.app/plataforma/audio/21.mp3",
               "audio_url": "https://drive.usercontent.google.com/download?id=1KfFFSbZxOdhT8TasqAezie1X0NnjqqQs&export=download",
-              "cover": "https://cd-trckas.vercel.app/CD%20Cover.png"
+              "cover": "cd_cover.svg"
             },
             {
               "id": 22,
@@ -369,7 +369,7 @@
               "proxy_stream_url": "https://cd-trckas.vercel.app/api/stream?id=1D-1PdFA2c6_foR4YtzYMOv1ddN3SH1fy",
               "static_stream_url": "https://cd-trckas.vercel.app/plataforma/audio/22.mp3",
               "audio_url": "https://drive.usercontent.google.com/download?id=1D-1PdFA2c6_foR4YtzYMOv1ddN3SH1fy&export=download",
-              "cover": "https://cd-trckas.vercel.app/CD%20Cover.png"
+              "cover": "cd_cover.svg"
             },
             {
               "id": 23,
@@ -385,7 +385,7 @@
               "proxy_stream_url": "https://cd-trckas.vercel.app/api/stream?id=12yMtTcG2zlkCkMRUQmPcN4QGAQnew_Zk",
               "static_stream_url": "https://cd-trckas.vercel.app/plataforma/audio/23.mp3",
               "audio_url": "https://drive.usercontent.google.com/download?id=12yMtTcG2zlkCkMRUQmPcN4QGAQnew_Zk&export=download",
-              "cover": "https://cd-trckas.vercel.app/CD%20Cover.png"
+              "cover": "cd_cover.svg"
             },
             {
               "id": 24,
@@ -401,7 +401,7 @@
               "proxy_stream_url": "https://cd-trckas.vercel.app/api/stream?id=1oqK1tfZY233cl9lYRI1-hQF7lUWRSiy7",
               "static_stream_url": "https://cd-trckas.vercel.app/plataforma/audio/24.mp3",
               "audio_url": "https://drive.usercontent.google.com/download?id=1oqK1tfZY233cl9lYRI1-hQF7lUWRSiy7&export=download",
-              "cover": "https://cd-trckas.vercel.app/CD%20Cover.png"
+              "cover": "cd_cover.svg"
             },
             {
               "id": 25,
@@ -417,7 +417,7 @@
               "proxy_stream_url": "https://cd-trckas.vercel.app/api/stream?id=1miVzjA84zXr5QBFYLdGsT39oAoiaMKTr",
               "static_stream_url": "https://cd-trckas.vercel.app/plataforma/audio/25.mp3",
               "audio_url": "https://drive.usercontent.google.com/download?id=1miVzjA84zXr5QBFYLdGsT39oAoiaMKTr&export=download",
-              "cover": "https://cd-trckas.vercel.app/CD%20Cover.png"
+              "cover": "cd_cover.svg"
             },
             {
               "id": 26,
@@ -433,7 +433,7 @@
               "proxy_stream_url": "https://cd-trckas.vercel.app/api/stream?id=1wkGR70dgJs_4s0J4hna8TlFxhUzeURzx",
               "static_stream_url": "https://cd-trckas.vercel.app/plataforma/audio/26.mp3",
               "audio_url": "https://drive.usercontent.google.com/download?id=1wkGR70dgJs_4s0J4hna8TlFxhUzeURzx&export=download",
-              "cover": "https://cd-trckas.vercel.app/CD%20Cover.png"
+              "cover": "cd_cover.svg"
             },
             {
               "id": 27,
@@ -449,7 +449,7 @@
               "proxy_stream_url": "https://cd-trckas.vercel.app/api/stream?id=1THpTyHyPfw_vdQQYdFxFU1JJPXI6c_8M",
               "static_stream_url": "https://cd-trckas.vercel.app/plataforma/audio/27.mp3",
               "audio_url": "https://drive.usercontent.google.com/download?id=1THpTyHyPfw_vdQQYdFxFU1JJPXI6c_8M&export=download",
-              "cover": "https://cd-trckas.vercel.app/CD%20Cover.png"
+              "cover": "cd_cover.svg"
             },
             {
               "id": 28,
@@ -465,7 +465,7 @@
               "proxy_stream_url": "https://cd-trckas.vercel.app/api/stream?id=12OBahGdOiuBr4hnF-GQ4C_N1iY7cWHKM",
               "static_stream_url": "https://cd-trckas.vercel.app/plataforma/audio/28.mp3",
               "audio_url": "https://drive.usercontent.google.com/download?id=12OBahGdOiuBr4hnF-GQ4C_N1iY7cWHKM&export=download",
-              "cover": "https://cd-trckas.vercel.app/CD%20Cover.png"
+              "cover": "cd_cover.svg"
             }
           ]
         },
