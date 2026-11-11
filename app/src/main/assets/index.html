@@ -18,15 +18,6 @@
                 <span class="logo-text">Spotify<span class="highlight">Arkaios</span></span>
                 <span class="version-chip">v2.1.0</span>
             </div>
-            
-            <div class="mode-switcher-sidebar">
-                <button class="mode-btn active" id="btnModeWeb" onclick="setAppMode('web')">
-                    <i class="fa-solid fa-globe"></i> Plataforma Web
-                </button>
-                <button class="mode-btn" id="btnModeApk" onclick="setAppMode('apk')">
-                    <i class="fa-solid fa-mobile-screen-button"></i> Modo APK / App
-                </button>
-            </div>
 
             <nav class="nav-menu">
                 <button class="nav-btn active" data-tab="home" onclick="switchTab('home')">
@@ -47,9 +38,6 @@
                 <button class="nav-btn" data-tab="radio" onclick="switchTab('radio')">
                     <i class="fa-solid fa-radio"></i> Radio FM / Jango Live
                 </button>
-                <button class="nav-btn" data-tab="apkConsole" onclick="switchTab('apkConsole')">
-                    <i class="fa-solid fa-cloud-arrow-down"></i> Consola APK Release
-                </button>
             </nav>
 
             <div class="daemon-badge">
@@ -69,22 +57,13 @@
                     <i class="fa-solid fa-magnifying-glass search-icon"></i>
                     <input type="text" id="globalSearchInput" placeholder="Buscar canciones en YouTube Music, TIDAL, Audius, Jamendo..." onkeyup="handleGlobalSearchKeyUp(event)">
                 </div>
-
-                <div class="header-actions">
-                    <button class="btn-header-apk" onclick="downloadApkDirect()">
-                        <i class="fa-solid fa-download"></i> Descargar APK (24.3 MB)
-                    </button>
-                    <a href="https://github.com/djklmr2025/Spotify-Arkaios/releases/tag/v2.1.0" target="_blank" class="btn-header-github">
-                        <i class="fa-brands fa-github"></i> GitHub Release
-                    </a>
-                </div>
             </header>
 
             <!-- TAB 0: HOME -->
             <section id="tab-home" class="tab-content active">
                 <div class="hero-banner">
                     <div class="hero-content-box">
-                        <span class="hero-badge"><i class="fa-solid fa-star"></i> PLATAFORMA INTEGRADA WEB & APK</span>
+                        <span class="hero-badge"><i class="fa-solid fa-star"></i> REPRODUCTOR NATIVO ANDROID HI-FI</span>
                         <h2>Cybernetic Horizon (Master FLAC)</h2>
                         <p>Búsqueda priorizada en <strong>1.º lugar en YouTube / YouTube Music</strong> y <strong>2.º lugar en TIDAL Master</strong>. Descargas directas en MP3, M4A y FLAC sin cifrar.</p>
                         <div class="hero-buttons">
@@ -301,7 +280,7 @@
                         </div>
                     </div>
                     <div class="embedded-iframe-wrapper">
-                        <iframe id="youtubeIframePlayer" src="" title="Reproductor Oficial Infraction YouTube" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                        <iframe id="youtubeIframePlayer" src="" title="Reproductor Oficial Infraction YouTube" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
                     </div>
                 </div>
 
@@ -419,41 +398,6 @@
 
                 <div class="radio-full-grid" id="radioFullGrid">
                     <!-- Dynamic Radio Stations -->
-                </div>
-            </section>
-
-            <!-- TAB 4: CONSOLA APK RELEASE (Modo APK & Android) -->
-            <section id="tab-apkConsole" class="tab-content">
-                <div class="apk-release-hero">
-                    <div class="apk-info-box">
-                        <span class="badge-tag"><i class="fa-android fa-brands"></i> ANDROID APK NATIVA OFICIAL</span>
-                        <h2>Spotify-Arkaios APK v2.1.0</h2>
-                        <p>Compilada con <strong>Kotlin Jetpack Compose</strong>, OpenJDK 21 y arquitectura reactiva. Descargas directas en almacenamiento público sin cifrado DRM.</p>
-                        
-                        <div class="apk-meta-grid">
-                            <div class="meta-item"><span class="label">Versión:</span> <span class="val">v2.1.0 Release</span></div>
-                            <div class="meta-item"><span class="label">Tamaño:</span> <span class="val">24.9 MB</span></div>
-                            <div class="meta-item"><span class="label">Compatibilidad:</span> <span class="val">Android 8.0 (API 26+)</span></div>
-                            <div class="meta-item"><span class="label">Estado Git:</span> <span class="val">Release v2.1.0 Oficial</span></div>
-                        </div>
-
-                        <div class="apk-download-actions">
-                            <button class="btn-download-apk-main" onclick="downloadApkDirect()">
-                                <i class="fa-solid fa-download"></i> Descargar APK Directa (v2.1.0)
-                            </button>
-                            <a href="https://github.com/djklmr2025/Spotify-Arkaios/releases/tag/v2.1.0" target="_blank" class="btn-github-release">
-                                <i class="fa-brands fa-github"></i> Ver Release en GitHub
-                            </a>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="apk-instructions-box">
-                    <h3><i class="fa-solid fa-terminal"></i> Instalación Rápida en Dispositivo o Emulador</h3>
-                    <div class="code-block">
-                        adb install -r app-debug.apk
-                    </div>
-                    <p class="inst-note">Permite la instalación de orígenes desconocidos en la configuración de tu celular Android.</p>
                 </div>
             </section>
         </main>

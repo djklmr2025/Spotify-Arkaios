@@ -1,6 +1,6 @@
 const SERVER_HOST = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
     ? `http://${window.location.hostname}:8788` 
-    : (window.location.origin.startsWith('http') && !window.location.origin.includes('file:') ? window.location.origin : 'http://192.168.101.106:8788');
+    : (window.location.origin.startsWith('http') && !window.location.origin.includes('file:') && window.location.hostname !== 'spotify-arkaios.vercel.app' ? window.location.origin : 'http://192.168.101.106:8788');
 const API_BASE = `${SERVER_HOST}/api`;
 
 // Global Audio Engine & State
@@ -65,7 +65,7 @@ function handleAudioPlaybackError() {
                            (track.album && track.album.toLowerCase().includes('cd trckas'));
     const padNum = track.number ? String(track.number).padStart(2, '0') : null;
 
-    if (isCdTrckasAlbum && padNum && audioPlayer.src.startsWith('file://')) {
+    if (isCdTrckasAlbum && padNum && (audioPlayer.src.startsWith('file://') || audioPlayer.src.includes('/local-sdcard/'))) {
         const cloudUrl = track.drive_file_id
             ? `https://drive.usercontent.google.com/download?id=${track.drive_file_id}&export=download`
             : `https://cd-trckas.vercel.app/plataforma/audio/${padNum}.mp3`;
@@ -604,7 +604,9 @@ async function loadTrackToPlayer(track, autoPlay = true) {
         streamSrc = cachedUrl;
         console.log('[PLAYER] ⚡ Reproducción instantánea (0ms) desde caché:', track.title);
     } else if (isCdTrckasAlbum && padNum && parseInt(padNum, 10) >= 1 && parseInt(padNum, 10) <= 28) {
-        streamSrc = `file:///sdcard/Music/CD-TRCKAS/${padNum}.mp3`;
+        streamSrc = window.location.protocol.startsWith('http')
+            ? `https://spotify-arkaios.vercel.app/local-sdcard/Music/CD-TRCKAS/${padNum}.mp3`
+            : `file:///sdcard/Music/CD-TRCKAS/${padNum}.mp3`;
     } else if (track.drive_file_id) {
         streamSrc = `https://drive.usercontent.google.com/download?id=${track.drive_file_id}&export=download`;
     } else if (track.streamUrl) {
@@ -1086,7 +1088,10 @@ function playOfficialYouTubeTrack(videoId, title, videoUrl) {
     if (extLink) extLink.href = videoUrl || `https://www.youtube.com/watch?v=${videoId}`;
 
     if (iframe) {
-        iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&enablejsapi=1`;
+        const embedOrigin = (window.location.origin && window.location.origin.startsWith('http'))
+            ? window.location.origin
+            : 'https://spotify-arkaios.vercel.app';
+        iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&playsinline=1&rel=0&modestbranding=1&enablejsapi=1&origin=${encodeURIComponent(embedOrigin)}`;
     }
 
     if (card) {
@@ -1111,7 +1116,10 @@ function playOfficialYouTubePlaylist(listId, title, url) {
     if (extLink) extLink.href = url || `https://www.youtube.com/playlist?list=${listId}`;
 
     if (iframe) {
-        iframe.src = `https://www.youtube-nocookie.com/embed/videoseries?list=${listId}&autoplay=1`;
+        const embedOrigin = (window.location.origin && window.location.origin.startsWith('http'))
+            ? window.location.origin
+            : 'https://spotify-arkaios.vercel.app';
+        iframe.src = `https://www.youtube.com/embed/videoseries?list=${listId}&autoplay=1&playsinline=1&rel=0&modestbranding=1&enablejsapi=1&origin=${encodeURIComponent(embedOrigin)}`;
     }
 
     if (card) {
