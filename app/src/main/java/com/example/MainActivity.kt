@@ -35,6 +35,11 @@ class MainActivity : Activity() {
     private var customView: View? = null
     private var customViewCallback: WebChromeClient.CustomViewCallback? = null
     private lateinit var customViewContainer: FrameLayout
+    private var filePathCallback: ValueCallback<Array<Uri>>? = null
+
+    companion object {
+        private const val FILE_CHOOSER_REQUEST_CODE = 1001
+    }
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -305,10 +310,57 @@ class MainActivity : Activity() {
                 hideCustomView()
             }
 
+            override fun onShowFileChooser(
+                webView: WebView?,
+                filePathCallback: ValueCallback<Array<Uri>>?,
+                fileChooserParams: FileChooserParams?
+            ): Boolean {
+                this@MainActivity.filePathCallback?.onReceiveValue(null)
+                this@MainActivity.filePathCallback = filePathCallback
+
+                return try {
+                    val acceptTypes = fileChooserParams?.acceptTypes ?: emptyArray()
+                    val isM3u = acceptTypes.any { it.contains("m3u", ignoreCase = true) || it.contains("mpegurl", ignoreCase = true) }
+                    val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+                        addCategory(Intent.CATEGORY_OPENABLE)
+                        type = if (isM3u) "*/*" else "audio/*"
+                        putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+                    }
+                    startActivityForResult(Intent.createChooser(intent, "Seleccionar multimedia o playlist"), FILE_CHOOSER_REQUEST_CODE)
+                    true
+                } catch (e: Exception) {
+                    this@MainActivity.filePathCallback = null
+                    false
+                }
+            }
+
             override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
                 android.util.Log.d("SpotifyArkaiosWeb", "[${consoleMessage?.messageLevel()}] ${consoleMessage?.message()} (line: ${consoleMessage?.lineNumber()})")
                 return true
             }
+        }
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == FILE_CHOOSER_REQUEST_CODE) {
+            val callback = filePathCallback
+            filePathCallback = null
+            if (resultCode != RESULT_OK || data == null) {
+                callback?.onReceiveValue(null)
+                return
+            }
+            val results = mutableListOf<Uri>()
+            val clipData = data.clipData
+            if (clipData != null) {
+                for (i in 0 until clipData.itemCount) {
+                    clipData.getItemAt(i)?.uri?.let { results.add(it) }
+                }
+            } else {
+                data.data?.let { results.add(it) }
+            }
+            callback?.onReceiveValue(if (results.isNotEmpty()) results.toTypedArray() else null)
         }
     }
 

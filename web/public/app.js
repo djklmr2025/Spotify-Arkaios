@@ -29,6 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadHomeData();
     loadRadioStations();
     loadPublicInfractionLibrary();
+    loadSavedLocalTracks();
     renderPlaylists();
     initCdTrckasModule();
 
@@ -771,55 +772,244 @@ function formatTime(secs) {
     return `${m}:${s < 10 ? '0' : ''}${s}`;
 }
 
-// Local File Importer (.mp3 / .flac / .m4a)
-function triggerLocalFilesImport() {
-    document.getElementById('localFilesInput').click();
+// Local File Importer (.mp3 / .flac / .m4a) & Persistent IndexedDB Storage
+const UserMediaDB = (function() {
+    const DB_NAME = 'ArkaiosUserLocalMediaDB';
+    const STORE_NAME = 'user_tracks';
+    let dbPromise = null;
+
+    function open() {
+        if (dbPromise) return dbPromise;
+        dbPromise = new Promise((resolve) => {
+            if (!window.indexedDB) return resolve(null);
+            const req = indexedDB.open(DB_NAME, 1);
+            req.onupgradeneeded = (e) => {
+                const db = e.target.result;
+                if (!db.objectStoreNames.contains(STORE_NAME)) {
+                    db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                }
+            };
+            req.onsuccess = (e) => resolve(e.target.result);
+            req.onerror = () => resolve(null);
+        });
+        return dbPromise;
+    }
+
+    async function saveTrack(trackRecord) {
+        const db = await open();
+        if (!db) return;
+        return new Promise((resolve) => {
+            const tx = db.transaction(STORE_NAME, 'readwrite');
+            tx.objectStore(STORE_NAME).put(trackRecord);
+            tx.oncomplete = () => resolve(true);
+            tx.onerror = () => resolve(false);
+        });
+    }
+
+    async function getAllTracks() {
+        const db = await open();
+        if (!db) return [];
+        return new Promise((resolve) => {
+            const tx = db.transaction(STORE_NAME, 'readonly');
+            const req = tx.objectStore(STORE_NAME).getAll();
+            req.onsuccess = () => resolve(req.result || []);
+            req.onerror = () => resolve([]);
+        });
+    }
+
+    async function deleteTrack(id) {
+        const db = await open();
+        if (!db) return;
+        return new Promise((resolve) => {
+            const tx = db.transaction(STORE_NAME, 'readwrite');
+            tx.objectStore(STORE_NAME).delete(id);
+            tx.oncomplete = () => resolve(true);
+            tx.onerror = () => resolve(false);
+        });
+    }
+
+    return { saveTrack, getAllTracks, deleteTrack };
+})();
+
+async function loadSavedLocalTracks() {
+    try {
+        const saved = await UserMediaDB.getAllTracks();
+        importedLocalTracks = saved.map(item => {
+            const objUrl = item.blob ? URL.createObjectURL(item.blob) : (item.url || '');
+            return {
+                ...item,
+                url: objUrl,
+                streamUrl: objUrl
+            };
+        });
+        renderLocalTracks();
+    } catch (e) {
+        console.warn('Error cargando pistas locales guardadas:', e);
+    }
 }
 
-function handleLocalFilesSelected(event) {
-    const files = Array.from(event.target.files);
+function triggerLocalFilesImport() {
+    const inp = document.getElementById('localFilesInput');
+    if (inp) {
+        inp.value = '';
+        inp.click();
+    }
+}
+
+async function handleLocalFilesSelected(event) {
+    const files = Array.from(event.target.files || []);
     if (files.length === 0) return;
 
-    files.forEach(file => {
+    for (const file of files) {
+        const ext = (file.name.split('.').pop() || 'MP3').toUpperCase();
         const objectUrl = URL.createObjectURL(file);
-        importedLocalTracks.push({
-            id: 'local_' + Date.now() + '_' + Math.random(),
+        const trackObj = {
+            id: 'local_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
             title: file.name.replace(/\.[^/.]+$/, ""),
-            artist: 'Archivo Local',
-            album: 'Almacenamiento Local',
+            artist: 'Mi Biblioteca Local',
+            album: 'Almacenamiento Dispositivo',
             url: objectUrl,
             streamUrl: objectUrl,
-            cover: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300',
-            genre: '📁 Local ' + file.name.split('.').pop().toUpperCase(),
-            format: file.name.split('.').pop().toUpperCase()
-        });
-    });
+            cover: 'cd_cover.svg',
+            genre: '📁 Local ' + ext,
+            format: ext,
+            blob: file
+        };
+        importedLocalTracks.push(trackObj);
+        await UserMediaDB.saveTrack(trackObj);
+    }
 
     renderLocalTracks();
+    switchTab('library');
     switchLibrarySubtab('local');
-    alert(`✔ Se importaron ${files.length} archivos de audio locales exitosamente.`);
+    showArkaiosToast(`✔ Se importaron ${files.length} pista(s) a tu biblioteca.`);
 }
 
 function renderLocalTracks() {
     const container = document.getElementById('localTracksList');
     if (!container) return;
     if (importedLocalTracks.length === 0) {
-        container.innerHTML = `<p style="padding:20px; text-align:center; color:var(--text-muted);">No has importado archivos locales aún. Presiona "Elegir Archivos Locales".</p>`;
+        container.innerHTML = `<p style="padding:20px; text-align:center; color:var(--text-muted);">No has importado archivos locales aún. Presiona "Elegir Archivos Locales" o "Añadir Enlace / Multimedia".</p>`;
         return;
     }
     container.innerHTML = `<div class="tracks-grid">` + importedLocalTracks.map((t, idx) => `
         <div class="track-item-card">
-            <img src="${t.cover}" alt="${t.title}">
+            <img src="${t.cover || 'cd_cover.svg'}" alt="${t.title}" onerror="this.onerror=null; this.src='cd_cover.svg';">
             <h4>${t.title}</h4>
-            <p>${t.genre}</p>
-            <button class="btn-track-play" onclick="playImportedLocalTrack(${idx})"><i class="fa-solid fa-play"></i> Reproducir</button>
+            <p>${t.artist} • <span style="color:var(--cyan-light);">${t.genre || 'Local'}</span></p>
+            <div class="track-actions" style="margin-top:8px;">
+                <button class="btn-track-play" onclick="playImportedLocalTrack(${idx})"><i class="fa-solid fa-play"></i> Reproducir</button>
+                <button class="btn-track-download" title="Añadir a Playlist" onclick="showAddToPlaylistModal('${t.id}')"><i class="fa-solid fa-plus"></i></button>
+                <button class="btn-track-download" title="Eliminar" onclick="deleteImportedLocalTrack('${t.id}')"><i class="fa-solid fa-trash"></i></button>
+            </div>
         </div>
     `).join('') + `</div>`;
 }
 
+async function deleteImportedLocalTrack(trackId) {
+    importedLocalTracks = importedLocalTracks.filter(t => t.id !== trackId);
+    await UserMediaDB.deleteTrack(trackId);
+    renderLocalTracks();
+    showArkaiosToast('Pista local eliminada.');
+}
+
 function playImportedLocalTrack(index) {
+    const tr = importedLocalTracks[index];
+    if (!tr) return;
+    if (tr.playbackMode === 'YOUTUBE_OFFICIAL_EMBED' && tr.videoId) {
+        switchTab('infractionPublic');
+        playOfficialYouTubeTrack(tr.videoId, tr.title, tr.url);
+        return;
+    }
     currentTrackList = importedLocalTracks;
     playTrackFromList(index);
+}
+
+// Importador de listas .M3U / .M3U8
+function triggerM3uImport() {
+    const inp = document.getElementById('m3uFilesInput');
+    if (inp) {
+        inp.value = '';
+        inp.click();
+    }
+}
+
+async function handleM3uFileSelected(event) {
+    const file = (event.target.files || [])[0];
+    if (!file) return;
+    try {
+        const text = await file.text();
+        const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+        const tracks = [];
+        let pendingTitle = null;
+        let pendingArtist = 'Stream M3U';
+
+        for (const line of lines) {
+            if (line.startsWith('#EXTINF:')) {
+                const info = line.substring(8);
+                const commaIdx = info.indexOf(',');
+                const label = commaIdx !== -1 ? info.substring(commaIdx + 1).trim() : info.trim();
+                if (label.includes(' - ')) {
+                    const parts = label.split(' - ');
+                    pendingArtist = parts[0].trim();
+                    pendingTitle = parts.slice(1).join(' - ').trim();
+                } else {
+                    pendingTitle = label || 'Pista M3U';
+                }
+            } else if (!line.startsWith('#')) {
+                const url = line;
+                const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([A-Za-z0-9_-]{11})/);
+                const trackTitle = pendingTitle || url.split('/').pop().replace(/\.[^/.]+$/, '') || `Pista ${tracks.length + 1}`;
+                if (ytMatch) {
+                    tracks.push({
+                        id: 'm3u_yt_' + Date.now() + '_' + tracks.length,
+                        videoId: ytMatch[1],
+                        title: trackTitle,
+                        artist: pendingArtist,
+                        url: url,
+                        videoUrl: url,
+                        playbackMode: 'YOUTUBE_OFFICIAL_EMBED',
+                        cover: `https://i.ytimg.com/vi/${ytMatch[1]}/hqdefault.jpg`,
+                        genre: 'YouTube M3U'
+                    });
+                } else {
+                    tracks.push({
+                        id: 'm3u_' + Date.now() + '_' + tracks.length,
+                        title: trackTitle,
+                        artist: pendingArtist,
+                        url: url,
+                        streamUrl: url,
+                        cover: 'cd_cover.svg',
+                        genre: 'M3U Stream',
+                        format: 'STREAM'
+                    });
+                }
+                pendingTitle = null;
+                pendingArtist = 'Stream M3U';
+            }
+        }
+
+        if (tracks.length === 0) {
+            showArkaiosToast('No se encontraron enlaces válidos en el archivo .M3U');
+            return;
+        }
+
+        const plName = file.name.replace(/\.[^/.]+$/, '') || 'Playlist M3U';
+        const newPl = {
+            id: 'pl_' + Date.now(),
+            name: plName,
+            cover: tracks[0].cover || 'cd_cover.svg',
+            tracks: tracks
+        };
+        customPlaylists.push(newPl);
+        localStorage.setItem('arkaios_playlists', JSON.stringify(customPlaylists));
+        renderPlaylists();
+        switchTab('library');
+        switchLibrarySubtab('playlists');
+        showArkaiosToast(`✔ Playlist "${plName}" importada con ${tracks.length} pistas.`);
+    } catch (e) {
+        showArkaiosToast('Error al leer el archivo .M3U');
+    }
 }
 
 // Download API Requests
@@ -1160,77 +1350,241 @@ function renderPlaylists() {
     `).join('');
 }
 
-function showCreatePlaylistModal() {
-    const name = prompt('Ingresa el nombre de tu nueva playlist:', 'Mi Playlist Favorita');
-    if (!name || !name.trim()) return;
+let toastTimeout = null;
+function showArkaiosToast(msg) {
+    const el = document.getElementById('arkaiosToast');
+    if (!el) return;
+    el.textContent = msg;
+    el.style.display = 'block';
+    if (toastTimeout) clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(() => {
+        el.style.display = 'none';
+    }, 3200);
+}
+
+function closeArkaiosModal() {
+    const modal = document.getElementById('arkaiosCustomModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function showCreatePlaylistModal(pendingTrackId = null) {
+    const modal = document.getElementById('arkaiosCustomModal');
+    const content = document.getElementById('arkaiosModalContent');
+    if (!modal || !content) return;
+
+    content.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <h3 style="margin:0; font-size:1.2rem; color:#06b6d4;"><i class="fa-solid fa-list-music"></i> Nueva Playlist Personalizada</h3>
+            <button onclick="closeArkaiosModal()" style="background:none; border:none; color:#94a3b8; font-size:1.3rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <label style="display:block; font-size:0.85rem; color:#cbd5e1; margin-bottom:6px;">Nombre de la Playlist</label>
+        <input type="text" id="newPlaylistNameInput" value="Mi Playlist Favorita" placeholder="Ej. Gym Techno, Favoritas..." style="width:100%; padding:12px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.15); background:#1e293b; color:#fff; font-size:0.95rem; margin-bottom:18px; outline:none;">
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
+            <button onclick="closeArkaiosModal()" style="padding:10px 16px; border-radius:10px; border:1px solid rgba(255,255,255,0.15); background:transparent; color:#cbd5e1; cursor:pointer;">Cancelar</button>
+            <button onclick="confirmCreatePlaylist('${pendingTrackId || ''}')" style="padding:10px 18px; border-radius:10px; border:none; background:linear-gradient(135deg,#06b6d4,#0284c7); color:#fff; font-weight:700; cursor:pointer;"><i class="fa-solid fa-check"></i> Crear Playlist</button>
+        </div>
+    `;
+    modal.style.display = 'flex';
+    setTimeout(() => {
+        const inp = document.getElementById('newPlaylistNameInput');
+        if (inp) { inp.focus(); inp.select(); }
+    }, 80);
+}
+
+function confirmCreatePlaylist(pendingTrackId) {
+    const inp = document.getElementById('newPlaylistNameInput');
+    const name = (inp ? inp.value : '').trim();
+    if (!name) {
+        showArkaiosToast('Escribe un nombre para la playlist.');
+        return;
+    }
 
     const newPlaylist = {
         id: 'pl_' + Date.now(),
-        name: name.trim(),
+        name: name,
         cover: 'cd_cover.svg',
         tracks: []
     };
 
+    if (pendingTrackId) {
+        const track = findTrackById(pendingTrackId);
+        if (track) {
+            const cleanTrack = { ...track };
+            delete cleanTrack.blob;
+            newPlaylist.tracks.push(cleanTrack);
+        }
+    }
+
     customPlaylists.push(newPlaylist);
     localStorage.setItem('arkaios_playlists', JSON.stringify(customPlaylists));
     renderPlaylists();
-    alert(`✔ Playlist "${name.trim()}" creada con éxito.`);
+    closeArkaiosModal();
     switchTab('library');
     switchLibrarySubtab('playlists');
+    showArkaiosToast(`✔ Playlist "${name}" creada con éxito.`);
+}
+
+function showAddCustomMediaModal() {
+    const modal = document.getElementById('arkaiosCustomModal');
+    const content = document.getElementById('arkaiosModalContent');
+    if (!modal || !content) return;
+
+    content.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <h3 style="margin:0; font-size:1.2rem; color:#06b6d4;"><i class="fa-solid fa-circle-plus"></i> Añadir Multimedia o Enlace Propio</h3>
+            <button onclick="closeArkaiosModal()" style="background:none; border:none; color:#94a3b8; font-size:1.3rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <label style="display:block; font-size:0.85rem; color:#cbd5e1; margin-bottom:6px;">Título de la Canción / Video / Radio</label>
+        <input type="text" id="customMediaTitleInput" placeholder="Ej. Mi Remix o Enlace de YouTube..." style="width:100%; padding:10px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.15); background:#1e293b; color:#fff; font-size:0.92rem; margin-bottom:12px; outline:none;">
+        
+        <label style="display:block; font-size:0.85rem; color:#cbd5e1; margin-bottom:6px;">Artista / Autor</label>
+        <input type="text" id="customMediaArtistInput" value="Multimedia Personal" style="width:100%; padding:10px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.15); background:#1e293b; color:#fff; font-size:0.92rem; margin-bottom:12px; outline:none;">
+
+        <label style="display:block; font-size:0.85rem; color:#cbd5e1; margin-bottom:6px;">URL Directa (.mp3, .flac, Stream Radio o YouTube)</label>
+        <input type="text" id="customMediaUrlInput" placeholder="https://www.youtube.com/watch?v=... o https://.../audio.mp3" style="width:100%; padding:10px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.15); background:#1e293b; color:#fff; font-size:0.92rem; margin-bottom:18px; outline:none;">
+
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+            <button onclick="closeArkaiosModal(); triggerLocalFilesImport();" style="padding:10px 14px; border-radius:10px; border:1px solid rgba(6,182,212,0.4); background:rgba(6,182,212,0.12); color:#38bdf8; font-weight:600; cursor:pointer;"><i class="fa-solid fa-folder-open"></i> Explorar Archivos</button>
+            <div style="display:flex; gap:8px;">
+                <button onclick="closeArkaiosModal()" style="padding:10px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.15); background:transparent; color:#cbd5e1; cursor:pointer;">Cancelar</button>
+                <button onclick="confirmAddCustomMedia()" style="padding:10px 16px; border-radius:10px; border:none; background:linear-gradient(135deg,#06b6d4,#0284c7); color:#fff; font-weight:700; cursor:pointer;"><i class="fa-solid fa-plus"></i> Guardar y Reproducir</button>
+            </div>
+        </div>
+    `;
+    modal.style.display = 'flex';
+}
+
+async function confirmAddCustomMedia() {
+    const title = (document.getElementById('customMediaTitleInput')?.value || '').trim() || 'Pista Personalizada';
+    const artist = (document.getElementById('customMediaArtistInput')?.value || '').trim() || 'Multimedia Personal';
+    const url = (document.getElementById('customMediaUrlInput')?.value || '').trim();
+
+    if (!url) {
+        showArkaiosToast('Ingresa un enlace válido o usa Explorar Archivos.');
+        return;
+    }
+
+    const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([A-Za-z0-9_-]{11})/);
+    let trackObj;
+    if (ytMatch) {
+        const vid = ytMatch[1];
+        trackObj = {
+            id: 'custom_yt_' + Date.now(),
+            videoId: vid,
+            title: title,
+            artist: artist,
+            url: url,
+            videoUrl: url,
+            playbackMode: 'YOUTUBE_OFFICIAL_EMBED',
+            cover: `https://i.ytimg.com/vi/${vid}/hqdefault.jpg`,
+            genre: '▶ YouTube Personal',
+            format: 'YT EMBED'
+        };
+    } else {
+        trackObj = {
+            id: 'custom_url_' + Date.now(),
+            title: title,
+            artist: artist,
+            url: url,
+            streamUrl: url,
+            cover: 'cd_cover.svg',
+            genre: '🌐 Stream Directo',
+            format: 'HQ STREAM'
+        };
+    }
+
+    importedLocalTracks.unshift(trackObj);
+    await UserMediaDB.saveTrack(trackObj);
+    renderLocalTracks();
+    closeArkaiosModal();
+    playImportedLocalTrack(0);
+    showArkaiosToast(`✔ "${title}" añadida a tu biblioteca.`);
+}
+
+function findTrackById(trackId) {
+    return importedLocalTracks.find(t => String(t.id) === String(trackId)) ||
+           (publicInfractionData.sampleTracks || []).find(t => String(t.id) === String(trackId)) ||
+           currentTrackList.find(t => String(t.id) === String(trackId)) ||
+           (cdTrckasState.currentTracks || []).find(t => String(t.id) === String(trackId));
 }
 
 function showAddToPlaylistModal(trackId) {
     if (customPlaylists.length === 0) {
-        if (confirm('No tienes ninguna playlist creada. ¿Deseas crear una ahora?')) {
-            showCreatePlaylistModal();
-        }
+        showCreatePlaylistModal(trackId);
         return;
     }
 
-    // Buscar track en catálogo público Infraction o lista actual
-    const track = (publicInfractionData.sampleTracks || []).find(t => t.id === trackId) || currentTrackList.find(t => t.id === trackId);
+    const track = findTrackById(trackId);
     if (!track) return;
 
-    const options = customPlaylists.map((pl, i) => `${i + 1}. ${pl.name} (${(pl.tracks || []).length} pistas)`).join('\n');
-    const choice = prompt(`Selecciona el número de la playlist donde añadir "${track.title}":\n\n${options}`);
-    const selectedIdx = parseInt(choice, 10) - 1;
+    const modal = document.getElementById('arkaiosCustomModal');
+    const content = document.getElementById('arkaiosModalContent');
+    if (!modal || !content) return;
 
-    if (isNaN(selectedIdx) || selectedIdx < 0 || selectedIdx >= customPlaylists.length) {
-        return;
-    }
+    const listHtml = customPlaylists.map((pl, idx) => `
+        <button onclick="addTrackToPlaylistAtIndex('${trackId}', ${idx})" style="width:100%; text-align:left; padding:12px 14px; margin-bottom:8px; border-radius:10px; border:1px solid rgba(255,255,255,0.12); background:#1e293b; color:#f8fafc; display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
+            <span><i class="fa-solid fa-music" style="color:#06b6d4; margin-right:8px;"></i> <strong>${pl.name}</strong></span>
+            <span style="font-size:0.8rem; color:#94a3b8;">${(pl.tracks || []).length} pistas</span>
+        </button>
+    `).join('');
 
+    content.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+            <h3 style="margin:0; font-size:1.15rem; color:#06b6d4;">Añadir a Playlist</h3>
+            <button onclick="closeArkaiosModal()" style="background:none; border:none; color:#94a3b8; font-size:1.3rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <p style="font-size:0.88rem; color:#cbd5e1; margin:0 0 12px;">Selecciona dónde guardar <strong>${track.title}</strong>:</p>
+        <div style="max-height:220px; overflow-y:auto; margin-bottom:14px;">
+            ${listHtml}
+        </div>
+        <div style="display:flex; justify-content:space-between;">
+            <button onclick="showCreatePlaylistModal('${trackId}')" style="padding:9px 14px; border-radius:10px; border:1px solid rgba(6,182,212,0.4); background:rgba(6,182,212,0.12); color:#38bdf8; font-weight:600; cursor:pointer;"><i class="fa-solid fa-plus"></i> Nueva Playlist</button>
+            <button onclick="closeArkaiosModal()" style="padding:9px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.15); background:transparent; color:#cbd5e1; cursor:pointer;">Cerrar</button>
+        </div>
+    `;
+    modal.style.display = 'flex';
+}
+
+function addTrackToPlaylistAtIndex(trackId, selectedIdx) {
+    const track = findTrackById(trackId);
     const targetPlaylist = customPlaylists[selectedIdx];
+    if (!track || !targetPlaylist) return;
+
     if (!targetPlaylist.tracks) targetPlaylist.tracks = [];
-    
-    // Evitar duplicar en la misma playlist
-    if (targetPlaylist.tracks.some(t => t.id === track.id)) {
-        alert(`La pista ya se encuentra en "${targetPlaylist.name}".`);
+    if (targetPlaylist.tracks.some(t => String(t.id) === String(track.id))) {
+        closeArkaiosModal();
+        showArkaiosToast(`La pista ya está en "${targetPlaylist.name}".`);
         return;
     }
 
-    targetPlaylist.tracks.push(track);
+    const cleanTrack = { ...track };
+    delete cleanTrack.blob;
+    targetPlaylist.tracks.push(cleanTrack);
     localStorage.setItem('arkaios_playlists', JSON.stringify(customPlaylists));
     renderPlaylists();
-    alert(`✔ Pista "${track.title}" añadida a la playlist "${targetPlaylist.name}".`);
+    closeArkaiosModal();
+    showArkaiosToast(`✔ Añadida a "${targetPlaylist.name}".`);
 }
 
 function deletePlaylist(index) {
-    if (confirm(`¿Seguro que deseas eliminar la playlist "${customPlaylists[index].name}"?`)) {
-        customPlaylists.splice(index, 1);
-        localStorage.setItem('arkaios_playlists', JSON.stringify(customPlaylists));
-        renderPlaylists();
-    }
+    const pl = customPlaylists[index];
+    if (!pl) return;
+    customPlaylists.splice(index, 1);
+    localStorage.setItem('arkaios_playlists', JSON.stringify(customPlaylists));
+    renderPlaylists();
+    showArkaiosToast(`Playlist "${pl.name}" eliminada.`);
 }
 
 function playPlaylist(index) {
     const pl = customPlaylists[index];
     if (!pl || !pl.tracks || pl.tracks.length === 0) {
-        alert('Esta playlist no tiene canciones aún.');
+        showArkaiosToast('Esta playlist aún no tiene canciones. Añade pistas con el botón +.');
         return;
     }
     const firstTrack = pl.tracks[0];
     if (firstTrack.playbackMode === 'YOUTUBE_OFFICIAL_EMBED') {
-        playOfficialYouTubeTrack(firstTrack.videoId, firstTrack.title, firstTrack.videoUrl);
+        switchTab('infractionPublic');
+        playOfficialYouTubeTrack(firstTrack.videoId, firstTrack.title, firstTrack.videoUrl || firstTrack.url);
     } else {
         currentTrackList = pl.tracks;
         currentTrackIndex = 0;
