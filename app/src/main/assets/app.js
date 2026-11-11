@@ -66,10 +66,20 @@ function handleAudioPlaybackError() {
     const padNum = track.number ? String(track.number).padStart(2, '0') : null;
 
     if (isCdTrckasAlbum && padNum && audioPlayer.src.startsWith('file://')) {
-        const fallbackUrl = `https://cd-trckas.vercel.app/plataforma/audio/${padNum}.mp3`;
-        console.log('[FALLBACK] Intentando CD-TRCKAS remoto:', fallbackUrl);
-        audioPlayer.src = fallbackUrl;
-        audioPlayer.play().catch(e => console.error('[FALLBACK] Error CD-TRCKAS remoto:', e));
+        const cloudUrl = track.drive_file_id
+            ? `https://drive.usercontent.google.com/download?id=${track.drive_file_id}&export=download`
+            : `https://cd-trckas.vercel.app/plataforma/audio/${padNum}.mp3`;
+        console.log('[FALLBACK] CD-TRCKAS jalando directamente del SSASS en Google Drive:', cloudUrl);
+        audioPlayer.src = cloudUrl;
+        audioPlayer.play().then(() => {
+            isPlaying = true;
+            updatePlayPauseButton();
+            const trackKey = AudioPrecacheManager.getTrackKey(track);
+            fetch(cloudUrl, { mode: 'cors' })
+                .then(r => r.ok ? r.blob() : null)
+                .then(b => b ? AudioPrecacheManager.saveBlob(trackKey, b) : null)
+                .catch(() => {});
+        }).catch(e => console.error('[FALLBACK] Error CD-TRCKAS remoto:', e));
     } else if (track.drive_file_id) {
         if (!audioPlayer.src.includes('spotify-arkaios.vercel.app/api/stream')) {
             const proxyUrl = `https://spotify-arkaios.vercel.app/api/stream?id=${track.drive_file_id}`;
@@ -397,7 +407,182 @@ function playTrackFromList(index) {
     loadTrackToPlayer(currentTrackList[index], true);
 }
 
-function loadTrackToPlayer(track, autoPlay = true) {
+// =========================================================================
+// MOTOR DE PRE-CACHE PREDICTIVO INTELIGENTE Y REPRODUCCIÓN INSTANTÁNEA (0 ms)
+// =========================================================================
+const AudioPrecacheManager = (function() {
+    const DB_NAME = 'ArkaiosAudioPrecacheDB';
+    const DB_VERSION = 1;
+    const STORE_NAME = 'audio_blobs';
+    let db = null;
+    const memCache = new Map();
+    let secondaryPreloader = null;
+    let prefetchingId = null;
+    let precacheTimer = null;
+
+    function initPreloader() {
+        if (!secondaryPreloader && typeof Audio !== 'undefined') {
+            try {
+                secondaryPreloader = new Audio();
+                secondaryPreloader.preload = 'auto';
+                secondaryPreloader.muted = true;
+            } catch (e) {}
+        }
+    }
+
+    function openDB() {
+        if (db) return Promise.resolve(db);
+        return new Promise((resolve) => {
+            if (typeof window === 'undefined' || !window.indexedDB) {
+                return resolve(null);
+            }
+            try {
+                const req = indexedDB.open(DB_NAME, DB_VERSION);
+                req.onupgradeneeded = (e) => {
+                    const d = e.target.result;
+                    if (!d.objectStoreNames.contains(STORE_NAME)) {
+                        d.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                    }
+                };
+                req.onsuccess = (e) => {
+                    db = e.target.result;
+                    resolve(db);
+                };
+                req.onerror = () => resolve(null);
+            } catch (err) {
+                resolve(null);
+            }
+        });
+    }
+
+    async function getCachedUrl(id) {
+        if (!id) return null;
+        if (memCache.has(id)) {
+            return memCache.get(id);
+        }
+        try {
+            const database = await openDB();
+            if (!database) return null;
+            return new Promise((resolve) => {
+                const tx = database.transaction(STORE_NAME, 'readonly');
+                const store = tx.objectStore(STORE_NAME);
+                const req = store.get(id);
+                req.onsuccess = () => {
+                    if (req.result && req.result.blob) {
+                        const objUrl = URL.createObjectURL(req.result.blob);
+                        memCache.set(id, objUrl);
+                        console.log('[PRECACHE] ⚡ Hit en caché local instantáneo (0ms) para:', id);
+                        resolve(objUrl);
+                    } else {
+                        resolve(null);
+                    }
+                };
+                req.onerror = () => resolve(null);
+            });
+        } catch (e) {
+            return null;
+        }
+    }
+
+    async function saveBlob(id, blob) {
+        if (!id || !blob) return null;
+        const objUrl = URL.createObjectURL(blob);
+        memCache.set(id, objUrl);
+        try {
+            const database = await openDB();
+            if (database) {
+                const tx = database.transaction(STORE_NAME, 'readwrite');
+                const store = tx.objectStore(STORE_NAME);
+                store.put({ id, blob, size: blob.size, timestamp: Date.now() });
+            }
+        } catch (e) {}
+        return objUrl;
+    }
+
+    function getDirectStreamUrl(track) {
+        if (!track) return '';
+        const isCdTrckas = (track.album_id === 'cd_trckas_official') || 
+                           (track.album && track.album.toLowerCase().includes('cd trckas'));
+        const padNum = track.number ? String(track.number).padStart(2, '0') : null;
+        if (track.drive_file_id) {
+            return `https://drive.usercontent.google.com/download?id=${track.drive_file_id}&export=download`;
+        }
+        if (isCdTrckas && padNum) {
+            return `https://cd-trckas.vercel.app/plataforma/audio/${padNum}.mp3`;
+        }
+        return track.streamUrl || track.stream_url || track.url || '';
+    }
+
+    function getTrackKey(track) {
+        if (!track) return null;
+        if (track.drive_file_id) return 'drive_' + track.drive_file_id;
+        if (track.id) return 'track_' + track.id;
+        const padNum = track.number ? String(track.number).padStart(2, '0') : null;
+        const isCdTrckas = (track.album_id === 'cd_trckas_official') || 
+                           (track.album && track.album.toLowerCase().includes('cd trckas'));
+        if (isCdTrckas && padNum) return 'cd_trckas_' + padNum;
+        return track.title ? 'title_' + track.title.toLowerCase().replace(/\s+/g, '_') : null;
+    }
+
+    async function precacheTrack(track) {
+        if (!track) return;
+        initPreloader();
+        const key = getTrackKey(track);
+        if (!key || memCache.has(key)) return;
+        const cached = await getCachedUrl(key);
+        if (cached) return;
+
+        const streamUrl = getDirectStreamUrl(track);
+        if (!streamUrl || streamUrl.startsWith('file://')) return;
+
+        if (prefetchingId === key) return;
+        prefetchingId = key;
+
+        if (secondaryPreloader) {
+            try {
+                secondaryPreloader.src = streamUrl;
+                secondaryPreloader.load();
+            } catch (e) {}
+        }
+
+        try {
+            console.log('[PRECACHE] 🚀 Precargando silenciosamente pista siguiente:', track.title);
+            const res = await fetch(streamUrl, { mode: 'cors' });
+            if (res.ok) {
+                const blob = await res.blob();
+                await saveBlob(key, blob);
+                console.log('[PRECACHE] ✔ Pista precacheada lista para reproducir al toque (0ms):', track.title);
+            }
+        } catch (e) {
+            console.log('[PRECACHE] Buffer secundario activo para:', track.title);
+        } finally {
+            if (prefetchingId === key) prefetchingId = null;
+        }
+    }
+
+    function scheduleNextTrackPrecache(currentIndex, trackList) {
+        if (precacheTimer) clearTimeout(precacheTimer);
+        if (!trackList || trackList.length <= 1) return;
+        precacheTimer = setTimeout(() => {
+            const nextIdx = (currentIndex + 1) % trackList.length;
+            const nextTrack = trackList[nextIdx];
+            if (nextTrack) {
+                precacheTrack(nextTrack);
+            }
+        }, 1800);
+    }
+
+    return {
+        getCachedUrl,
+        saveBlob,
+        getDirectStreamUrl,
+        getTrackKey,
+        precacheTrack,
+        scheduleNextTrackPrecache
+    };
+})();
+
+async function loadTrackToPlayer(track, autoPlay = true) {
     if (!track) return;
     document.getElementById('playerTitle').textContent = track.title || 'Desconocido';
     document.getElementById('playerArtist').textContent = track.artist || 'KLMR';
@@ -408,14 +593,19 @@ function loadTrackToPlayer(track, autoPlay = true) {
     }
 
     let streamSrc = '';
+    const trackKey = AudioPrecacheManager.getTrackKey(track);
+    const cachedUrl = await AudioPrecacheManager.getCachedUrl(trackKey);
+
     const isCdTrckasAlbum = (track.album_id === 'cd_trckas_official') || 
                            (track.album && track.album.toLowerCase().includes('cd trckas'));
     const padNum = track.number ? String(track.number).padStart(2, '0') : null;
 
-    if (isCdTrckasAlbum && padNum && parseInt(padNum, 10) >= 1 && parseInt(padNum, 10) <= 28) {
+    if (cachedUrl) {
+        streamSrc = cachedUrl;
+        console.log('[PLAYER] ⚡ Reproducción instantánea (0ms) desde caché:', track.title);
+    } else if (isCdTrckasAlbum && padNum && parseInt(padNum, 10) >= 1 && parseInt(padNum, 10) <= 28) {
         streamSrc = `file:///sdcard/Music/CD-TRCKAS/${padNum}.mp3`;
     } else if (track.drive_file_id) {
-        // Enlace directo oficial sin 302 redirects que soporta Range 206 y CORS abierto
         streamSrc = `https://drive.usercontent.google.com/download?id=${track.drive_file_id}&export=download`;
     } else if (track.streamUrl) {
         streamSrc = track.streamUrl;
@@ -429,7 +619,6 @@ function loadTrackToPlayer(track, autoPlay = true) {
         streamSrc = track.url || track.audio_url || '';
     }
 
-    // Convertir cualquier URL drive.google.com/uc a drive.usercontent.google.com directa
     if (streamSrc && streamSrc.includes('drive.google.com/uc?export=download&id=')) {
         const fileId = streamSrc.split('id=')[1]?.split('&')[0];
         if (fileId) {
@@ -453,11 +642,20 @@ function loadTrackToPlayer(track, autoPlay = true) {
                 isPlaying = true;
                 updatePlayPauseButton();
                 console.log('[PLAYER] Reproduciendo:', track.title);
+                if (!cachedUrl && streamSrc.startsWith('http')) {
+                    fetch(streamSrc, { mode: 'cors' })
+                        .then(r => r.ok ? r.blob() : null)
+                        .then(b => b ? AudioPrecacheManager.saveBlob(trackKey, b) : null)
+                        .catch(() => {});
+                }
+                AudioPrecacheManager.scheduleNextTrackPrecache(currentTrackIndex, currentTrackList);
             }).catch(err => {
                 console.warn('[PLAYER] Error al iniciar play:', err.name, err.message);
                 handleAudioPlaybackError();
             });
         }
+    } else {
+        AudioPrecacheManager.scheduleNextTrackPrecache(currentTrackIndex, currentTrackList);
     }
 }
 
