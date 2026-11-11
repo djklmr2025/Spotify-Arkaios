@@ -487,8 +487,10 @@
               "genre": "Synthwave",
               "bpm": 128,
               "duration": "03:45",
-              "stream_url": "https://arkaios-music-access.vercel.app/api/stream?albumId=doxer_singles_vault&trackId=dox-01",
-              "cover": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600"
+              "stream_url": "https://cd-trckas.vercel.app/plataforma/audio/01.mp3",
+              "cover": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600",
+              "static_stream_url": "https://cd-trckas.vercel.app/plataforma/audio/01.mp3",
+              "audio_url": "https://cd-trckas.vercel.app/plataforma/audio/01.mp3"
             },
             {
               "id": 102,
@@ -499,8 +501,10 @@
               "genre": "Cyber-Trance",
               "bpm": 132,
               "duration": "04:15",
-              "stream_url": "https://arkaios-music-access.vercel.app/api/stream?albumId=doxer_singles_vault&trackId=dox-02",
-              "cover": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600"
+              "stream_url": "https://cd-trckas.vercel.app/plataforma/audio/02.mp3",
+              "cover": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600",
+              "static_stream_url": "https://cd-trckas.vercel.app/plataforma/audio/02.mp3",
+              "audio_url": "https://cd-trckas.vercel.app/plataforma/audio/02.mp3"
             }
           ]
         },
@@ -522,8 +526,10 @@
               "genre": "House",
               "bpm": 124,
               "duration": "02:45",
-              "stream_url": "https://arkaios-music-access.vercel.app/api/stream?albumId=klmr_house_2025&trackId=01",
-              "cover": "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=600"
+              "stream_url": "https://cd-trckas.vercel.app/plataforma/audio/01.mp3",
+              "cover": "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=600",
+              "static_stream_url": "https://cd-trckas.vercel.app/plataforma/audio/01.mp3",
+              "audio_url": "https://cd-trckas.vercel.app/plataforma/audio/01.mp3"
             },
             {
               "id": 202,
@@ -534,8 +540,10 @@
               "genre": "House",
               "bpm": 126,
               "duration": "03:12",
-              "stream_url": "https://arkaios-music-access.vercel.app/api/stream?albumId=klmr_house_2025&trackId=02",
-              "cover": "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=600"
+              "stream_url": "https://cd-trckas.vercel.app/plataforma/audio/02.mp3",
+              "cover": "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=600",
+              "static_stream_url": "https://cd-trckas.vercel.app/plataforma/audio/02.mp3",
+              "audio_url": "https://cd-trckas.vercel.app/plataforma/audio/02.mp3"
             },
             {
               "id": 203,
@@ -546,8 +554,10 @@
               "genre": "Deep House",
               "bpm": 122,
               "duration": "03:52",
-              "stream_url": "https://arkaios-music-access.vercel.app/api/stream?albumId=klmr_house_2025&trackId=03",
-              "cover": "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=600"
+              "stream_url": "https://cd-trckas.vercel.app/plataforma/audio/03.mp3",
+              "cover": "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=600",
+              "static_stream_url": "https://cd-trckas.vercel.app/plataforma/audio/03.mp3",
+              "audio_url": "https://cd-trckas.vercel.app/plataforma/audio/03.mp3"
             },
             {
               "id": 204,
@@ -558,8 +568,10 @@
               "genre": "House",
               "bpm": 125,
               "duration": "03:05",
-              "stream_url": "https://arkaios-music-access.vercel.app/api/stream?albumId=klmr_house_2025&trackId=04",
-              "cover": "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=600"
+              "stream_url": "https://cd-trckas.vercel.app/plataforma/audio/04.mp3",
+              "cover": "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=600",
+              "static_stream_url": "https://cd-trckas.vercel.app/plataforma/audio/04.mp3",
+              "audio_url": "https://cd-trckas.vercel.app/plataforma/audio/04.mp3"
             }
           ]
         }

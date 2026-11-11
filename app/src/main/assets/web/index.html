@@ -136,11 +136,14 @@
                             <button class="btn-cd-action btn-sync" onclick="refreshCdTrckasFromCloud()" title="Sincronizar subidas recientes de usuarios">
                                 <i class="fa-solid fa-rotate"></i> Sincronizar Subidas
                             </button>
-                            <a href="https://cd-trckas.vercel.app" target="_blank" rel="noopener noreferrer" class="btn-cd-action btn-portal">
-                                <i class="fa-solid fa-cloud-arrow-up"></i> Subir mi CD en CD-TRCKAS
-                            </a>
-                            <a href="https://arkaios-music-access.vercel.app" target="_blank" rel="noopener noreferrer" class="btn-cd-action btn-vault">
+                            <button class="btn-cd-action btn-vault" onclick="openSsassVaultFromHeader()" title="Abrir y reproducir Bóvedas SSASS Musical en la app">
                                 <i class="fa-solid fa-vault"></i> Bóveda SSASS
+                            </button>
+                            <a href="https://drive.google.com/drive/folders/16cs6nVNIalIDTfRCdF3b_BBu5GQJ6asF?usp=sharing" target="_blank" rel="noopener noreferrer" class="btn-cd-action btn-gdrive" title="Abrir Carpeta Google Drive Oficial (5TB Master)">
+                                <i class="fa-brands fa-google-drive"></i> Carpeta Drive (5TB)
+                            </a>
+                            <a href="https://cd-trckas.vercel.app" target="_blank" rel="noopener noreferrer" class="btn-cd-action btn-portal">
+                                <i class="fa-solid fa-cloud-arrow-up"></i> Subir mi CD
                             </a>
                         </div>
                     </div>
@@ -484,6 +487,8 @@
         </div>
     </footer>
 
+    <script src="cd_trckas_catalog.js"></script>
+    <script src="infraction_public_playlists.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

@@ -354,26 +354,63 @@ function playTrackFromList(index) {
 }
 
 function loadTrackToPlayer(track, autoPlay = true) {
-    document.getElementById('playerTitle').textContent = track.title;
-    document.getElementById('playerArtist').textContent = track.artist;
+    if (!track) return;
+    document.getElementById('playerTitle').textContent = track.title || 'Desconocido';
+    document.getElementById('playerArtist').textContent = track.artist || 'KLMR';
     const coverEl = document.getElementById('playerCover');
     if (coverEl) {
         coverEl.onerror = function() { this.src = 'cd_cover.svg'; };
         coverEl.src = track.cover || 'cd_cover.svg';
     }
-    let streamSrc = track.streamUrl || track.url || track.stream_url || track.audio_url;
-    if (streamSrc && streamSrc.startsWith('/')) {
+
+    let streamSrc = '';
+    const padNum = track.number ? String(track.number).padStart(2, '0') : null;
+
+    if (padNum && parseInt(padNum, 10) >= 1 && parseInt(padNum, 10) <= 28) {
+        streamSrc = `file:///sdcard/Music/CD-TRCKAS/${padNum}.mp3`;
+    } else if (track.static_stream_url) {
+        streamSrc = track.static_stream_url;
+    } else if (track.proxy_stream_url) {
+        streamSrc = track.proxy_stream_url;
+    } else {
+        streamSrc = track.streamUrl || track.url || track.stream_url || track.audio_url || '';
+    }
+
+    if (streamSrc && streamSrc.startsWith('/') && !streamSrc.startsWith('//')) {
         streamSrc = `${SERVER_HOST}${streamSrc}`;
     }
+
+    console.log('[PLAYER] Cargando pista:', track.title, 'URL:', streamSrc);
+
+    audioPlayer.pause();
     audioPlayer.src = streamSrc;
+
     if (autoPlay) {
-        audioPlayer.play().then(() => {
-            isPlaying = true;
-            updatePlayPauseButton();
-        }).catch(err => {
-            console.warn('Auto-play prevent:', err);
-        });
+        const p = audioPlayer.play();
+        if (p !== undefined) {
+            p.then(() => {
+                isPlaying = true;
+                updatePlayPauseButton();
+                console.log('[PLAYER] Reproduciendo:', track.title);
+            }).catch(err => {
+                console.warn('[PLAYER] Error inicial:', err.name, err.message);
+                if (padNum && streamSrc.startsWith('file://')) {
+                    const fallbackUrl = `https://cd-trckas.vercel.app/plataforma/audio/${padNum}.mp3`;
+                    console.log('[PLAYER] Intentando fallback remoto:', fallbackUrl);
+                    audioPlayer.src = fallbackUrl;
+                    audioPlayer.play().then(() => {
+                        isPlaying = true;
+                        updatePlayPauseButton();
+                        console.log('[PLAYER] Fallback remoto reproduciendo:', track.title);
+                    }).catch(e2 => console.error('[PLAYER] Error en fallback remoto:', e2));
+                }
+            });
+        }
     }
+}
+
+function playHeroTrack() {
+    playCdTrckasOfficialAlbum();
 }
 
 function playRadioStream(streamUrl, name, genre, cover) {
@@ -600,12 +637,14 @@ let infrFavorites = JSON.parse(localStorage.getItem('arkaios_infr_favorites') ||
 
 async function loadPublicInfractionLibrary() {
     try {
-        let data = null;
-        try {
-            const res = await fetch('infraction_public_playlists.json');
-            if (res.ok) data = await res.json();
-        } catch (e) {
-            // Intento secundario desde API
+        let data = window.INFRACTION_PUBLIC_PLAYLISTS || null;
+        if (!data) {
+            try {
+                const res = await fetch('infraction_public_playlists.json');
+                if (res.ok) data = await res.json();
+            } catch (e) {
+                // Intento secundario desde API
+            }
         }
 
         if (!data) {
@@ -953,40 +992,37 @@ let cdTrckasState = {
 };
 
 async function initCdTrckasModule() {
-    setupCdTrckasAudioFallback();
     await loadCdTrckasCatalog();
-    refreshCdTrckasFromCloud(false).catch(err => console.warn('Cloud sync background notice:', err));
-}
-
-function setupCdTrckasAudioFallback() {
-    audioPlayer.addEventListener('error', () => {
-        if (!currentTrackList || currentTrackIndex < 0 || currentTrackIndex >= currentTrackList.length) return;
-        const current = currentTrackList[currentTrackIndex];
-        if (current.proxy_stream_url && audioPlayer.src !== current.proxy_stream_url) {
-            console.log('[CD-TRCKAS] Fallback a stream proxy:', current.proxy_stream_url);
-            audioPlayer.src = current.proxy_stream_url;
-            audioPlayer.play().catch(console.warn);
-        } else if (current.static_stream_url && audioPlayer.src !== current.static_stream_url) {
-            console.log('[CD-TRCKAS] Fallback a static MP3:', current.static_stream_url);
-            audioPlayer.src = current.static_stream_url;
-            audioPlayer.play().catch(console.warn);
+    if (cdTrckasState.allAlbums && cdTrckasState.allAlbums.length > 0) {
+        const official = cdTrckasState.allAlbums.find(a => a.id === 'cd_trckas_official') || cdTrckasState.allAlbums[0];
+        if (official && official.tracks && official.tracks.length > 0) {
+            currentTrackList = official.tracks;
+            currentTrackIndex = 0;
+            loadTrackToPlayer(official.tracks[0], false);
         }
-    });
+    }
+    refreshCdTrckasFromCloud(false).catch(err => console.warn('Cloud sync background notice:', err));
 }
 
 async function loadCdTrckasCatalog() {
     try {
-        let catalogData = null;
-        try {
-            const res = await fetch('cd_trckas_catalog.json');
-            if (res.ok) catalogData = await res.json();
-        } catch (e) {
-            console.warn('Carga local cd_trckas_catalog.json fallback:', e);
+        let catalogData = window.CD_TRCKAS_CATALOG_DATA || null;
+        if (!catalogData) {
+            try {
+                const res = await fetch('cd_trckas_catalog.json');
+                if (res.ok) catalogData = await res.json();
+            } catch (e) {
+                console.warn('Carga local cd_trckas_catalog.json fallback:', e);
+            }
         }
 
         if (!catalogData) {
-            const resRemote = await fetch('https://cd-trckas.vercel.app/catalog_manifest.json');
-            if (resRemote.ok) catalogData = await resRemote.json();
+            try {
+                const resRemote = await fetch('https://cd-trckas.vercel.app/catalog_manifest.json');
+                if (resRemote.ok) catalogData = await resRemote.json();
+            } catch (e) {
+                console.warn('Carga remota cd-trckas fallback:', e);
+            }
         }
 
         if (catalogData) {
@@ -1243,6 +1279,17 @@ function shuffleCdTrckasAlbum() {
 function openCdTrckasFromHome() {
     switchTab('cdtrckas');
     selectCdAlbum('cd_trckas_official');
+}
+
+function openSsassVaultFromHeader() {
+    switchTab('cdtrckas');
+    filterCdTrckasAlbums('ssass');
+    const ssassAlbum = cdTrckasState.allAlbums.find(a => a.category === 'ssass' || a.id === 'doxer_singles_vault');
+    if (ssassAlbum) {
+        selectCdAlbum(ssassAlbum.id);
+    }
+    const grid = document.getElementById('cdtrckasAlbumsGrid');
+    if (grid) grid.scrollIntoView({ behavior: 'smooth' });
 }
 
 async function refreshCdTrckasFromCloud(showToast = true) {
