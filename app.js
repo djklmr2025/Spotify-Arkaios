@@ -35,9 +35,53 @@ document.addEventListener('DOMContentLoaded', () => {
     audioPlayer.addEventListener('timeupdate', updateProgress);
     audioPlayer.addEventListener('ended', onTrackEnded);
 
+    audioPlayer.addEventListener('play', () => {
+        isPlaying = true;
+        updatePlayPauseButton();
+    });
+    audioPlayer.addEventListener('playing', () => {
+        isPlaying = true;
+        updatePlayPauseButton();
+    });
+    audioPlayer.addEventListener('pause', () => {
+        isPlaying = false;
+        updatePlayPauseButton();
+    });
+    audioPlayer.addEventListener('error', (e) => {
+        const err = audioPlayer.error;
+        console.warn('[AUDIO ERROR]', err ? `Code: ${err.code}, Msg: ${err.message}` : e, 'Current src:', audioPlayer.src);
+        handleAudioPlaybackError();
+    });
+
     // Initial default track setup
     setupInitialTrack();
 });
+
+function handleAudioPlaybackError() {
+    const track = currentTrackList[currentTrackIndex];
+    if (!track) return;
+
+    const isCdTrckasAlbum = (track.album_id === 'cd_trckas_official') || 
+                           (track.album && track.album.toLowerCase().includes('cd trckas'));
+    const padNum = track.number ? String(track.number).padStart(2, '0') : null;
+
+    if (isCdTrckasAlbum && padNum && audioPlayer.src.startsWith('file://')) {
+        const fallbackUrl = `https://cd-trckas.vercel.app/plataforma/audio/${padNum}.mp3`;
+        console.log('[FALLBACK] Intentando CD-TRCKAS remoto:', fallbackUrl);
+        audioPlayer.src = fallbackUrl;
+        audioPlayer.play().catch(e => console.error('[FALLBACK] Error CD-TRCKAS remoto:', e));
+    } else if (track.drive_file_id) {
+        if (!audioPlayer.src.includes('spotify-arkaios.vercel.app/api/stream')) {
+            const proxyUrl = `https://spotify-arkaios.vercel.app/api/stream?id=${track.drive_file_id}`;
+            console.log('[FALLBACK] Intentando proxy serverless Vercel:', proxyUrl);
+            audioPlayer.src = proxyUrl;
+            audioPlayer.play().then(() => {
+                isPlaying = true;
+                updatePlayPauseButton();
+            }).catch(e2 => console.error('[FALLBACK] Proxy Vercel también falló:', e2));
+        }
+    }
+}
 
 function setAppMode(mode) {
     document.getElementById('btnModeWeb').classList.toggle('active', mode === 'web');
@@ -371,7 +415,8 @@ function loadTrackToPlayer(track, autoPlay = true) {
     if (isCdTrckasAlbum && padNum && parseInt(padNum, 10) >= 1 && parseInt(padNum, 10) <= 28) {
         streamSrc = `file:///sdcard/Music/CD-TRCKAS/${padNum}.mp3`;
     } else if (track.drive_file_id) {
-        streamSrc = `https://drive.google.com/uc?export=download&id=${track.drive_file_id}`;
+        // Enlace directo oficial sin 302 redirects que soporta Range 206 y CORS abierto
+        streamSrc = `https://drive.usercontent.google.com/download?id=${track.drive_file_id}&export=download`;
     } else if (track.streamUrl) {
         streamSrc = track.streamUrl;
     } else if (track.stream_url) {
@@ -382,6 +427,14 @@ function loadTrackToPlayer(track, autoPlay = true) {
         streamSrc = track.static_stream_url;
     } else {
         streamSrc = track.url || track.audio_url || '';
+    }
+
+    // Convertir cualquier URL drive.google.com/uc a drive.usercontent.google.com directa
+    if (streamSrc && streamSrc.includes('drive.google.com/uc?export=download&id=')) {
+        const fileId = streamSrc.split('id=')[1]?.split('&')[0];
+        if (fileId) {
+            streamSrc = `https://drive.usercontent.google.com/download?id=${fileId}&export=download`;
+        }
     }
 
     if (streamSrc && streamSrc.startsWith('/') && !streamSrc.startsWith('//')) {
@@ -401,26 +454,8 @@ function loadTrackToPlayer(track, autoPlay = true) {
                 updatePlayPauseButton();
                 console.log('[PLAYER] Reproduciendo:', track.title);
             }).catch(err => {
-                console.warn('[PLAYER] Error inicial:', err.name, err.message);
-                if (isCdTrckasAlbum && padNum && streamSrc.startsWith('file://')) {
-                    const fallbackUrl = `https://cd-trckas.vercel.app/plataforma/audio/${padNum}.mp3`;
-                    console.log('[PLAYER] Intentando fallback remoto CD-TRCKAS:', fallbackUrl);
-                    audioPlayer.src = fallbackUrl;
-                    audioPlayer.play().then(() => {
-                        isPlaying = true;
-                        updatePlayPauseButton();
-                        console.log('[PLAYER] Fallback remoto reproduciendo:', track.title);
-                    }).catch(e2 => console.error('[PLAYER] Error en fallback remoto:', e2));
-                } else if (track.drive_file_id && streamSrc.includes('drive.google.com')) {
-                    const fallbackDriveUrl = `https://drive.usercontent.google.com/download?id=${track.drive_file_id}&export=download`;
-                    console.log('[PLAYER] Intentando fallback usercontent Drive:', fallbackDriveUrl);
-                    audioPlayer.src = fallbackDriveUrl;
-                    audioPlayer.play().then(() => {
-                        isPlaying = true;
-                        updatePlayPauseButton();
-                        console.log('[PLAYER] Fallback usercontent reproduciendo:', track.title);
-                    }).catch(e3 => console.error('[PLAYER] Error en fallback usercontent:', e3));
-                }
+                console.warn('[PLAYER] Error al iniciar play:', err.name, err.message);
+                handleAudioPlaybackError();
             });
         }
     }
@@ -488,11 +523,14 @@ function onTrackEnded() {
 }
 
 function updateProgress() {
-    if (!audioPlayer.duration) return;
-    const percent = (audioPlayer.currentTime / audioPlayer.duration) * 100;
-    document.getElementById('progressBar').value = percent;
-    document.getElementById('currentTime').textContent = formatTime(audioPlayer.currentTime);
-    document.getElementById('totalDuration').textContent = formatTime(audioPlayer.duration);
+    const cur = audioPlayer.currentTime || 0;
+    const dur = audioPlayer.duration;
+    document.getElementById('currentTime').textContent = formatTime(cur);
+    if (dur && !isNaN(dur) && isFinite(dur)) {
+        const percent = (cur / dur) * 100;
+        document.getElementById('progressBar').value = percent;
+        document.getElementById('totalDuration').textContent = formatTime(dur);
+    }
 }
 
 function seekAudio(percent) {
@@ -1080,8 +1118,8 @@ function processCdTrckasData(catalogData) {
                     bpm: t.bpm || 124,
                     duration: t.duration || '03:30',
                     drive_file_id: t.drive_file_id || null,
-                    streamUrl: t.stream_url || t.streamUrl || (t.drive_file_id ? `https://drive.google.com/uc?export=download&id=${t.drive_file_id}` : (t.audio_url || '')),
-                    proxy_stream_url: t.proxy_stream_url || (t.drive_file_id ? `https://drive.google.com/uc?export=download&id=${t.drive_file_id}` : ''),
+                    streamUrl: t.drive_file_id ? `https://drive.usercontent.google.com/download?id=${t.drive_file_id}&export=download` : (t.stream_url || t.streamUrl || t.audio_url || ''),
+                    proxy_stream_url: t.drive_file_id ? `https://spotify-arkaios.vercel.app/api/stream?id=${t.drive_file_id}` : (t.proxy_stream_url || ''),
                     static_stream_url: t.static_stream_url || '',
                     cover: album.cover || 'cd_cover.svg'
                 }))
